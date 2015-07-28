@@ -9,5 +9,6 @@ setup(
     author="Sam Fries",
     author_email="fries2@llnl.gov",
     packages=["cdatgui"],
-    scripts=["scripts/cdatgui"]
+    scripts=["scripts/cdatgui"],
+    package_data={"cdatgui": ["resources/*.png"]}
 )
