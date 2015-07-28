@@ -1,6 +1,7 @@
-from static_docked import StaticDockWidget
-from PySide import QtCore
-from toolbars import AddEditRemoveToolbar
+from cdatgui.bases import StaticDockWidget
+from PySide import QtCore, QtGui
+from cdatgui.toolbars import AddEditRemoveToolbar
+from cdms_file_tree import CDMSFileTree
 
 
 class VariableWidget(StaticDockWidget):
@@ -14,11 +15,17 @@ class VariableWidget(StaticDockWidget):
                                                     self.edit_variable,
                                                     self.remove_variable))
 
+        self.tree = CDMSFileTree(self)
+        self.setWidget(self.tree)
+
     def add_variable(self):
-        print "Add"
+        fd = QtGui.QFileDialog.getOpenFileName(self, u"Select netCDF file")[0]
+        self.tree.add_file(fd)
 
     def edit_variable(self):
-        print "Edit"
+        # Edit variable dialog
+        print "Edit Variable"
 
     def remove_variable(self):
-        print "Remove"
+        # Confirm removal dialog
+        print "Remove Variable"

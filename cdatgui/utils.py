@@ -23,3 +23,14 @@ class Spacer(QtGui.QWidget):
                                QtGui.QSizePolicy.Expanding)
         else:
             self.resize(width, 1)
+
+
+def has_flag(flags, flag):
+    return flags & flag
+
+
+def accum_flags(flags):
+    base = 0
+    for flag in flags:
+        base |= flag
+    return base

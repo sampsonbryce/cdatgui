@@ -1,5 +1,8 @@
 from PySide import QtGui, QtCore
-from variable_widget import VariableWidget
+from .variables import VariableWidget
+
+
+DockWidgetArea = QtCore.Qt.DockWidgetArea
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -10,13 +13,13 @@ class MainWindow(QtGui.QMainWindow):
         self.add_left_dock(VariableWidget(parent=self))
 
     def add_left_dock(self, widget):
-        self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, widget)
+        self.addDockWidget(DockWidgetArea.LeftDockWidgetArea, widget)
 
     def add_right_dock(self, widget):
-        self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea, widget)
+        self.addDockWidget(DockWidgetArea.RightDockWidgetArea, widget)
 
     def add_bottom_dock(self, widget):
-        self.addDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, widget)
+        self.addDockWidget(DockWidgetArea.BottomDockWidgetArea, widget)
 
     def add_top_dock(self, widget):
-        self.addDockWidget(QtCore.Qt.DockWidgetArea.TopDockWidgetArea, widget)
+        self.addDockWidget(DockWidgetArea.TopDockWidgetArea, widget)

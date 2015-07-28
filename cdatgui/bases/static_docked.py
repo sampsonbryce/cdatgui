@@ -1,15 +1,5 @@
 from PySide import QtCore, QtGui
-
-
-def has_flag(flags, flag):
-    return flags & flag
-
-
-def accum_flags(flags):
-    base = 0
-    for flag in flags:
-        base |= flag
-    return base
+from cdatgui.utils import accum_flags, has_flag
 
 
 class StaticDockWidget(QtGui.QDockWidget):
