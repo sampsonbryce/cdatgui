@@ -1,5 +1,5 @@
 from PySide import QtGui, QtCore
-from .manager import manager
+from manager import manager
 import os.path
 from cdatgui.utils import icon
 

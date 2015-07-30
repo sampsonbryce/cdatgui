@@ -1,5 +1,5 @@
 from PySide import QtGui, QtCore
-from utils import icon, Spacer
+from utils import icon, Spacer, header_label
 
 
 add_icon = None
@@ -31,7 +31,7 @@ class AddEditRemoveToolbar(QtGui.QToolBar):
         self.addWidget(Spacer(width=5, parent=self))
 
         # Add the title as a label
-        self.addWidget(QtGui.QLabel(title, parent))
+        self.addWidget(header_label(title))
 
         self.addWidget(Spacer(parent=self))
 

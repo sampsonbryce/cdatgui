@@ -1,5 +1,5 @@
 from PySide import QtGui, QtCore
-from .variables import VariableWidget
+from variables import VariableWidget
 
 
 DockWidgetArea = QtCore.Qt.DockWidgetArea

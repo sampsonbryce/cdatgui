@@ -34,3 +34,13 @@ def accum_flags(flags):
     for flag in flags:
         base |= flag
     return base
+
+
+def label(text):
+    l = QtGui.QLabel(unicode(text))
+    return l
+
+
+def header_label(text):
+    l = label(text)
+    return l

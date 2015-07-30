@@ -1,6 +1,7 @@
 import pytest
 import cdatgui
 import vcs
+import cdms2
 
 
 def test_cdms_file_tree_add_file(qtbot):
@@ -63,3 +64,22 @@ def test_cdms_file_tree_get_selected(qtbot):
     selected_vars = tree.get_selected()
     assert len(selected_vars) == 2
     assert selected_vars[0].id == "clt" and selected_vars[1].id == "u"
+
+
+"""
+def test_cdms_var_list_add_var(qtbot):
+    varlist = cdatgui.variables.cdms_var_list.CDMSVariableList()
+    qtbot.addWidget(varlist)
+
+    clt = cdms2.open(vcs.sample_data + "/clt.nc")
+
+    varlist.add_variable(clt("clt"))
+
+    # Make sure it has an item in the list
+    assert varlist.count() == 1
+
+    item = varlist.item(0)
+
+    # Make sure it has the variable name as the text
+    assert item.text() == "clt"
+"""
