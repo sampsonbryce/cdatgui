@@ -24,7 +24,7 @@ class VariableWidget(StaticDockWidget):
 
     def edit_variable(self):
         # Edit variable dialog
-        print "Edit Variable"
+        print "Edit variable"
 
     def remove_variable(self):
         # Confirm removal dialog
