@@ -11,3 +11,13 @@ The current requirements are:
 3. `pytest` (installable via pip, used to run tests) 
 4. `pytest-qt` (used to power GUI tests)
 
+## Installation
+
+Once you have the requirements installed, you should be able to do this:
+
+1. `source uvcdat/bin/setup_runtime.sh`
+2. `cd cdatgui`
+3. `python setup.py install`
+4. `cdatgui`
+
+This should get you the current rev of the GUI up and running.
