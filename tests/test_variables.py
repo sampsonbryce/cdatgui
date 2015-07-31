@@ -10,7 +10,7 @@ def test_cdms_file_tree_add_file(qtbot):
 
     sample_file = vcs.sample_data + "/clt.nc"
 
-    tree.add_file(sample_file)
+    tree.add_file(cdms2.open(sample_file))
 
     # Make sure the item was added
     assert tree.topLevelItemCount() == 1
@@ -35,7 +35,7 @@ def test_cdms_file_tree_add_file(qtbot):
 
     # Make sure we can't add the same file twice
     with pytest.raises(ValueError):
-        tree.add_file(sample_file)
+        tree.add_file(cdms2.open(sample_file))
 
 
 def test_cdms_file_tree_get_selected(qtbot):
@@ -44,7 +44,7 @@ def test_cdms_file_tree_get_selected(qtbot):
 
     sample_file = vcs.sample_data + "/clt.nc"
 
-    tree.add_file(sample_file)
+    tree.add_file(cdms2.open(sample_file))
 
     # Nothing selected, should return None
     assert len(tree.get_selected()) == 0
@@ -66,7 +66,6 @@ def test_cdms_file_tree_get_selected(qtbot):
     assert selected_vars[0].id == "clt" and selected_vars[1].id == "u"
 
 
-"""
 def test_cdms_var_list_add_var(qtbot):
     varlist = cdatgui.variables.cdms_var_list.CDMSVariableList()
     qtbot.addWidget(varlist)
@@ -82,4 +81,3 @@ def test_cdms_var_list_add_var(qtbot):
 
     # Make sure it has the variable name as the text
     assert item.text() == "clt"
-"""

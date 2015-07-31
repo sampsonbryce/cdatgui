@@ -1,11 +1,12 @@
 from PySide import QtGui
 from cdms_file_tree import CDMSFileTree
+from cdatgui.toolbars import AddEditRemoveToolbar
+from cdms_file_chooser import CDMSFileChooser
 
 
 class AddDialog(QtGui.QDialog):
     def __init__(self, parent=None, f=0):
         super(AddDialog, self).__init__(parent=parent, f=f)
-        self.setModal(True)
 
         wrap = QtGui.QVBoxLayout()
 
@@ -29,16 +30,34 @@ class AddDialog(QtGui.QDialog):
 
         self.setLayout(wrap)
 
-        tree_wrapper = QtGui.QGroupBox()
-
         # Should persist available files here...
         self.tree = CDMSFileTree()
         tree_layout = QtGui.QVBoxLayout()
-        tree_layout.addWidget(self.tree)
-        tree_wrapper.setLayout(tree_layout)
-        tree_wrapper.setTitle(u"Recent Datasets")
+        toolbar = AddEditRemoveToolbar(u"Available Files",
+                                       add_action=self.add_file,
+                                       remove_action=self.remove_file)
 
-        horiz.addWidget(tree_wrapper)
+        tree_layout.addWidget(toolbar, 0)
+        tree_layout.addWidget(self.tree, 10)
+
+        horiz.addLayout(tree_layout, 2)
+
+        self.chooser = CDMSFileChooser()
+        self.chooser.accepted.connect(self.added_files)
 
     def selected_variables(self):
         return self.tree.get_selected()
+
+    def add_file(self):
+        # Need to choose between ESGF, OpenDAP, and File picker.
+        # Let's start with file picker and work from there
+        # Probably should also give access to sample data!
+        self.chooser.show()
+
+    def added_files(self):
+        files = self.chooser.get_selected()
+        for cdmsfile in files:
+            self.tree.add_file(cdmsfile)
+
+    def remove_file(self):
+        pass

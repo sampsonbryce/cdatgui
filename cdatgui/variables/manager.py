@@ -5,8 +5,8 @@ __man__ = None
 
 
 def manager():
+    global __man__
     if __man__ is None:
-        global __man__
         __man__ = Manager()
     return __man__
 

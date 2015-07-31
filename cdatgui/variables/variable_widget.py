@@ -2,6 +2,7 @@ from cdatgui.bases import StaticDockWidget
 from PySide import QtCore
 from cdatgui.toolbars import AddEditRemoveToolbar
 from variable_add import AddDialog
+from cdms_var_list import CDMSVariableList
 
 
 class VariableWidget(StaticDockWidget):
@@ -19,12 +20,14 @@ class VariableWidget(StaticDockWidget):
                                                     self.edit_variable,
                                                     self.remove_variable))
 
-        # self.setWidget(widget)
+        self.variable_widget = CDMSVariableList(self)
+
+        self.setWidget(self.variable_widget)
 
     def add_variable(self):
         new_variables = self.add_dialog.selected_variables()
         for var in new_variables:
-            print var.id
+            self.variable_widget.add_variable(var)
 
     def edit_variable(self):
         # Edit variable dialog

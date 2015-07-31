@@ -1,5 +1,4 @@
 from PySide import QtGui, QtCore
-from manager import manager
 import os.path
 from cdatgui.utils import icon
 
@@ -40,19 +39,13 @@ class CDMSFileTree(QtGui.QTreeWidget):
         self.header().resizeSection(0, 48)
         self.header().close()
 
-    def add_file(self, filepath):
-        if filepath in self.files:
-            raise ValueError("File '%s' already loaded" % filepath)
+    def add_file(self, cdmsfile):
+        if cdmsfile.id in self.files:
+            raise ValueError("File '%s' already loaded" % cdmsfile.id)
 
-        try:
-            cdmsfile = manager().get_file(filepath)
-        except IOError as e:
-            error_dialog = QtGui.QErrorMessage(self)
-            error_dialog.showMessage(e.message)
-            return
+        self.files[cdmsfile.id] = cdmsfile
 
-        self.files[filepath] = cdmsfile
-        self.files_ordered.append(filepath)
+        self.files_ordered.append(cdmsfile)
 
         file_name = os.path.basename(cdmsfile.id)
 
@@ -72,7 +65,7 @@ class CDMSFileTree(QtGui.QTreeWidget):
         for item in items:
             var_name = item.text(1)
             file_index = self.indexOfTopLevelItem(item.parent())
-            filepath = self.files_ordered[file_index]
-            variables.append(self.files[filepath](var_name))
+            cdmsfile = self.files_ordered[file_index]
+            variables.append(cdmsfile(var_name))
 
         return variables
