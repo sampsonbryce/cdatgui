@@ -29,7 +29,7 @@ class CDMSFileChooser(QtGui.QDialog):
         self.file_browser = FileBrowserWidget("/", self)
         self.file_browser.selectionChange.connect(self.selected_files)
 
-        self.tabs.addWidget(u"Local File", self.file_browser)
+        self.tabs.add_widget(u"Local File", self.file_browser)
 
     def selected_files(self):
         files = self.file_browser.get_selected_files()
@@ -39,7 +39,7 @@ class CDMSFileChooser(QtGui.QDialog):
             self.accepted_button.setEnabled(True)
 
     def get_selected(self):
-        if self.tabs.currentRow() == 0:
+        if self.tabs.current_row() == 0:
             files = []
             for fpath in self.file_browser.get_selected_files():
                 files.append(manager().get_file(fpath))
