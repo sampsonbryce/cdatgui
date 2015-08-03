@@ -1,6 +1,7 @@
 import pytest
 from PySide import QtGui
 import cdatgui
+import os
 
 
 def test_vertical_tabs(qtbot):
@@ -37,3 +38,14 @@ def test_vertical_tabs(qtbot):
     # Make sure set_current_row updates things correctly
     assert widget.current_row() == 1
     assert widget.current_item() == (test_title_2, test_layout)
+
+
+def test_file_browser(qtbot):
+    # Simple directory with a subdir and some files
+    fpath = os.path.join(os.path.basename(__file__), "testdir")
+
+    widget = cdatgui.bases.FileBrowserWidget(fpath)
+    qtbot.addWidget(widget)
+
+    # Make sure it doesn't default to selecting anything
+    assert len(widget.get_selected_files()) == 0
