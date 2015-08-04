@@ -13,6 +13,9 @@ class FileInfoItem(QtGui.QListWidgetItem):
 
 
 class DirectoryListWidget(QtGui.QWidget):
+
+    currentItemChanged = QtGui.QListWidget.currentItemChanged
+
     def __init__(self, directory, parent=None, f=0, filters=None):
         super(DirectoryListWidget, self).__init__(parent=parent, f=f)
 
@@ -35,7 +38,21 @@ class DirectoryListWidget(QtGui.QWidget):
             self.files.append(path)
             self.list.addItem(FileInfoItem(fileinfo))
 
+        self.list.currentItemChanged.connect(self.currentItemChanged.emit)
+
         self.layout = QtGui.QVBoxLayout()
         self.layout.addWidget(self.title)
         self.layout.addWidget(self.list)
         self.setLayout(self.layout)
+
+    def selected_file_info(self):
+        index = self.list.currentRow()
+
+        if index == -1:
+            return None
+
+        file_info = self.dir.entryInfoList()[index]
+        return file_info
+
+    def has_item(self, item):
+        return self.list.row(item) >= 0
