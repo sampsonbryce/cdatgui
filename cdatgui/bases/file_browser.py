@@ -2,12 +2,12 @@ from PySide import QtGui, QtCore
 from directory_widget import DirectoryListWidget
 
 
-class FileBrowserWidget(QtGui.QWidget):
+class FileBrowserWidget(QtGui.QScrollArea):
 
     selectionChange = QtCore.Signal()
 
-    def __init__(self, root, parent=None, f=0, filetypes=None):
-        super(FileBrowserWidget, self).__init__(parent=parent, f=f)
+    def __init__(self, root, parent=None, filetypes=None):
+        super(FileBrowserWidget, self).__init__(parent=parent)
 
         self.root = QtCore.QDir(root)
 
@@ -15,22 +15,34 @@ class FileBrowserWidget(QtGui.QWidget):
             # TODO: Filter by file type
             pass
 
-        self.layout = QtGui.QHBoxLayout()
+        self.container = QtGui.QHBoxLayout()
+        self.container.setSpacing(0)
+
+        parent = QtGui.QWidget()
+        parent.setLayout(self.container)
+        self.setWidget(parent)
+        self.setWidgetResizable(True)
+        self.horizontalScrollBar().rangeChanged.connect(self.move_to_right)
+
         self.dirs = []
         self.open_directory(self.root)
-        self.setLayout(self.layout)
 
     def open_directory(self, directory):
         dlw = DirectoryListWidget(directory)
-        self.layout.addWidget(dlw)
+        dlw.setMinimumWidth(200)
+        dlw.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Policy.Preferred,
+                                            QtGui.QSizePolicy.Policy.Maximum))
+
+        self.container.addWidget(dlw)
         dlw.currentItemChanged.connect(self.update_selection)
         self.dirs.append(dlw)
 
+    def move_to_right(self, min, max):
+        self.horizontalScrollBar().setValue(max)
+
     def set_root(self, path):
         self.root = QtCore.QDir(path)
-
         self.remove_directories(0)
-
         self.open_directory(self.root)
 
     def get_selected_files(self):
@@ -56,7 +68,7 @@ class FileBrowserWidget(QtGui.QWidget):
         """
         for widget in self.dirs[index:]:
             widget.currentItemChanged.disconnect(self.update_selection)
-            self.layout.removeWidget(widget)
+            self.container.removeWidget(widget)
             widget.setParent(None)
         self.dirs = self.dirs[:index]
 

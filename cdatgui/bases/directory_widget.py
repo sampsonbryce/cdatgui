@@ -1,6 +1,8 @@
 from PySide import QtGui, QtCore
 from cdatgui.utils import header_label
 
+default_flags = QtCore.QDir.AllEntries | QtCore.QDir.NoDotAndDotDot
+
 
 class FileInfoItem(QtGui.QListWidgetItem):
     def __init__(self, fileinfo):
@@ -33,7 +35,7 @@ class DirectoryListWidget(QtGui.QWidget):
 
         self.files = []
 
-        for fileinfo in self.dir.entryInfoList():
+        for fileinfo in self.dir.entryInfoList(default_flags):
             path = fileinfo.filePath()
             self.files.append(path)
             self.list.addItem(FileInfoItem(fileinfo))
@@ -51,7 +53,7 @@ class DirectoryListWidget(QtGui.QWidget):
         if index == -1:
             return None
 
-        file_info = self.dir.entryInfoList()[index]
+        file_info = self.dir.entryInfoList(default_flags)[index]
         return file_info
 
     def has_item(self, item):
