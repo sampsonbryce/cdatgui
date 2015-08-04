@@ -9,3 +9,6 @@ class CDMSVariableList(QtGui.QListWidget):
     def add_variable(self, cdmsvar):
         self.variables.append(cdmsvar)
         self.addItem(cdmsvar.id)
+
+    def get_variable(self, index):
+        return self.variables[index]

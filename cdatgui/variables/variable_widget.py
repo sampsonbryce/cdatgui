@@ -7,6 +7,8 @@ from cdms_var_list import CDMSVariableList
 
 class VariableWidget(StaticDockWidget):
 
+    selectedVariable = QtCore.Signal(object)
+
     def __init__(self, parent=None, flags=0):
         super(VariableWidget, self).__init__(u"Variables", parent, flags)
         self.allowed_sides = [QtCore.Qt.DockWidgetArea.LeftDockWidgetArea]
@@ -21,8 +23,12 @@ class VariableWidget(StaticDockWidget):
                                                     self.remove_variable))
 
         self.variable_widget = CDMSVariableList(self)
-
+        self.variable_widget.currentRowChanged.connect(self.select_variable)
         self.setWidget(self.variable_widget)
+
+    def select_variable(self, index):
+        var = self.variable_widget.get_variable(index)
+        self.selectedVariable.emit(var)
 
     def add_variable(self):
         new_variables = self.add_dialog.selected_variables()

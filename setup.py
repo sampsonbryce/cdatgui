@@ -8,7 +8,10 @@ setup(
     description="A Graphical User Interface for CDAT",
     author="Sam Fries",
     author_email="fries2@llnl.gov",
-    packages=["cdatgui", "cdatgui.bases", "cdatgui.variables"],
+    packages=["cdatgui",
+              "cdatgui.bases",
+              "cdatgui.variables",
+              "cdatgui.spreadsheet"],
     scripts=["scripts/cdatgui"],
     package_data={"cdatgui": ["resources/*.png"]}
 )
