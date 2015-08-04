@@ -57,7 +57,7 @@ class FileBrowserWidget(QtGui.QWidget):
         for widget in self.dirs[index:]:
             widget.currentItemChanged.disconnect(self.update_selection)
             self.layout.removeWidget(widget)
-            widget.deleteLater()
+            widget.setParent(None)
         self.dirs = self.dirs[:index]
 
     def update_selection(self, current, previous):
