@@ -18,7 +18,7 @@ class DirectoryListWidget(QtGui.QWidget):
 
     currentItemChanged = QtGui.QListWidget.currentItemChanged
 
-    def __init__(self, directory, parent=None, f=0, filters=None):
+    def __init__(self, directory, parent=None, f=0, filetypes=None):
         super(DirectoryListWidget, self).__init__(parent=parent, f=f)
 
         # An instance of QDir
@@ -34,11 +34,15 @@ class DirectoryListWidget(QtGui.QWidget):
         self.title = header_label(directory.dirName())
 
         self.files = []
+        self.entries = self.dir.entryInfoList(default_flags)
 
-        for fileinfo in self.dir.entryInfoList(default_flags):
+        for fileinfo in self.entries:
             path = fileinfo.filePath()
             self.files.append(path)
-            self.list.addItem(FileInfoItem(fileinfo))
+            item = FileInfoItem(fileinfo)
+            if filetypes is not None and fileinfo.isFile() and fileinfo.suffix() not in filetypes:
+                item.setFlags(0)
+            self.list.addItem(item)
 
         self.list.currentItemChanged.connect(self.currentItemChanged.emit)
 

@@ -11,9 +11,7 @@ class FileBrowserWidget(QtGui.QScrollArea):
 
         self.root = QtCore.QDir(root)
 
-        if filetypes is not None:
-            # TODO: Filter by file type
-            pass
+        self.filetypes = filetypes
 
         self.container = QtGui.QHBoxLayout()
         self.container.setSpacing(0)
@@ -28,7 +26,7 @@ class FileBrowserWidget(QtGui.QScrollArea):
         self.open_directory(self.root)
 
     def open_directory(self, directory):
-        dlw = DirectoryListWidget(directory)
+        dlw = DirectoryListWidget(directory, filetypes=self.filetypes)
         dlw.setMinimumWidth(200)
         dlw.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Policy.Preferred,
                                             QtGui.QSizePolicy.Policy.Maximum))

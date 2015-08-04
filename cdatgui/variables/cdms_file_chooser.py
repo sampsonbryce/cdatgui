@@ -26,7 +26,7 @@ class CDMSFileChooser(QtGui.QDialog):
         layout.addWidget(buttons)
 
         # Add different methods for opening files here
-        self.file_browser = FileBrowserWidget("/")
+        self.file_browser = FileBrowserWidget("/", filetypes=["nc"])
         self.file_browser.selectionChange.connect(self.selected_files)
 
         self.tabs.add_widget(u"Local File", self.file_browser)
