@@ -29,11 +29,8 @@ class FileBrowserWidget(QtGui.QWidget):
     def set_root(self, path):
         self.root = QtCore.QDir(path)
 
-        # Update the display widgets
-        for widget in self.dirs:
-            self.layout.removeWidget(widget)
+        self.remove_directories(0)
 
-        self.dirs = []
         self.open_directory(self.root)
 
     def get_selected_files(self):
@@ -53,8 +50,17 @@ class FileBrowserWidget(QtGui.QWidget):
 
         return selected
 
+    def remove_directories(self, index):
+        """
+        index is the start of the section to cut off the end
+        """
+        for widget in self.dirs[index:]:
+            widget.currentItemChanged.disconnect(self.update_selection)
+            self.layout.removeWidget(widget)
+            widget.deleteLater()
+        self.dirs = self.dirs[:index]
+
     def update_selection(self, current, previous):
-        print "hi"
         seeking = None
 
         if current is None:
@@ -72,12 +78,13 @@ class FileBrowserWidget(QtGui.QWidget):
             return
 
         if ind < len(self.dirs) - 1:
-            # Need to remove everything after widget
-            for widget in self.dirs[ind + 1:]:
-                self.layout.removeWidget(widget)
-            self.dirs = self.dirs[:ind + 1]
+            self.remove_directories(ind + 1)
 
         new_file = widget.selected_file_info()
+
+        if new_file is None:
+            self.selectionChange.emit()
+            return
 
         if new_file.isDir():
             self.open_directory(QtCore.QDir(new_file.filePath()))
