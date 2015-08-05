@@ -11,7 +11,8 @@ setup(
     packages=["cdatgui",
               "cdatgui.bases",
               "cdatgui.variables",
-              "cdatgui.spreadsheet"],
+              "cdatgui.spreadsheet",
+              "cdatgui.graphics"],
     scripts=["scripts/cdatgui"],
     package_data={"cdatgui": ["resources/*.png"]}
 )
