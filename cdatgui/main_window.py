@@ -2,7 +2,8 @@ from PySide import QtGui, QtCore
 from variables import VariableWidget
 from spreadsheet.window import SpreadsheetWindow
 from graphics import GraphicsMethodWidget
-
+from plotter import PlotManager
+import vcs
 
 DockWidgetArea = QtCore.Qt.DockWidgetArea
 
@@ -12,6 +13,11 @@ class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None, f=QtCore.Qt.WindowFlags()):
         super(MainWindow, self).__init__(parent=parent)
         self.spreadsheet = SpreadsheetWindow(f=QtCore.Qt.Widget)
+
+        self.manager = PlotManager(self.spreadsheet.getCanvas(0, 0))
+        self.manager.graphics_method = vcs.getboxfill()
+        self.manager.template = vcs.gettemplate('default')
+
         self.setCentralWidget(self.spreadsheet)
 
         var_widget = VariableWidget(parent=self)
@@ -23,12 +29,18 @@ class MainWindow(QtGui.QMainWindow):
         self.add_left_dock(gm_widget)
 
     def update_var_on_main(self, var):
-        canvas = self.spreadsheet.getCanvas(0, 0)
-        canvas.clear()
-        canvas.plot(var)
+        self.manager.variables = (var, None)
+        try:
+            self.manager.plot()
+        except ValueError:
+            print "Waiting on GM"
 
     def update_gm_on_main(self, gm):
-        pass
+        self.manager.graphics_method = gm
+        try:
+            self.manager.plot()
+        except ValueError:
+            print "Waiting on variables"
 
     def add_left_dock(self, widget):
         self.addDockWidget(DockWidgetArea.LeftDockWidgetArea, widget)

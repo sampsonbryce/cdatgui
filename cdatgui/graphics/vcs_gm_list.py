@@ -20,3 +20,20 @@ class GraphicsMethodList(QtGui.QTreeWidget):
                 child = QtGui.QTreeWidgetItem()
                 child.setText(0, gm)
                 item.addChild(child)
+
+    def get_selected(self):
+        items = self.selectedItems()
+        sel = None
+
+        for selected in items:
+            if selected.parent() is None:
+                continue
+
+            p = selected.parent()
+
+            t = self.types[p.text(0)]
+            gm = t[selected.text(0)]
+            sel = gm
+            break
+
+        return sel

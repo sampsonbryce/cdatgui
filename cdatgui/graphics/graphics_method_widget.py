@@ -15,7 +15,15 @@ class GraphicsMethodWidget(StaticDockWidget):
                                                     self.add_gm,
                                                     self.edit_gm,
                                                     self.remove_gm))
-        self.setWidget(GraphicsMethodList())
+        self.list = GraphicsMethodList()
+        self.list.itemSelectionChanged.connect(self.selection_change)
+        self.setWidget(self.list)
+
+    def selection_change(self):
+        selected = self.list.get_selected()
+        if selected is None:
+            return
+        self.selectedGraphicsMethod.emit(selected)
 
     def add_gm(self):
         pass
