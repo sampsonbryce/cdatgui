@@ -1,7 +1,9 @@
 from PySide import QtGui, QtCore
-from variables import VariableWidget
+
 from spreadsheet.window import SpreadsheetWindow
+from variables import VariableWidget
 from graphics import GraphicsMethodWidget
+from templates import TemplateWidget
 from plotter import PlotManager
 import vcs
 
@@ -28,6 +30,10 @@ class MainWindow(QtGui.QMainWindow):
         gm_widget.selectedGraphicsMethod.connect(self.update_gm_on_main)
         self.add_left_dock(gm_widget)
 
+        tmpl_widget = TemplateWidget(parent=self)
+        tmpl_widget.selectedTemplate.connect(self.update_tmpl_on_main)
+        self.add_left_dock(tmpl_widget)
+
     def update_var_on_main(self, var):
         self.manager.variables = (var, None)
         try:
@@ -41,6 +47,13 @@ class MainWindow(QtGui.QMainWindow):
             self.manager.plot()
         except ValueError:
             print "Waiting on variables"
+
+    def update_tmpl_on_main(self, tmpl):
+        self.manager.template = tmpl
+        try:
+            self.manager.plot()
+        except ValueError:
+            print "Waiting on gm/variables"
 
     def add_left_dock(self, widget):
         self.addDockWidget(DockWidgetArea.LeftDockWidgetArea, widget)

@@ -1,0 +1,1 @@
+from template_widget import TemplateWidget # noqa
