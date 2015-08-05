@@ -5,6 +5,7 @@ class PlotManager(object):
     def __init__(self, canvas):
         self.canvas = canvas
         self.dp = None
+        self.dp_ind = 0
         self._gm = None
         self._vars = None
         self._template = None
@@ -48,7 +49,8 @@ class PlotManager(object):
             raise ValueError("No template specified")
 
         if self.dp is not None:
-
+            if self.dp.name not in self.canvas.display_names:
+                self.dp = vcs.elements["display"][self.canvas.display_names[self.dp_ind]]
             # Set the slabs appropriately
             self.dp.array[0] = self.variables[0]
             self.dp.array[1] = self.variables[1]
@@ -60,8 +62,13 @@ class PlotManager(object):
             self.dp.g_name = self.graphics_method.name
             self.dp.g_type = vcs.graphicsmethodtype(self.graphics_method)
 
+            ind = self.canvas.display_names.index(self.dp.name)
+
             # Update the canvas
             self.canvas.update()
+
+            self.dp = vcs.elements["display"][self.canvas.display_names[ind]]
+
         else:
             args = []
             for var in self.variables:
@@ -71,4 +78,4 @@ class PlotManager(object):
             args.append(vcs.graphicsmethodtype(self.graphics_method))
             args.append(self.graphics_method.name)
             self.dp = self.canvas.plot(*args)
-            print self.dp
+            self.dp_ind = self.canvas.display_names.index(self.dp.name)

@@ -1030,12 +1030,14 @@ class QCDATWidget(QVTKWidget):
         self.canvas.backend.renWin.AddRenderer(ren)
         self.canvas.backend.createDefaultInteractor()
         i = self.canvas.backend.renWin.GetInteractor()
+        """
         i.RemoveObservers("ConfigureEvent")
         try:
           i.RemoveObservers("ModifiedEvent")
         except:
           pass
         i.AddObserver("ModifiedEvent",self.canvas.backend.configureEvent)
+        """
 
 
     def prepExtraDims(self, var):
