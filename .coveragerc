@@ -1,0 +1,3 @@
+[run]
+source = cdatgui
+omit = cdatgui/spreadsheet/*
