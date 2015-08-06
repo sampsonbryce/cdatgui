@@ -51,7 +51,7 @@ import os.path
 from PySide import QtCore, QtGui
 
 from .sheet import StandardWidgetSheet
-from .cell import QCellPresenter, QCellContainer, QCellToolBar
+from .cell import QCellContainer, QCellToolBar
 from . import spreadsheet_rc
 from .vtk_classes import QCDATWidget
 
@@ -97,8 +97,6 @@ class StandardWidgetToolBar(QtGui.QToolBar):
         QtGui.QToolBar.__init__(self, parent)
         self.sheetTab = parent
         self.addAction(self.sheetTab.tabWidget.newSheetAction())
-        self.addAction(self.sheetTab.tabWidget.openAction())
-        self.addAction(self.sheetTab.tabWidget.saveAction())
         self.addWidget(self.rowCountSpinBox())
         self.addWidget(self.colCountSpinBox())
         self.addAction(self.sheetTab.tabWidget.exportSheetToImageAction())
@@ -411,98 +409,6 @@ class StandardWidgetSheetTabInterface(object):
                 self.setCellByWidget(r, c, cellWidget)
                 presenter.hide()
 
-    def setEditingMode(self, editing=True):
-        """ setEditingMode(editing: bool) -> None
-        Turn on/off the editing mode of the tab
-
-        """
-        # Turn off active cell selection
-        self.sheet.clearSelection()
-        self.sheet.setActiveCell(-1, -1)
-        # Go over all the cells and set the editing widget up
-        (rowCount, colCount) = self.getDimension()
-        for r in xrange(rowCount):
-            for c in xrange(colCount):
-                self.setCellEditingMode(r, c, editing)
-        QtCore.QCoreApplication.processEvents()
-
-    def swapCell(self, row, col, newSheet, newRow, newCol):
-        """ swapCell(row, col: int, newSheet: Sheet,
-                     newRow, newCol: int) -> None
-        Swap the (row, col) of this sheet to (newRow, newCol) of newSheet
-
-        """
-        myWidget = self.takeCell(row, col)
-        theirWidget = newSheet.takeCell(newRow, newCol)
-        self.setCellByWidget(row, col, theirWidget)
-        newSheet.setCellByWidget(newRow, newCol, myWidget)
-        info = self.getCellPipelineInfo(row, col)
-        self.setCellPipelineInfo(row, col,
-                                 newSheet.getCellPipelineInfo(newRow, newCol))
-        newSheet.setCellPipelineInfo(newRow, newCol, info)
-
-    def copyCell(self, row, col, newSheet, newRow, newCol):
-        """ copyCell(row, col: int, newSheet: Sheet,
-                     newRow, newCol: int) -> None
-        Copy the (row, col) of this sheet to (newRow, newCol) of newSheet
-
-        """
-        info = self.getCellPipelineInfo(row, col)
-        if info:
-            info = info[0]
-            mId = info['moduleId']
-            pipeline = newSheet.setPipelineToLocateAt(newRow, newCol,
-                                                      info['pipeline'], [mId])
-            executePipelineWithProgress(pipeline, 'Copy Cell',
-                                        current_version=info['version'],
-                                        actions=info['actions'],
-                                        reason=info['reason'],
-                                        locator=info['locator'],
-                                        controller=info['controller'],
-                                        sinks=[mId])
-
-    def executePipelineToCell(self, pInfo, row, col, reason=''):
-        """ executePipelineToCell(p: tuple, row: int, col: int) -> None
-        p: (locator, version, actions, pipeline)
-
-        Execute a pipeline and put all of its cell to (row, col). This
-        need to be fixed to layout all cells inside the pipeline
-
-        """
-        pipeline = self.setPipelineToLocateAt(row, col, pInfo[3])
-        executePipelineWithProgress(pipeline, 'Execute Cell',
-                                    locator=pInfo[0],
-                                    controller=pInfo[4],
-                                    current_version=pInfo[1],
-                                    actions=pInfo[2],
-                                    reason=reason)
-
-    def setPipelineToLocateAt(self, row, col, inPipeline, cellIds=[]):
-        """ setPipelineToLocateAt(row: int, col: int, inPipeline: Pipeline,
-                                  cellIds: [ids]) -> Pipeline
-        Modify the pipeline to have its cells (provided by cellIds) to
-        be located at (row, col) of this sheet
-
-        """
-        sheetName = str(self.tabWidget.tabText(self.tabWidget.indexOf(self)))
-        # Note that we must increment row/col by 1 to match how the
-        # CellReference module expects them
-        return assignPipelineCellLocations(inPipeline, sheetName,
-                                           row + 1, col + 1, cellIds)
-
-    def getPipelineInfo(self, row, col):
-        """ getPipelineInfo(row: int, col: int) -> tuple
-        Return (locator, versionNumber, actions, pipeline, controller) for a cell
-
-        """
-        info = self.getCellPipelineInfo(row, col)
-        if info:
-            return (info[0]['locator'],
-                    info[0]['version'],
-                    info[0]['actions'],
-                    info[0]['pipeline'],
-                    info[0]['controller'])
-        return None
 
     def exportSheetToImage(self, fileName):
         """ exportSheetToImage() -> None
@@ -605,7 +511,6 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
         self.vLayout.addWidget(self.toolBar, 0)
         self.vLayout.addWidget(self.sheet, 1)
         self.setLayout(self.vLayout)
-        self.pipelineInfo = {}
         self.setAcceptDrops(True)
         self.createContainers()
 
@@ -649,7 +554,6 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
             self.sheet.setRowCount(self.toolBar.rowSpinBox.value())
             self.sheet.stretchCells()
             self.createContainers()
-            self.setEditingMode(self.tabWidget.editingMode)
 
     def colSpinBoxChanged(self):
         """ colSpinBoxChanged() -> None
@@ -661,7 +565,6 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
             self.sheet.setColumnCount(self.toolBar.colSpinBox.value())
             self.sheet.stretchCells()
             self.createContainers()
-            self.setEditingMode(self.tabWidget.editingMode)
 
     ### Belows are API Wrappers to connect to self.sheet
 
