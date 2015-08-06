@@ -85,11 +85,6 @@ class StandardWidgetTabController(QtGui.QTabWidget):
         self.loadingMode = False
         self.tabCloseRequested.connect(self.delete_sheet_by_index)
 
-        self.closeButton = QtGui.QToolButton(self)
-        #self.closeButton.setIcon(CurrentTheme.VIEW_MANAGER_CLOSE_ICON)
-        self.closeButton.setAutoRaise(True)
-        self.setCornerWidget(self.closeButton)
-        self.closeButton.clicked.connect(self.deleteSheetAction().trigger)
 
     def isLoadingMode(self):
         """ isLoadingMode() -> boolean
