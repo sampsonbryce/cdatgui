@@ -49,10 +49,7 @@ class AddDialog(QtGui.QDialog):
         return self.tree.get_selected()
 
     def add_file(self):
-        # Need to choose between ESGF, OpenDAP, and File picker.
-        # Let's start with file picker and work from there
-        # Probably should also give access to sample data!
-        self.chooser.show()
+        self.chooser.show()  # pragma: no cover
 
     def added_files(self):
         files = self.chooser.get_selected()
@@ -60,4 +57,4 @@ class AddDialog(QtGui.QDialog):
             self.tree.add_file(cdmsfile)
 
     def remove_file(self):
-        pass
+        pass  # pragma: no cover

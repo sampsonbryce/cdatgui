@@ -1,4 +1,5 @@
 import pytest
+import mocks
 import cdatgui
 import vcs
 import cdms2
@@ -137,3 +138,26 @@ def test_manager():
     # Will only retrieve correct file types
     with pytest.raises(IOError):
         man.get_file(__file__)
+
+
+def test_add_dialog(qtbot):
+    dia = cdatgui.variables.variable_add.AddDialog()
+    qtbot.addWidget(dia)
+
+    # No files selected yet
+    assert len(dia.selected_variables()) == 0
+
+    dia.chooser = mocks.CDMSFileChooser
+
+    assert dia.tree.topLevelItemCount() == 0
+
+    dia.added_files()
+
+    # The tree should have clt.nc
+    assert dia.tree.topLevelItemCount() == 1
+    assert dia.tree.topLevelItem(0).text(1) == "clt.nc"
+
+    # Select the "clt" variable
+    dia.tree.topLevelItem(0).child(0).setSelected(True)
+    assert len(dia.selected_variables()) == 1
+
