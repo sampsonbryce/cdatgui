@@ -190,23 +190,12 @@ class QVTKWidget(QtGui.QWidget):
         Work around vtk bugs for resizing window
 
         """
-        ########################################################
-        # VTK - BUGGGGGGGGG - GRRRRRRRRR
-        # This is a 'bug' in vtkWin32OpenGLRenderWindow(.cxx)
-        # If a render window is mapped to screen, the actual
-        # window size is the client area of the window in Win32.
-        # However, this real window size is only updated through
-        # vtkWin32OpenGLRenderWindow::GetSize(). So this has to
-        # be called here to get the cell size correctly. This
-        # invalidates the condition in the next SetSize().
-        # We can use self.mRenWin.SetSize(0,0) here but it will
-        # cause flickering and decrease performance!
-        # SetPosition(curX,curY) also works here but slower.
-        self.mRenWin.GetSize()
 
         self.mRenWin.SetSize(width, height)
         self.mRenWin.Modified()
         if self.mRenWin.GetInteractor():
+            if self.mRenWin.GetRenderers().GetNumberOfItems() == 1:
+                return
             self.mRenWin.GetInteractor().UpdateSize(width, height)
             self.mRenWin.GetInteractor().InvokeEvent(vtk.vtkCommand.ConfigureEvent)
 
