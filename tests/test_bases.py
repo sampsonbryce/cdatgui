@@ -3,6 +3,7 @@ from PySide import QtGui, QtCore
 import cdatgui
 import os
 
+
 def get_fb():
     # Simple directory with a subdir and some files
     fpath = os.path.join(os.path.dirname(__file__), "testdir")

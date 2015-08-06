@@ -17,7 +17,7 @@ class VerticalTabWidget(QtGui.QWidget):
 
         self.is_layout = []
 
-        self.list.itemClicked.connect(self.item_clicked)
+        self.list.currentItemChanged.connect(self.current_changed)
 
     def add_widget(self, title, widget):
         self.list.addItem(title)
@@ -43,8 +43,7 @@ class VerticalTabWidget(QtGui.QWidget):
 
         return item_title, item
 
-    def item_clicked(self, item):
-        print "clicked", self.list.row(item)
+    def current_changed(self, current, previous):
         self.display.setCurrentIndex(self.list.currentRow())
 
     def current_item(self):
@@ -61,4 +60,3 @@ class VerticalTabWidget(QtGui.QWidget):
 
     def set_current_row(self, index):
         self.list.setCurrentRow(index)
-        self.display.setCurrentIndex(index)
