@@ -81,3 +81,14 @@ def test_cdms_var_list_add_var(qtbot):
 
     # Make sure it has the variable name as the text
     assert item.text() == "clt"
+
+
+def test_cdms_var_list_get_var(qtbot):
+    varlist = cdatgui.variables.cdms_var_list.CDMSVariableList()
+    qtbot.addWidget(varlist)
+    clt = cdms2.open(vcs.sample_data + "/clt.nc")
+    varlist.add_variable(clt("clt"))
+
+    # Make sure it's the same variable
+    var = varlist.get_variable(0)
+    assert var.id == "clt"
