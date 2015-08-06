@@ -36,10 +36,16 @@ class AddEditRemoveToolbar(QtGui.QToolBar):
         self.addWidget(Spacer(parent=self))
 
         if add_action is not None:
-            self.addAction(add_icon, u"Add", add_action)
+            self.add = self.addAction(add_icon, u"Add", add_action)
+        else:
+            self.add = None  # pragma: no cover
 
         if edit_action is not None:
-            self.addAction(edit_icon, u"Edit", edit_action)
+            self.edit = self.addAction(edit_icon, u"Edit", edit_action)
+        else:
+            self.edit = None  # pragma: no cover
 
         if remove_action is not None:
-            self.addAction(remove_icon, u"Remove", remove_action)
+            self.remove = self.addAction(remove_icon, u"Remove", remove_action)
+        else:
+            self.remove = None  # pragma: no cover
