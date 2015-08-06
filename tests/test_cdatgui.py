@@ -32,3 +32,16 @@ def test_add_edit_remove_tbar(qtbot):
     assert "remove" in called
 
     assert bar.windowTitle() == u"Title"
+
+
+def test_utils_data_file(qtbot):
+    path = cdatgui.utils.data_file("utils.py")
+
+    module_path = cdatgui.utils.__file__
+    if module_path[-3:] == "pyc":
+        module_path = module_path[:-1]
+
+    assert path == module_path
+
+    with pytest.raises(IOError):
+        cdatgui.utils.data_file("notarealfile.noreally")
