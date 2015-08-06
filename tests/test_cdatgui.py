@@ -34,7 +34,7 @@ def test_add_edit_remove_tbar(qtbot):
     assert bar.windowTitle() == u"Title"
 
 
-def test_utils_data_file(qtbot):
+def test_utils_data_file():
     path = cdatgui.utils.data_file("utils.py")
 
     module_path = cdatgui.utils.__file__
@@ -47,8 +47,16 @@ def test_utils_data_file(qtbot):
         cdatgui.utils.data_file("notarealfile.noreally")
 
 
-def test_utils_icon(qtbot):
+def test_utils_icon():
     icon = cdatgui.utils.icon("esgf.png")
     assert type(icon) == QtGui.QIcon
     with pytest.raises(IOError):
         cdatgui.utils.icon("nosuchfile.txt")
+
+
+def test_utils_flags():
+    flagged_val = 3
+    assert cdatgui.utils.has_flag(flagged_val, 1)
+    assert cdatgui.utils.has_flag(flagged_val, 2)
+
+    assert cdatgui.utils.accum_flags([1, 2, 8]) == 11

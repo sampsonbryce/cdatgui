@@ -16,6 +16,10 @@ def icon(icon_name):
 
 class Spacer(QtGui.QWidget):
     def __init__(self, width=None, parent=None):
+        """
+        A simple spacer object that will expand to fill all space
+        or be of a defined width. No tests needed.
+        """
         super(Spacer, self).__init__(parent=parent)
 
         if width is None:
