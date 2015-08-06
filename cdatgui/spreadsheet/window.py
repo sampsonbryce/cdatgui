@@ -46,7 +46,7 @@ import tempfile
 from .base import StandardSheetReference
 from .cell import QCellContainer
 from .sheet import StandardWidgetSheet
-from .tabcontroller_stack import TabControllerStack
+from .tabcontroller import StandardWidgetTabController
 
 
 class SpreadsheetWindow(QtGui.QMainWindow):
@@ -68,14 +68,8 @@ class SpreadsheetWindow(QtGui.QMainWindow):
         # The stack of current spreadsheets
         self.stackedCentralWidget = QtGui.QStackedWidget(self)
         # The controller that handles the spreadsheets
-        self.tabControllerStack = TabControllerStack(self.stackedCentralWidget)
-        # FIXME: Temprary create view for now
-        self.tabControllerStack.add_view('Default')
-        self.stackedCentralWidget.addWidget(self.tabControllerStack)
-        # Do we need fullscreen?
-        self.fullScreenStackedWidget = QtGui.QStackedWidget(
-            self.stackedCentralWidget)
-        self.stackedCentralWidget.addWidget(self.fullScreenStackedWidget)
+        self.tabController = StandardWidgetTabController(self.stackedCentralWidget)
+        self.stackedCentralWidget.addWidget(self.tabController)
         self.setCentralWidget(self.stackedCentralWidget)
         self.setStatusBar(QtGui.QStatusBar(self))
         self.modeActionGroup = QtGui.QActionGroup(self)
@@ -85,15 +79,12 @@ class SpreadsheetWindow(QtGui.QMainWindow):
 
         self.setupMenu()
 
-        self.tabControllerStack.needChangeTitle.connect(self.setWindowTitle)
+        self.tabController.needChangeTitle.connect(self.setWindowTitle)
 
         self.quitAction = QtGui.QAction('&Quit Spreadsheet', self)
         self.addAction(self.quitAction)
         self.quitAction.setShortcut('Ctrl+Q')
         self.quitAction.triggered.connect(self.quitActionTriggered)
-
-    def get_current_tab_controller(self):
-        return self.tabControllerStack.currentWidget()
 
     def quitActionTriggered(self):
         self.close()
@@ -116,15 +107,12 @@ class SpreadsheetWindow(QtGui.QMainWindow):
         #self.mainMenu.addAction(self.tabController.saveAsAction())
         #self.mainMenu.addAction(self.tabController.openAction())
         #self.mainMenu.addSeparator()
-        self.mainMenu.addAction(self.tabControllerStack.new_tab_action)
-        #self.mainMenu.addAction(self.tabController.deleteSheetAction())
+        self.mainMenu.addAction(self.tabController.newSheetAction())
+        self.mainMenu.addAction(self.tabController.deleteSheetAction())
         self.viewMenu = QtGui.QMenu('&View', self.menuBar())
         #self.menuBar().addAction(self.viewMenu.menuAction())
-        self.viewMenu.addAction(self.interactiveModeAction())
-        self.viewMenu.addAction(self.editingModeAction())
         self.viewMenu.addSeparator()
         self.viewMenu.addAction(self.fitToWindowAction())
-        self.viewMenu.addAction(self.fullScreenAction())
         self.windowMenu = QtGui.QMenu('&Window', self.menuBar())
         self.menuBar().addAction(self.windowMenu.menuAction())
 
@@ -140,7 +128,7 @@ class SpreadsheetWindow(QtGui.QMainWindow):
             self.fitAction.setStatusTip('Stretch spreadsheet cells '
                                         'to fit the window size')
             self.fitAction.setCheckable(True)
-            checked = self.tabControllerStack.currentWidget().currentWidget().sheet.fitToWindow
+            checked = self.tabController.currentWidget().sheet.fitToWindow
             self.fitAction.setChecked(checked)
             self.connect(self.fitAction,
                          QtCore.SIGNAL('toggled(bool)'),
@@ -325,7 +313,7 @@ class SpreadsheetWindow(QtGui.QMainWindow):
 
         """
         eType = e.type()
-        tabController = self.get_current_tab_controller()
+        tabController = self.tabController
 
         # Handle Show/Hide cell resizer on MouseMove
         if eType==QtCore.QEvent.MouseMove:
@@ -405,7 +393,7 @@ class SpreadsheetWindow(QtGui.QMainWindow):
         # this shoud not be neccecary if storing this info externally
         # Get first cell in active sheet
         reference = StandardSheetReference()
-        sheet = self.get_current_tab_controller().findSheet(reference)
+        sheet = self.tabController.findSheet(reference)
         cell = sheet.getCell(0,0)
 
         # Set up data and plot
@@ -537,28 +525,15 @@ class SpreadsheetWindow(QtGui.QMainWindow):
         sm.detach()
         QtCore.QCoreApplication.quit()
 
-
-    def changeTabController(self, name):
-        self.tabControllerStack.change_selected_view(name)
-
-    def addTabController(self, name):
-        self.tabControllerStack.add_view(name)
-
-    def removeTabController(self, name):
-        self.tabControllerStack.remove_view(name)
-
-    def getTabController(self, name):
-        return self.tabControllerStack.get_tab_controller_by_name(name)
-
     def getCanvas(self, row=0, col=0):
         # return canvas for specified position in current sheet
         reference = StandardSheetReference()
-        sheet = self.get_current_tab_controller().findSheet(reference)
+        sheet = self.tabController.findSheet(reference)
         cell = sheet.getCell(row, col)
         return cell.canvas
 
     def getSelectedLocations(self):
         # return canvas for specified position in current sheet
         reference = StandardSheetReference()
-        sheet = self.get_current_tab_controller().findSheet(reference)
+        sheet = self.tabController.findSheet(reference)
         return sheet.getSelectedLocations()
