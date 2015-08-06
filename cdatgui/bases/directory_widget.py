@@ -31,7 +31,7 @@ class DirectoryListWidget(QtGui.QWidget):
 
         self.list = QtGui.QListWidget()
 
-        self.title = header_label(directory.dirName())
+        self.title = header_label(self.name())
 
         self.files = []
         self.entries = self.dir.entryInfoList(default_flags)
@@ -51,13 +51,16 @@ class DirectoryListWidget(QtGui.QWidget):
         self.layout.addWidget(self.list)
         self.setLayout(self.layout)
 
+    def name(self):
+        return self.dir.dirName()
+
     def selected_file_info(self):
         index = self.list.currentRow()
 
         if index == -1:
             return None
 
-        file_info = self.dir.entryInfoList(default_flags)[index]
+        file_info = self.entries[index]
         return file_info
 
     def has_item(self, item):
