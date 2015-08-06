@@ -60,3 +60,10 @@ def test_utils_flags():
     assert cdatgui.utils.has_flag(flagged_val, 2)
 
     assert cdatgui.utils.accum_flags([1, 2, 8]) == 11
+
+
+def test_utils_labels():
+    l = cdatgui.utils.label("Hi There")
+    assert type(l) == QtGui.QLabel
+    l2 = cdatgui.utils.header_label("Oh Hi")
+    assert type(l2) == QtGui.QLabel
