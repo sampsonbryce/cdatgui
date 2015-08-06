@@ -92,3 +92,32 @@ def test_cdms_var_list_get_var(qtbot):
     # Make sure it's the same variable
     var = varlist.get_variable(0)
     assert var.id == "clt"
+
+
+def test_cdms_file_chooser_browse(qtbot):
+    chooser = cdatgui.variables.cdms_file_chooser.CDMSFileChooser()
+
+    # Make sure it's on the file browser
+    chooser.tabs.set_current_row(0)
+
+    qtbot.addWidget(chooser)
+
+    assert chooser.accepted_button.isEnabled() is False
+
+    # Navigate the file browser to sample_data directory
+    chooser.file_browser.set_root(vcs.sample_data)
+
+    assert chooser.accepted_button.isEnabled() is False
+
+    l = chooser.file_browser.dirs[0].list
+
+    # Find clt.nc row
+    l.setCurrentItem(l.findItems(u"clt.nc", 0)[0])
+
+    assert chooser.accepted_button.isEnabled() is True
+
+    assert chooser.get_selected()[0].id == vcs.sample_data + "/clt.nc"
+
+    l.setCurrentItem(None)
+
+    assert chooser.accepted_button.isEnabled() is False
