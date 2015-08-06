@@ -45,3 +45,10 @@ def test_utils_data_file(qtbot):
 
     with pytest.raises(IOError):
         cdatgui.utils.data_file("notarealfile.noreally")
+
+
+def test_utils_icon(qtbot):
+    icon = cdatgui.utils.icon("esgf.png")
+    assert type(icon) == QtGui.QIcon
+    with pytest.raises(IOError):
+        cdatgui.utils.icon("nosuchfile.txt")
