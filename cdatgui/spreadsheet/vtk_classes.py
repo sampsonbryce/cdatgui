@@ -35,7 +35,6 @@ class QVTKWidget(QtGui.QWidget):
                                              QtGui.QSizePolicy.Expanding))
         self.toolBarType = QVTKWidgetToolBar
         self.iHandlers = []
-        self.renderer_maps = {}
 
     def removeObserversFromInteractorStyle(self):
         """ removeObserversFromInteractorStyle() -> None
@@ -71,82 +70,13 @@ class QVTKWidget(QtGui.QWidget):
         resources
 
         """
-        self.renderer_maps = {}
-        for ren in self.getRendererList():
-            self.mRenWin.RemoveRenderer(ren)
-
         self.removeObserversFromInteractorStyle()
 
         self.updateContents(([], None, [], None, None))
 
         self.SetRenderWindow(None)
 
-        QCellWidget.deleteLater(self)
-
-    def updateContents(self, inputPorts, cameralist = None):
-        """ updateContents(inputPorts: tuple)
-        Updates the cell contents with new vtkRenderer
-
-        """
-        renWin = self.GetRenderWindow()
-        for iHandler in self.iHandlers:
-            if iHandler.observer:
-                iHandler.observer.vtkInstance.SetInteractor(None)
-            iHandler.clear()
-
-        # Remove old renderers first
-        oldRenderers = self.getRendererList()
-        for renderer in oldRenderers:
-            renWin.RemoveRenderer(renderer)
-            renderer.SetRenderWindow(None)
-        del oldRenderers
-
-        (renderers, renderView, self.iHandlers, iStyle, picker) = inputPorts
-        if renderView:
-            renderView.vtkInstance.SetupRenderWindow(renWin)
-            renderers = [renderView.vtkInstance.GetRenderer()]
-        self.renderer_maps = {}
-        self.usecameras = False
-        if cameralist != None and len(cameralist) == len(renderers):
-            self.usecameras = True
-        j = 0
-        for renderer in renderers:
-            if renderView==None:
-                vtkInstance = renderer.vtkInstance
-                renWin.AddRenderer(vtkInstance)
-                self.renderer_maps[vtkInstance] = renderer.moduleInfo['moduleId']
-            else:
-                vtkInstance = renderer
-            if hasattr(vtkInstance, 'IsActiveCameraCreated'):
-                if self.usecameras:
-                    vtkInstance.SetActiveCamera(cameralist[j])
-                    j = j + 1
-                if not vtkInstance.IsActiveCameraCreated():
-                    vtkInstance.ResetCamera()
-                else:
-                    vtkInstance.ResetCameraClippingRange()
-
-        if picker:
-            self.iren.SetPicker(picker.vtkInstance)
-
-        # Update interactor style
-        self.removeObserversFromInteractorStyle()
-        if renderView==None:
-            if iStyle==None:
-                iStyleInstance = vtk.vtkInteractorStyleTrackballCamera()
-            else:
-                iStyleInstance = iStyle.vtkInstance
-            self.iren.SetInteractorStyle(iStyleInstance)
-        self.addObserversToInteractorStyle()
-
-        for iHandler in self.iHandlers:
-            if iHandler.observer:
-                iHandler.observer.vtkInstance.SetInteractor(self.iren)
-        renWin.Render()
-
-        # Capture window into history for playback
-        # Call this at the end to capture the image after rendering
-        QCellWidget.updateContents(self, inputPorts)
+        QtGui.QWidget.deleteLater(self)
 
     def GetRenderWindow(self):
         """ GetRenderWindow() -> vtkRenderWindow
@@ -255,9 +185,6 @@ class QVTKWidget(QtGui.QWidget):
 
         return super(QVTKWidget, self).event(e)
 
-        # return QtGui.QWidget.event(self,e)
-        # Was this right? Wasn't this supposed to be QCellWidget.event()?
-
     def resizeWindow(self, width, height):
         """ resizeWindow(width: int, height: int) -> None
         Work around vtk bugs for resizing window
@@ -339,12 +266,11 @@ class QVTKWidget(QtGui.QWidget):
 
     def mousePressEvent(self,e):
         """ mousePressEvent(e: QMouseEvent) -> None
-        Echo mouse event to vtkRenderWindowwInteractor
+        Echo mouse event to vtkRenderWindowInteractor
 
         """
         if (not self.iren) or (not self.iren.GetEnabled()):
             return
-
 
         ctrl = bool(e.modifiers() & QtCore.Qt.ControlModifier)
 
@@ -373,7 +299,7 @@ class QVTKWidget(QtGui.QWidget):
 
     def mouseMoveEvent(self,e):
         """ mouseMoveEvent(e: QMouseEvent) -> None
-        Echo mouse event to vtkRenderWindowwInteractor
+        Echo mouse event to vtkRenderWindowInteractor
 
         """
         if (not self.iren) or (not self.iren.GetEnabled()):
@@ -391,7 +317,7 @@ class QVTKWidget(QtGui.QWidget):
 
     def enterEvent(self,e):
         """ enterEvent(e: QEvent) -> None
-        Echo mouse event to vtkRenderWindowwInteractor
+        Echo mouse event to vtkRenderWindowInteractor
 
         """
 
@@ -402,7 +328,7 @@ class QVTKWidget(QtGui.QWidget):
 
     def leaveEvent(self,e):
         """ leaveEvent(e: QEvent) -> None
-        Echo mouse event to vtkRenderWindowwInteractor
+        Echo mouse event to vtkRenderWindowInteractor
 
         """
 
@@ -413,7 +339,7 @@ class QVTKWidget(QtGui.QWidget):
 
     def mouseReleaseEvent(self,e):
         """ mouseReleaseEvent(e: QEvent) -> None
-        Echo mouse event to vtkRenderWindowwInteractor
+        Echo mouse event to vtkRenderWindowInteractor
 
         """
 
@@ -439,7 +365,7 @@ class QVTKWidget(QtGui.QWidget):
 
     def keyPressEvent(self,e):
         """ keyPressEvent(e: QKeyEvent) -> None
-        Disallow 'quit' key in vtkRenderWindowwInteractor and sync the others
+        Disallow 'quit' key in vtkRenderWindowInteractor and sync the others
 
         """
         if (not self.iren) or (not self.iren.GetEnabled()):
@@ -447,7 +373,7 @@ class QVTKWidget(QtGui.QWidget):
 
         ascii_key = None
         if len(e.text())>0:
-            ascii_key = e.text().toLatin1()[0]
+            ascii_key = e.text()[0]
         else:
             ascii_key = chr(0)
 
@@ -483,7 +409,7 @@ class QVTKWidget(QtGui.QWidget):
 
         ascii_key = None
         if len(e.text())>0:
-            ascii_key = e.text().toLatin1()[0]
+            ascii_key = e.text()[0]
         else:
             ascii_key = chr(0)
 
@@ -897,89 +823,6 @@ class QVTKWidgetToolBar(QtGui.QToolBar):
         self.addAnimationButtons()
         self.appendAction(QVTKWidgetSaveCamera(self))
 
-class QVTKWidgetSaveCamera(QtGui.QAction):
-    """
-    QVTKWidgetSaveCamera is the action to capture the current camera
-    of the vtk renderers and save it back to the pipeline
-
-    """
-    def __init__(self, parent=None):
-        """ QVTKWidgetSaveCamera(parent: QWidget) -> QVTKWidgetSaveCamera
-        Setup the image, status tip, etc. of the action
-
-        """
-        QtGui.QAction.__init__(self,
-                               "Save &Camera",
-                               parent)
-        self.setStatusTip("Save current camera views to the pipeline")
-
-    def setCamera(self, controller):
-        ops = []
-        pipeline = controller.current_pipeline
-        cellWidget = self.toolBar.getSnappedWidget()
-        renderers = cellWidget.getRendererList()
-        for ren in renderers:
-            cam = ren.GetActiveCamera()
-            cpos = cam.GetPosition()
-            cfol = cam.GetFocalPoint()
-            cup = cam.GetViewUp()
-            rendererId = cellWidget.renderer_maps[ren]
-            # Looking for SetActiveCamera()
-            camera = None
-            renderer = pipeline.modules[rendererId]
-            for c in pipeline.connections.values():
-                if c.destination.moduleId==rendererId:
-                    if c.destination.name=='SetActiveCamera':
-                        camera = pipeline.modules[c.source.moduleId]
-                        break
-
-            if not camera:
-                # Create camera
-                vtk_package = 'edu.utah.sci.vistrails.vtk'
-                camera = controller.create_module(vtk_package, 'vtkCamera', '',
-                                                  0.0, 0.0)
-                ops.append(('add', camera))
-
-                # Connect camera to renderer
-                camera_conn = controller.create_connection(camera, 'self',
-                                                           renderer,
-                                                           'SetActiveCamera')
-                ops.append(('add', camera_conn))
-            # update functions
-            def convert_to_str(arglist):
-                new_arglist = []
-                for arg in arglist:
-                    new_arglist.append(str(arg))
-                return new_arglist
-            functions = [('SetPosition', convert_to_str(cpos)),
-                         ('SetFocalPoint', convert_to_str(cfol)),
-                         ('SetViewUp', convert_to_str(cup))]
-            ops.extend(controller.update_functions_ops(camera, functions))
-
-        action = core.db.action.create_action(ops)
-        controller.add_new_action(action)
-        controller.perform_action(action)
-        controller.select_latest_version()
-
-    def triggeredSlot(self, checked=False):
-        """ toggledSlot(checked: boolean) -> None
-        Execute the action when the button is clicked
-
-        """
-        visApp = QtCore.QCoreApplication.instance()
-        if hasattr(visApp, 'builderWindow'):
-            builderWindow = visApp.builderWindow
-            if builderWindow:
-                info = self.toolBar.sheet.getCellPipelineInfo(
-                    self.toolBar.row, self.toolBar.col)
-                if info:
-                    info = info[0]
-                    view = builderWindow.ensureVistrail(info['locator'])
-                    if view:
-                        controller = view.controller
-                        controller.change_selected_version(info['version'])
-                        self.setCamera(controller)
-
 class QCDATWidget(QVTKWidget):
     """ QCDATWidget is the spreadsheet cell widget where the plots are displayed.
     The widget interacts with the underlying C++, VCSQtManager through SIP.
@@ -1013,17 +856,10 @@ class QCDATWidget(QVTKWidget):
         #layout = QtGui.QVBoxLayout()
         #self.setLayout(layout)
 
-    def processParameterChange( self, args ):
-        from pipeline_helper import CDMSPipelineHelper
-        parameter_name  = args[1]
-        parameter_values  = args[2]
-        CDMSPipelineHelper.change_parameters( [ ( parameter_name, parameter_values ), ] )
-        
     def createCanvas(self):
         if self.canvas is not None:
           return
         self.canvas = vcs.init(backend=self.GetRenderWindow())
-        self.canvas.ParameterChanged.connect( self.processParameterChange )
         ren = vtk.vtkRenderer()
         r,g,b = self.canvas.backgroundcolor
         ren.SetBackground(r/255.,g/255.,b/255.)
@@ -1038,7 +874,6 @@ class QCDATWidget(QVTKWidget):
           pass
         i.AddObserver("ModifiedEvent",self.canvas.backend.configureEvent)
         """
-
 
     def prepExtraDims(self, var):
         k={}
@@ -1073,7 +908,7 @@ class QCDATWidget(QVTKWidget):
         self.canvas = None
         #self.window = None
         
-        QCellWidget.deleteLater(self)    
+        QtGui.QWidget.deleteLater(self)
         
     def dumpToFile(self, filename):
         """ dumpToFile(filename: str, dump_as_pdf: bool) -> None

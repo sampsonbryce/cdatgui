@@ -175,7 +175,6 @@ class StandardSingleCellSheetTab(QtGui.QWidget,
         self.helpers = CellHelpers(self)
         self.toolBars = {}
         self.blankCellToolBar = None
-        self.pipelineInfo = {}
 
     ### Belows are API Wrappers to connect to self.sheet
 

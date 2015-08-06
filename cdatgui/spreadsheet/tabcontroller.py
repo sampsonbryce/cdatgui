@@ -83,7 +83,6 @@ class StandardWidgetTabController(QtGui.QTabWidget):
         self.monitoredPipelines = {}
         self.spreadsheetFileName = None
         self.loadingMode = False
-        self.editingMode = False
         self.tabCloseRequested.connect(self.delete_sheet_by_index)
 
         self.closeButton = QtGui.QToolButton(self)
@@ -170,57 +169,11 @@ class StandardWidgetTabController(QtGui.QTabWidget):
                          self.showPrevTab)
         return self.showPrevTabActionVar
 
-    def saveAction(self):
-        """ saveAction() -> QAction
-        Return the 'Save' action
-
-        """
-        if not hasattr(self, 'saveActionVar'):
-            self.saveActionVar = QtGui.QAction(QtGui.QIcon(':/images/save.png'),
-                                               '&Save', self)
-            self.saveActionVar.setStatusTip('Save the current spreadsheet')
-            self.saveActionVar.setShortcut('Ctrl+S')
-            self.connect(self.saveActionVar,
-                         QtCore.SIGNAL('triggered()'),
-                         self.saveSpreadsheet)
-        return self.saveActionVar
-
-    def saveAsAction(self):
-        """ saveAsAction() -> QAction
-        Return the 'Save As...' action
-
-        """
-        if not hasattr(self, 'saveAsActionVar'):
-            icon = QtGui.QIcon(':/images/saveas.png')
-            self.saveAsActionVar = QtGui.QAction(icon, 'Save &As...', self)
-            self.saveAsActionVar.setStatusTip('Save the current spreadsheet '
-                                              'at a new location')
-            self.connect(self.saveAsActionVar,
-                         QtCore.SIGNAL('triggered()'),
-                         self.saveSpreadsheetAs)
-        return self.saveAsActionVar
-
-    def openAction(self):
-        """ openAction() -> QAction
-        Return the 'Open...' action
-
-        """
-        if not hasattr(self, 'openActionVar'):
-            self.openActionVar = QtGui.QAction(QtGui.QIcon(':/images/open.png'),
-                                               '&Open...', self)
-            self.openActionVar.setStatusTip('Open a saved spreadsheet')
-            self.openActionVar.setShortcut('Ctrl+O')
-            self.connect(self.openActionVar,
-                         QtCore.SIGNAL('triggered()'),
-                         self.openSpreadsheetAs)
-        return self.openActionVar
-
     def uvcdatPreferencesAction(self):
         """ uvcdatAutoExecuteAction(self) -> QAction
         It will show a popup with preferences
 
         """
-        from core.configuration import get_vistrails_configuration
         if not hasattr(self, 'uvcdatPreferencesVar'):
             self.uvcdatPreferencesVar = QtGui.QAction(UVCDATTheme.PREFERENCES_ICON,
                                                       'Sheet Options',
@@ -288,67 +241,6 @@ class StandardWidgetTabController(QtGui.QTabWidget):
                          self.uvcdatMinimalThemeActionTriggered)
         return self.uvcdatPreferencesVar
 
-    def uvcdatAutoExecuteActionTriggered(self, checked):
-        """uvcdatAutoExecuteActionTriggered(checked: boolean) -> None
-        When the check state changes the configuration needs to be updated.
-
-        """
-        from core.configuration import get_vistrails_persistent_configuration,\
-            get_vistrails_configuration
-        from gui.application import get_vistrails_application
-        _app = get_vistrails_application()
-        get_vistrails_persistent_configuration().uvcdat.autoExecute = checked
-        get_vistrails_configuration().uvcdat.autoExecute = checked
-        _app.save_configuration()
-
-    def uvcdatAspectRatioActionTriggered(self, checked):
-        """uvcdatAspectRatioActionTriggered(checked: boolean) -> None
-        When the check state changes the configuration needs to be updated.
-
-        """
-
-        from core.configuration import get_vistrails_persistent_configuration,\
-            get_vistrails_configuration
-        from gui.application import get_vistrails_application
-        _app = get_vistrails_application()
-        get_vistrails_persistent_configuration().uvcdat.aspectRatio = checked
-        get_vistrails_configuration().uvcdat.aspectRatio = checked
-        _app.save_configuration()
-
-    def uvcdat_show_changes_message(self):
-        msg = "The changes will be applied next time you restart UV-CDAT."
-        show_info("UV-CDAT", msg)
-
-    def uvcdatDefaultThemeActionTriggered(self, checked):
-        """uvcdatDefaultThemeActionTriggered(checked: boolean) -> None
-        When the check state changes the configuration needs to be updated.
-
-        """
-
-        from core.configuration import get_vistrails_persistent_configuration,\
-            get_vistrails_configuration
-        from gui.application import get_vistrails_application
-        _app = get_vistrails_application()
-        get_vistrails_persistent_configuration().uvcdat.theme = "Default"
-        get_vistrails_configuration().uvcdat.theme = "Default"
-        _app.save_configuration()
-        self.uvcdat_show_changes_message()
-
-    def uvcdatMinimalThemeActionTriggered(self, checked):
-        """uvcdatMinimalThemeActionTriggered(checked: boolean) -> None
-        When the check state changes the configuration needs to be updated.
-
-        """
-
-        from core.configuration import get_vistrails_persistent_configuration,\
-            get_vistrails_configuration
-        from gui.application import get_vistrails_application
-        _app = get_vistrails_application()
-        get_vistrails_persistent_configuration().uvcdat.theme = "Minimal"
-        get_vistrails_configuration().uvcdat.theme = "Minimal"
-        _app.save_configuration()
-        self.uvcdat_show_changes_message()
-
     def exportSheetToImageAction(self):
         """ exportSheetToImageAction() -> QAction
         Export the current sheet to an image
@@ -409,8 +301,6 @@ class StandardWidgetTabController(QtGui.QTabWidget):
         """tabInserted(index: int) -> None
         event handler to get when sheets are inserted """
         self.deleteSheetAction().setEnabled(True)
-        self.saveAction().setEnabled(True)
-        self.saveAsAction().setEnabled(True)
 
     def tabRemoved(self, index):
         """tabInserted(index: int) -> None
@@ -419,12 +309,6 @@ class StandardWidgetTabController(QtGui.QTabWidget):
             self.deleteSheetAction().setEnabled(False)
             self.saveAction().setEnabled(False)
             self.saveAsAction().setEnabled(False)
-
-    def removeSheetReference(self, sheet):
-        """ removeSheetReference(sheet: StandardWidgetSheetTab) -> None
-        Remove references of a sheet from the spreadsheet
-        """
-        pass
 
     def delete_sheet_by_index(self, index):
         widget = self.widget(index)
@@ -585,32 +469,6 @@ class StandardWidgetTabController(QtGui.QTabWidget):
                 t.showHelpers(False, QtCore.QPoint(-1,-1))
         return result
 
-    def setupFullScreenWidget(self, fs, stackedWidget):
-        """ setupFullScreenWidget(fs: boolean, stackedWidget: QStackedWidget)
-                                  -> None
-        Prepare(fs=True)/Clean(fs=False) up full screen mode
-
-        """
-        if fs:
-            idx = self.currentIndex()
-            for i in xrange(self.count()):
-                widget = self.widget(0)
-                self.removeTab(0)
-                self.tabTrueParent = widget.parent()
-                widget.setParent(stackedWidget)
-                stackedWidget.addWidget(widget)
-            stackedWidget.setCurrentIndex(idx)
-            self.operatingWidget = stackedWidget
-        else:
-            idx = stackedWidget.currentIndex()
-            for i in xrange(stackedWidget.count()):
-                widget = stackedWidget.widget(0)
-                stackedWidget.removeWidget(widget)
-                widget.setParent(self.tabTrueParent)
-                self.addTab(widget, widget.windowTitle())
-            self.setCurrentIndex(idx)
-            self.operatingWidget = self
-
     def showNextTab(self):
         """ showNextTab() -> None
         Bring the next tab up
@@ -648,7 +506,6 @@ class StandardWidgetTabController(QtGui.QTabWidget):
             action.setData(idx)
             if t==self.operatingWidget.currentWidget():
                 action.setIcon(QtGui.QIcon(':/images/ok.png'))
-        menu.addAction(self.parent().parent().fullScreenAction())
         return menu
 
     def showPopupMenu(self):
@@ -679,207 +536,9 @@ class StandardWidgetTabController(QtGui.QTabWidget):
         self.emit(QtCore.SIGNAL('needChangeTitle'),
                   '%s - VisTrails Spreadsheet' % displayName)
 
-    def saveSpreadsheet(self, fileName=None):
-        """ saveSpreadsheet(fileName: str) -> None
-        Save the current spreadsheet to a file if fileName is not
-        None. Else, pop up a dialog to ask for a file name.
-
-        """
-        def serialize_locator(locator):
-            wrapper = XMLWrapper()
-            dom = wrapper.create_document('spreadsheet_locator')
-            root = dom.documentElement
-            root.setAttribute("version", "1.0")
-            locator.serialize(dom,root)
-            return dom.toxml()
-
-        def need_save():
-            from vistrails.gui.vistrails_window import _app
-            need_save_vt = False
-            for t in self.tabWidgets:
-                dim = t.getDimension()
-                for r in xrange(dim[0]):
-                    for c in xrange(dim[1]):
-                        info = t.getCellPipelineInfo(r,c)
-                        if info:
-                            controller = info[0]['controller']
-                            view = _app.ensureController(controller)
-                            if view:
-                                controller = view.get_controller()
-                                if controller.changed:
-                                    need_save_vt = True
-            return need_save_vt
-
-        if need_save():
-            show_warning('Save Spreadsheet', 'Please save your vistrails and try again.')
-            return
-
-        if fileName==None:
-            fileName = self.spreadsheetFileName
-        if fileName:
-            indexFile = open(fileName, 'w')
-            indexFile.write(str(len(self.tabWidgets))+'\n')
-            for t in self.tabWidgets:
-                dim = t.getDimension()
-                sheet = spreadsheetRegistry.getSheetByType(type(t))
-                indexFile.write('%s\n'%str((str(t.windowTitle()),
-                                            sheet,
-                                            dim[0], dim[1])))
-                for r in xrange(dim[0]):
-                    for c in xrange(dim[1]):
-                        info = t.getCellPipelineInfo(r,c)
-                        if info:
-                            newinfo0 = copy.copy(info[0])
-                            newinfo0['pipeline'] = None
-                            newinfo0['actions'] = []
-                            newinfo0['locator'] = \
-                                          serialize_locator(newinfo0['controller'].locator)
-                            newinfo0['controller'] = None
-                            indexFile.write('%s\n'
-                                            %str((r, c,
-                                                  newinfo0,
-                                                  info[1], info[2])))
-                indexFile.write('---\n')
-            indexFile.write(str(len(self.executedPipelines[0]))+'\n')
-            for vistrail in self.executedPipelines[0]:
-                indexFile.write('%s\n'%str((serialize_locator(vistrail[0].locator),
-                                            vistrail[1])))
-            self.changeSpreadsheetFileName(fileName)
-            indexFile.close()
-        else:
-            self.saveSpreadsheetAs()
-
-    def saveSpreadsheetAs(self):
-        """ saveSpreadsheetAs() -> None
-        Asking a file name before saving the spreadsheet
-
-        """
-        fileName = QtGui.QFileDialog.getSaveFileName(self,
-                                                     'Choose a spreadsheet '
-                                                     'name',
-                                                     '',
-                                                     'VisTrails Spreadsheet '
-                                                     '(*.vss)')
-        if fileName:
-            (root, ext) = os.path.splitext(fileName)
-            if ext=='':
-                fileName += '.vss'
-            self.saveSpreadsheet(fileName)
-
-    def openSpreadsheet(self, fileName):
-        """ openSpreadsheet(fileName: str) -> None
-        Open a saved spreadsheet assuming that all VTK files must exist and have
-        all the version using the saved spreadsheet
-
-        """
-        def parse_locator(text):
-            locator = None
-            wrapper = XMLWrapper()
-            dom = wrapper.create_document_from_string(text)
-            root = dom.documentElement
-            version = None
-            version = root.getAttribute('version')
-            if version == '1.0':
-                for element in named_elements(root, 'locator'):
-                    if str(element.getAttribute('type')) == 'file':
-                        locator = FileLocator.parse(element)
-                    elif str(element.getAttribute('type')) == 'db':
-                        locator = DBLocator.parse(element)
-            return locator
-        locators = {}
-        indexFile = open(fileName, 'r')
-        contents = indexFile.read()
-        self.clearTabs()
-        lidx = 0
-        lines = contents.split('\n')
-        tabCount = int(lines[lidx])
-        lidx += 1
-        for tabIdx in xrange(tabCount):
-            # FIXME: eval should pretty much never be used
-            tabInfo = literal_eval(lines[lidx])
-            lidx += 1
-            sheet = spreadsheetRegistry.getSheet(tabInfo[1])(self)
-            sheet.setDimension(tabInfo[2], tabInfo[3])
-            self.addTabWidget(sheet, tabInfo[0])
-            while lines[lidx]!='---':
-                (r, c, vistrail, pid, cid) = literal_eval(lines[lidx])
-                locator = vistrail['locator']
-                if locators.has_key(locator):
-                    vistrail['locator'] = locators[locator]
-                else:
-                    locators[locator] = parse_locator(vistrail['locator'])
-                    vistrail['locator'] = locators[locator]
-                self.appendMonitoredLocations((vistrail, pid, cid),
-                                              (sheet, r, c))
-                lidx += 1
-            lidx += 1
-        pipelineCount = int(lines[lidx])
-        lidx += 1
-        self.loadingMode = True
-        progress = QtGui.QProgressDialog("Loading spreadsheet...",
-                                         "&Cancel", 0, pipelineCount,
-                                         self,
-                                         QtCore.Qt.WindowStaysOnTopHint
-                                         )
-        progress.show()
-        for pipelineIdx in xrange(pipelineCount):
-            # FIXME: eval should pretty much never be used
-            (serializedLocator, version) = literal_eval(lines[lidx])
-            try:
-                locator = locators[serializedLocator]
-            except KeyError:
-                locator = parse_locator(serializedLocator)
-            if locator:
-                bundle = locator.load()
-                if isinstance(bundle, SaveBundle):
-                    pipeline = bundle.vistrail.getPipeline(version)
-                else:
-                    pipeline = bundle.getPipeline(version)
-                execution = get_default_interpreter()
-                progress.setValue(pipelineIdx)
-                QtCore.QCoreApplication.processEvents()
-                if progress.wasCanceled():
-                    break
-                kwargs = {'locator': locator,
-                          'current_version': version,
-                          'view': DummyView(),
-                          }
-                execution.execute(pipeline, **kwargs)
-            else:
-                raise RuntimeError("Couldn't load spreadsheet")
-            lidx += 1
-        progress.setValue(pipelineCount)
-        QtCore.QCoreApplication.processEvents()
-        self.changeSpreadsheetFileName(fileName)
-        self.loadingMode = False
-        indexFile.close()
-
-    def openSpreadsheetAs(self):
-        """ openSpreadsheetAs() -> None
-        Open a saved spreadsheet and set its filename in the dialog box
-
-        """
-        fileName = QtGui.QFileDialog.getOpenFileName(self,
-                                                     'Choose a spreadsheet',
-                                                     '',
-                                                     'VisTrails Spreadsheet '
-                                                     '(*.vss)',
-                                                     )
-        if fileName:
-            self.openSpreadsheet(fileName)
-
     def cleanup(self):
         """ cleanup() -> None
         Clear reference of non-collectable objects/temp files for gc
 
         """
         self.clearTabs()
-
-    def setEditingMode(self, editing=True):
-        """ setEditingMode(editing: bool) -> None
-        Turn on/off the editing mode of the whole spreadsheet
-
-        """
-        self.editingMode = editing
-        for w in self.tabWidgets:
-            w.setEditingMode(editing)
