@@ -100,8 +100,9 @@ class CellResizerConfig(object):
         Return the cursor that will be shown inside the resizer
 
         """
-        return QtGui.QCursor(QtCore.Qt.SizeFDiagCursor)
-
+        cursor = QtGui.QCursor()
+        cursor.setShape(QtCore.Qt.SizeFDiagCursor)
+        return cursor
 
 class CellResizer(QtGui.QLabel):
     """

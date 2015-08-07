@@ -98,7 +98,6 @@ class QVTKWidget(QtGui.QWidget):
         interactor as well
 
         """
-        print "SetRenderWindow visible and parent", self.isVisible(), self.parent().isVisible()
         if w == self.mRenWin:
             return
 

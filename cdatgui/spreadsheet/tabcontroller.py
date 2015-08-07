@@ -82,7 +82,6 @@ class StandardWidgetTabController(QtGui.QTabWidget):
         self.executedPipelines = [[],{},{}]
         self.monitoredPipelines = {}
         self.spreadsheetFileName = None
-        self.loadingMode = False
         self.tabCloseRequested.connect(self.delete_sheet_by_index)
 
         self.closeButton = QtGui.QToolButton(self)
@@ -90,13 +89,6 @@ class StandardWidgetTabController(QtGui.QTabWidget):
         self.closeButton.setAutoRaise(True)
         self.setCornerWidget(self.closeButton)
         self.closeButton.clicked.connect(self.deleteSheetAction().trigger)
-
-    def isLoadingMode(self):
-        """ isLoadingMode() -> boolean
-        Checking if the controller is in loading mode
-
-        """
-        return self.loadingMode
 
     def create_first_sheet(self):
         self.addTabWidget(StandardWidgetSheetTab(self), 'Sheet 1')
@@ -307,8 +299,6 @@ class StandardWidgetTabController(QtGui.QTabWidget):
         event handler to get when sheets are removed """
         if self.count() == 0:
             self.deleteSheetAction().setEnabled(False)
-            self.saveAction().setEnabled(False)
-            self.saveAsAction().setEnabled(False)
 
     def delete_sheet_by_index(self, index):
         widget = self.widget(index)
@@ -330,7 +320,6 @@ class StandardWidgetTabController(QtGui.QTabWidget):
             widget = self.currentWidget()
             self.tabWidgets.remove(widget)
             self.removeTab(self.currentIndex())
-            self.removeSheetReference(widget)
             widget.deleteAllCells()
             widget.deleteLater()
             QtCore.QCoreApplication.processEvents()
