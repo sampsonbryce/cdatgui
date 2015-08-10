@@ -37,8 +37,8 @@ class VariableWidget(StaticDockWidget):
 
     def edit_variable(self):
         # Edit variable dialog
-        print "Edit variable"
+        pass  # pragma: nocover
 
     def remove_variable(self):
         # Confirm removal dialog
-        print "Remove Variable"
+        pass  # pragma: nocover

@@ -1,8 +1,6 @@
 import pytest
-import cdatgui
-import vcs
-import cdms2
 from cdatgui.spreadsheet.window import SpreadsheetWindow
+
 
 def test_spreadsheet_window(qtbot):
     window = SpreadsheetWindow()
@@ -16,6 +14,7 @@ def test_spreadsheet_window(qtbot):
 
     window.getSelectedLocations()
 
+
 def test_spreadsheet_tabcontroller(qtbot):
     window = SpreadsheetWindow()
     qtbot.addWidget(window)
@@ -26,10 +25,13 @@ def test_spreadsheet_tabcontroller(qtbot):
     tc.newSheetActionTriggered()
     tc.moveTab(0,0)
     tc.splitTab(0)
+    # Keeps the tab from taking forever to get cleaned up
+    qtbot.addWidget(tc.floatingTabWidgets[0])
     tc.mergeTab(tc.floatingTabWidgets[0],0)
     tc.tabWidgetUnderMouse()
     tc.showNextTab()
     tc.changeSpreadsheetFileName('TestName - (1)')
+
 
 def test_spreadsheet_tab(qtbot):
     window = SpreadsheetWindow()
@@ -57,6 +59,7 @@ def test_spreadsheet_tab(qtbot):
     assert not tab.getSelectedLocations()
     tab.setSpan(0, 0, 2, 1)
     assert tab.sheet.getRealLocation(1,0) == (0,0)
+
 
 def test_spreadsheet_sheet(qtbot):
     window = SpreadsheetWindow()

@@ -5,13 +5,21 @@ import vcs
 import cdms2
 
 
-def test_cdms_file_tree_add_file(qtbot):
+@pytest.fixture
+def cdmsfile():
+    return cdms2.open(vcs.sample_data + "/clt.nc")
+
+
+@pytest.fixture
+def clt():
+    return cdmsfile()("clt")
+
+
+def test_cdms_file_tree_add_file(qtbot, cdmsfile):
     tree = cdatgui.variables.cdms_file_tree.CDMSFileTree()
     qtbot.addWidget(tree)
 
-    sample_file = vcs.sample_data + "/clt.nc"
-
-    tree.add_file(cdms2.open(sample_file))
+    tree.add_file(cdmsfile)
 
     # the item was added
     assert tree.topLevelItemCount() == 1
@@ -36,16 +44,14 @@ def test_cdms_file_tree_add_file(qtbot):
 
     # we can't add the same file twice
     with pytest.raises(ValueError):
-        tree.add_file(cdms2.open(sample_file))
+        tree.add_file(cdmsfile)
 
 
-def test_cdms_file_tree_get_selected(qtbot):
+def test_cdms_file_tree_get_selected(qtbot, cdmsfile):
     tree = cdatgui.variables.cdms_file_tree.CDMSFileTree()
     qtbot.addWidget(tree)
 
-    sample_file = vcs.sample_data + "/clt.nc"
-
-    tree.add_file(cdms2.open(sample_file))
+    tree.add_file(cdmsfile)
 
     # Nothing selected, should return None
     assert len(tree.get_selected()) == 0
@@ -67,13 +73,11 @@ def test_cdms_file_tree_get_selected(qtbot):
     assert selected_vars[0].id == "clt" and selected_vars[1].id == "u"
 
 
-def test_cdms_var_list_add_var(qtbot):
+def test_cdms_var_list_add_var(qtbot, clt):
     varlist = cdatgui.variables.cdms_var_list.CDMSVariableList()
     qtbot.addWidget(varlist)
 
-    clt = cdms2.open(vcs.sample_data + "/clt.nc")
-
-    varlist.add_variable(clt("clt"))
+    varlist.add_variable(clt)
 
     # it has an item in the list
     assert varlist.count() == 1
@@ -84,11 +88,10 @@ def test_cdms_var_list_add_var(qtbot):
     assert item.text() == "clt"
 
 
-def test_cdms_var_list_get_var(qtbot):
+def test_cdms_var_list_get_var(qtbot, clt):
     varlist = cdatgui.variables.cdms_var_list.CDMSVariableList()
-    qtbot.addWidget(varlist)
-    clt = cdms2.open(vcs.sample_data + "/clt.nc")
-    varlist.add_variable(clt("clt"))
+
+    varlist.add_variable(clt)
 
     # it's the same variable
     var = varlist.get_variable(0)
@@ -161,3 +164,18 @@ def test_add_dialog(qtbot):
     dia.tree.topLevelItem(0).child(0).setSelected(True)
     assert len(dia.selected_variables()) == 1
 
+
+def test_variable_widget(qtbot):
+    w = cdatgui.variables.VariableWidget()
+    qtbot.addWidget(w)
+
+    w.add_dialog = mocks.VariableAddDialog
+
+    # Fake the signal to check for new variables
+    w.add_variable()
+
+    # Make sure that we can select a variable
+    with qtbot.waitSignal(w.selectedVariable,
+                          timeout=1000,
+                          raising=True):
+        w.select_variable(0)
