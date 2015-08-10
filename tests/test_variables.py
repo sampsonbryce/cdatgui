@@ -5,16 +5,6 @@ import vcs
 import cdms2
 
 
-@pytest.fixture
-def cdmsfile():
-    return cdms2.open(vcs.sample_data + "/clt.nc")
-
-
-@pytest.fixture
-def clt():
-    return cdmsfile()("clt")
-
-
 def test_cdms_file_tree_add_file(qtbot, cdmsfile):
     tree = cdatgui.variables.cdms_file_tree.CDMSFileTree()
     qtbot.addWidget(tree)

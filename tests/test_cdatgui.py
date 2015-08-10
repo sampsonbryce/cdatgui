@@ -67,3 +67,13 @@ def test_utils_labels():
     assert type(l) == QtGui.QLabel
     l2 = cdatgui.utils.header_label("Oh Hi")
     assert type(l2) == QtGui.QLabel
+
+
+def test_main_window(qtbot, clt):
+    mw = cdatgui.MainWindow()
+    qtbot.addWidget(mw)
+    mw.update_var_on_main(clt)
+    m = mw.manager
+
+    # Make sure it plotted something
+    assert m.dp is not None
