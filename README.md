@@ -10,6 +10,7 @@ The current requirements are:
 2. `PySide` (might give you some lip when you install it; installation issues will get ironed out, I wound up having to use homebrew to install it, and added a .pth file to UV-CDAT's site-packages directory that points to homebrew's site-packages).
 3. `pytest` (installable via pip, used to run tests) 
 4. `pytest-qt` (used to power GUI tests)
+5. `pytest-cov` (used to measure test coverage)
 
 ## Installation
 
@@ -21,3 +22,7 @@ Once you have the requirements installed, you should be able to do this:
 4. `cdatgui`
 
 This should get you the current rev of the GUI up and running.
+
+## Running tests
+
+To run tests and generate an HTML report listing the current coverage status, you should be able to just use the script in the root of the project, `test`. It will run all of the tests, generate a coverage report, and shove that into `htmlcov`. To view the results of the coverage, open `htmlcov/index.html`.
