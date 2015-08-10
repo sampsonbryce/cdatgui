@@ -163,7 +163,7 @@ class SpreadsheetWindow(QtGui.QMainWindow):
         #return QtCore.QSize(1024, 768)
         return QtCore.QSize(600, 800)
 
-    def eventFilter(self,q,e):
+    def eventFilter(self, q, e):
         """ eventFilter(q: QObject, e: QEvent) -> depends on event type
         An application-wide eventfilter to capture mouse/keyboard events
 

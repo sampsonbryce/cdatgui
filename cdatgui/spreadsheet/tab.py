@@ -52,7 +52,6 @@ from PySide import QtCore, QtGui
 
 from .sheet import StandardWidgetSheet
 from .cell import QCellContainer, QCellToolBar
-from . import spreadsheet_rc
 from .vtk_classes import QCDATWidget
 
 
@@ -276,7 +275,7 @@ class StandardWidgetSheetTabInterface(object):
         for r in xrange(rowCount):
             for c in xrange(colCount):
                 w = self.getCell(r, c)
-                if w==None or (isinstance(w, QCellPresenter) and w.cellWidget==None):
+                if w==None:
                     return (r,c)
         (r, c) = self.lastCellLocation
         (rs, cs) = self.getSpan(r, c)
@@ -316,26 +315,6 @@ class StandardWidgetSheetTabInterface(object):
         """
         pass
 
-    def setCellPipelineInfo(self, row, col, info):
-        """ setCellPipelineInfo(row: int, col: int, info: any type) -> None
-        Provide a way for the spreadsheet to store vistrail
-        information, info, for the cell (row, col)
-
-        """
-        if not (row,col) in self.pipelineInfo:
-            self.pipelineInfo[(row,col)] = {}
-        self.pipelineInfo[(row,col)] = info
-
-    def getCellPipelineInfo(self, row, col):
-        """ getCellPipelineInfo(row: int, col: int) -> any type
-        Provide a way for the spreadsheet to extract vistrail
-        information, info, for the cell (row, col)
-
-        """
-        if not (row,col) in self.pipelineInfo:
-            return None
-        return self.pipelineInfo[(row,col)]
-
     def getSelectedLocations(self):
         """ getSelectedLocations() -> list
         Return the selected locations (row, col) of the current sheet
@@ -356,7 +335,6 @@ class StandardWidgetSheetTabInterface(object):
 
         """
         self.setCellByType(row, col, None, None)
-        self.setCellPipelineInfo(row, col, None)
 
     def deleteAllCells(self):
         """ deleteAllCells() -> None
@@ -383,32 +361,6 @@ class StandardWidgetSheetTabInterface(object):
             return widget
         else:
             return cell
-
-    def setCellEditingMode(self, r, c, editing=True):
-        """ setCellEditingMode(r: int, c: int, editing: bool) -> None
-        Turn on/off the editing mode of a single cell
-
-        """
-        if editing:
-            cellWidget = self.getCell(r, c)
-            if isinstance(cellWidget, QCellPresenter):
-                return
-            presenter = QCellPresenter()
-            presenter.assignCell(self, r, c)
-            cellWidget = self.takeCell(r, c)
-            self.setCellByWidget(r, c, presenter)
-            if cellWidget:
-                cellWidget.hide()
-        else:
-            presenter = self.getCell(r, c)
-            if not isinstance(presenter, QCellPresenter):
-                return
-            presenter = self.takeCell(r, c)
-            if presenter:
-                cellWidget = presenter.releaseCellWidget()
-                self.setCellByWidget(r, c, cellWidget)
-                presenter.hide()
-
 
     def exportSheetToImage(self, fileName):
         """ exportSheetToImage() -> None
@@ -519,7 +471,7 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
         for r in xrange(row_count):
             for c in xrange(col_count):
                 w = self.getCellWidget(r, c)
-                if w is None:
+                if w is None or w.widget() is None:
                     widget = QCDATWidget()
                     cellWidget = QCellContainer(widget)
                     self.setCellByWidget(r, c, cellWidget)
@@ -669,30 +621,7 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
 
     def dropEvent(self, event):
         """ Execute the pipeline at the particular location """
-        mimeData = event.mimeData()
-        if (hasattr(mimeData, 'versionId') and
-            hasattr(mimeData, 'controller')):
-            event.accept()
-            versionId = mimeData.versionId
-            controller = mimeData.controller
-            pipeline = controller.vistrail.getPipeline(versionId)
-
-            inspector = PipelineInspector()
-            inspector.inspect_spreadsheet_cells(pipeline)
-            inspector.inspect_ambiguous_modules(pipeline)
-            if len(inspector.spreadsheet_cells)==1:
-                localPos = self.sheet.viewport().mapFromGlobal(QtGui.QCursor.pos())
-                row = self.sheet.rowAt(localPos.y())
-                col = self.sheet.columnAt(localPos.x())
-                if (row!=-1 and col!=-1):
-                    pipeline = self.setPipelineToLocateAt(row, col, pipeline)
-            executePipelineWithProgress(pipeline, 'Execute Cell',
-                                        controller=controller,
-                                        locator=controller.locator,
-                                        current_version=versionId,
-                                        reason='Drop Version')
-        else:
-            event.ignore()
+        pass #event.ignore()
 
     def setSpan(self, row, col, rowSpan, colSpan):
         """ setSpan(row, col, rowSpan, colSpan: int) -> None
