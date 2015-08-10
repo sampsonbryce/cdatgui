@@ -175,3 +175,14 @@ def test_file_browser_update_root(qtbot):
     assert len(widget.dirs) == 1
     # it's the right item
     assert widget.dirs[0].name() == "subfolder"
+
+
+def test_static_dock_widget_sides(qtbot):
+    w = cdatgui.bases.static_docked.StaticDockWidget("Docked")
+    qtbot.addWidget(w)
+
+    w.allowed_sides = [QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, QtCore.Qt.DockWidgetArea.RightDockWidgetArea]
+    assert w.allowedAreas() == QtCore.Qt.DockWidgetArea.LeftDockWidgetArea | QtCore.Qt.DockWidgetArea.RightDockWidgetArea
+    assert len(w.allowed_sides) == 2
+    for side in [QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, QtCore.Qt.DockWidgetArea.RightDockWidgetArea]:
+        assert side in w.allowed_sides

@@ -12,11 +12,14 @@ class StaticDockWidget(QtGui.QDockWidget):
     def allowed_sides(self):
         flags = self.allowedAreas()
         parsed = []
-        for flag in QtCore.Qt.DockWidgetArea:
+        for flag in (QtCore.Qt.DockWidgetArea.LeftDockWidgetArea,
+                     QtCore.Qt.DockWidgetArea.RightDockWidgetArea,
+                     QtCore.Qt.DockWidgetArea.TopDockWidgetArea,
+                     QtCore.Qt.DockWidgetArea.BottomDockWidgetArea):
             if has_flag(flags, flag):
                 parsed.append(flag)
 
-        return flags
+        return parsed
 
     @allowed_sides.setter
     def allowed_sides(self, sides):
