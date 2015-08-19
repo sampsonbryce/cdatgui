@@ -1,14 +1,44 @@
 import vtk
 import os
+import platform
 from PySide import QtCore, QtGui
 import vcs
 from vtk.qt4.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
-from functools import partial
 
 
-class QCDATWidget(QtGui.QFrame):
+class VTKWidget(QtGui.QFrame):
+    becameDrawable = QtCore.Signal()
 
-    visiblityChanged = QtCore.Signal(bool)
+    def __init__(self, parent=None, f=0):
+        super(VTKWidget, self).__init__(parent=parent, f=f)
+
+        self.ren_win = vtk.vtkRenderWindow()
+        self.inter = QVTKRenderWindowInteractor(parent=self, rw=self.ren_win)
+
+        layout = QtGui.QVBoxLayout()
+        layout.addWidget(self.inter)
+        self.setLayout(layout)
+
+        self.events = (self.ren_win.AddObserver("ModifiedEvent",
+                                                self.modified),
+                       self.inter.AddObserver("ConfigureEvent",
+                                              self.modified)
+                       )
+
+    def isDrawable(self):
+        # Need to redirect stderr to quash the Invalid Drawable errors?
+        val = self.ren_win.IsDrawable()
+        return val
+
+    def modified(self, obj, ev):
+        if self.ren_win.IsDrawable():
+            self.ren_win.RemoveObserver(self.events[0])
+            self.inter.RemoveObserver(self.events[1])
+            self.becameDrawable.emit()
+
+
+class QCDATWidget(QtGui.QWidget):
+    canvasReady = QtCore.Signal()
 
     save_formats = ["PNG file (*.png)",
                     "GIF file (*.gif)",
@@ -16,44 +46,37 @@ class QCDATWidget(QtGui.QFrame):
                     "Postscript file (*.ps)",
                     "SVG file (*.svg)"]
 
-    def __init__(self, parent=None):
-        super(QCDATWidget, self).__init__(parent=parent)
+    def __init__(self, parent=None, f=0):
+        super(QCDATWidget, self).__init__(parent=parent, f=f)
 
-        self.mRenWin = vtk.vtkRenderWindow()
-        self.iren = QVTKRenderWindowInteractor(parent=self, rw=self.mRenWin)
+        self.vtk = VTKWidget(parent=self, f=f)
+
         self.canvas = None
 
-        self.layout = QtGui.QVBoxLayout()
-        self.layout.addWidget(self.iren)
-        self.setLayout(self.layout)
+        def init_canvas():
+            self.canvas = vcs.init(backend=self.vtk.ren_win)
+            self.canvas.open()
+            self.canvasReady.emit()
 
-        self.becameVisible = partial(self.visiblityChanged.emit, True)
-        self.becameHidden = partial(self.visiblityChanged.emit, False)
+        if self.vtk.isDrawable() is False:
+            # There's a weird Qt/VTK bug that spews out "Invalid Drawable"
+            # until the window is fully initialized and visible. We'll wait
+            # until mRenWin.IsDrawable is True, then init the canvas
+            self.vtk.becameDrawable.connect(init_canvas)
+        else:
+            init_canvas()
+
+        self.layout = QtGui.QVBoxLayout()
+        self.layout.addWidget(self.vtk)
+        self.setLayout(self.layout)
 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
                                              QtGui.QSizePolicy.Expanding))
-
-        self.visiblityChanged.connect(self.manageCanvas)
-
+        self.h_timer = None
+        self.s_timer = None
         # Just need a callable that returns something
         self.toolBarType = lambda x: None
-
-    def manageCanvas(self, showing):
-        if showing and self.canvas is None:
-            self.canvas = vcs.init(backend=self.mRenWin)
-            self.canvas.open()
-        if not showing and self.canvas is not None:
-            self.canvas.onClosing((0, 0))
-            self.canvas = None
-
-    def showEvent(self, e):
-        super(QCDATWidget, self).showEvent(e)
-        QtCore.QTimer.singleShot(0, self.becameVisible)
-
-    def hideEvent(self, e):
-        super(QCDATWidget, self).hideEvent(e)
-        QtCore.QTimer.singleShot(0, self.becameHidden)
 
     def prepExtraDims(self, var):
         k = {}
@@ -73,9 +96,15 @@ class QCDATWidget(QtGui.QFrame):
         resources
         """
 
-        self.canvas.onClosing((0, 0))
-
-        self.canvas = None
+        if self.canvas is not None:
+            self.canvas.onClosing((0, 0))
+            self.canvas = None
+        if self.s_timer is not None:
+            self.s_timer.stop()
+            self.s_timer = None
+        if self.h_timer is not None:
+            self.h_timer.stop()
+            self.h_timer = None
 
         QtGui.QWidget.deleteLater(self)
 

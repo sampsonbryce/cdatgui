@@ -2,13 +2,17 @@ import vcs
 
 
 class PlotManager(object):
-    def __init__(self, canvas):
-        self.canvas = canvas
+    def __init__(self, cell):
+        self.cell = cell
         self.dp = None
         self.dp_ind = 0
         self._gm = None
         self._vars = None
         self._template = None
+
+    @property
+    def canvas(self):
+        return self.cell.canvas
 
     def gm(self):
         return self._gm

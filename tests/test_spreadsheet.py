@@ -9,8 +9,12 @@ def test_spreadsheet_window(qtbot):
     window.fitActionToggled(True)
     window.fitActionToggled(False)
 
-    # Check that it has a canvas
-    assert window.getCanvas() is not None
+    cell = window.getCell()
+    with qtbot.waitSignal(cell.canvasReady,
+                          timeout=1000,
+                          raising=True):
+        # Check that it has a canvas
+        assert window.getCanvas() is not None
 
     window.getSelectedLocations()
 
@@ -23,11 +27,11 @@ def test_spreadsheet_tabcontroller(qtbot):
 
     tc.clearTabs()
     tc.newSheetActionTriggered()
-    tc.moveTab(0,0)
+    tc.moveTab(0, 0)
     tc.splitTab(0)
     # Keeps the tab from taking forever to get cleaned up
     qtbot.addWidget(tc.floatingTabWidgets[0])
-    tc.mergeTab(tc.floatingTabWidgets[0],0)
+    tc.mergeTab(tc.floatingTabWidgets[0], 0)
     tc.tabWidgetUnderMouse()
     tc.showNextTab()
     tc.changeSpreadsheetFileName('TestName - (1)')
@@ -58,22 +62,4 @@ def test_spreadsheet_tab(qtbot):
     tab.clearSelection()
     assert not tab.getSelectedLocations()
     tab.setSpan(0, 0, 2, 1)
-    assert tab.sheet.getRealLocation(1,0) == (0,0)
-
-
-def test_spreadsheet_sheet(qtbot):
-    window = SpreadsheetWindow()
-    qtbot.addWidget(window)
-
-    sheet = window.tabController.currentWidget().sheet
-
-    sheet.forceColumnMultiSelect(0)
-    sheet.forceColumnMultiSelect(0)
-    sheet.forceRowMultiSelect(0)
-    sheet.forceRowMultiSelect(0)
-    sheet.forceSheetSelect()
-    sheet.forceSheetSelect()
-    sheet.setFitToWindow(True)
-    sheet.resizeEvent(None)
-    sheet.setFitToWindow(False)
-    sheet.stretchCells()
+    assert tab.sheet.getRealLocation(1, 0) == (0, 0)
