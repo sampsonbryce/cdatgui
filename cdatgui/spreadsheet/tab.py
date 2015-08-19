@@ -475,8 +475,6 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
                     widget = QCDATWidget()
                     cellWidget = QCellContainer(widget)
                     self.setCellByWidget(r, c, cellWidget)
-                    # create canvas after widgets parent has been set
-                    widget.createCanvas()
 
     def removeContainers(self, new_rows=None, new_cols=None):
         if new_rows is not None and new_cols is not None:

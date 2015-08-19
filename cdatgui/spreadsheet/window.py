@@ -212,6 +212,12 @@ class SpreadsheetWindow(QtGui.QMainWindow):
                     if widget:
                         widget.repaint()
 
+    def getCell(self, row=0, col=0):
+        reference = StandardSheetReference()
+        sheet = self.tabController.findSheet(reference)
+        cell = sheet.getCell(row, col)
+        return cell
+
     def getCanvas(self, row=0, col=0):
         # return canvas for specified position in current sheet
         reference = StandardSheetReference()
