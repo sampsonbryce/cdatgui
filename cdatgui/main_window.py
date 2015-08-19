@@ -16,7 +16,7 @@ class MainWindow(QtGui.QMainWindow):
         super(MainWindow, self).__init__(parent=parent)
         self.spreadsheet = SpreadsheetWindow(f=QtCore.Qt.Widget)
 
-        self.manager = PlotManager(self.spreadsheet.getCanvas(0, 0))
+        self.manager = PlotManager(self.spreadsheet.getCell(0, 0))
         self.manager.graphics_method = vcs.getboxfill()
         self.manager.template = vcs.gettemplate('default')
 
