@@ -7,7 +7,7 @@ import platform
 from vtk.qt4.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 
-class QVTKWidget(QtGui.QWidget):
+class QVTKWidget(QtGui.QFrame):
     """
     QVTKWidget is the actual rendering widget that can display
     vtkRenderer inside a Qt QWidget
@@ -21,12 +21,14 @@ class QVTKWidget(QtGui.QWidget):
         context
 
         """
-        QtGui.QWidget.__init__(self, parent, f | QtCore.Qt.MSWindowsOwnDC)
+        super(QVTKWidget, self).__init__(parent, f | QtCore.Qt.MSWindowsOwnDC)
 
         self.interacting = None
         self.mRenWin = None
         self.iren = None
-        self.createInteractor = args.get( 'createInteractor', True )
+        self.layout = QtGui.QVBoxLayout()
+        self.setLayout(self.layout)
+        self.createInteractor = args.get('createInteractor', True)
         self.setAttribute(QtCore.Qt.WA_OpaquePaintEvent)
         self.setAttribute(QtCore.Qt.WA_PaintOnScreen)
         self.setMouseTracking(True)
@@ -139,14 +141,8 @@ class QVTKWidget(QtGui.QWidget):
 
             if not self.mRenWin.GetInteractor():
                 if self.createInteractor:
-                    self.iren = QVTKRenderWindowInteractor(rw=self.mRenWin)
-#                    iren = vtk.vtkGenericRenderWindowInteractor()
-#                if system.systemType=='Darwin':
-#                    iren.InstallMessageProcOff()
-#                    self.iren.Initialize()
-#                if system.systemType=='Linux':
-#                    system.XDestroyWindow(self.mRenWin.GetGenericDisplayId(),
-#                                          self.mRenWin.GetGenericWindowId())
+                    self.iren = QVTKRenderWindowInteractor(parent=self, rw=self.mRenWin)
+                    self.layout.addWidget(self.iren)
                 self.mRenWin.SetWindowInfo(str(int(self.winId())))
                 self.resizeWindow(self.width(), self.height())
                 self.mRenWin.SetPosition(self.x(), self.y())
@@ -374,20 +370,19 @@ class QVTKWidget(QtGui.QWidget):
 
         ctrl = bool(e.modifiers() & QtCore.Qt.ControlModifier)
 
-        shift = bool(e.modifiers()&QtCore.Qt.ShiftModifier)
+        shift = bool(e.modifiers() & QtCore.Qt.ShiftModifier)
         if ctrl:
             e.ignore()
             return
 
-        self.iren.SetKeyEventInformation(ctrl,shift,ascii_key, e.count(), keysym)
+        self.iren.SetKeyEventInformation(ctrl, shift, ascii_key, e.count(), keysym)
 
         self.iren.InvokeEvent("KeyPressEvent")
 
         if ascii_key:
             self.iren.InvokeEvent("CharEvent")
 
-
-    def keyReleaseEvent(self,e):
+    def keyReleaseEvent(self, e):
         """ keyReleaseEvent(e: QKeyEvent) -> None
         Disallow 'quit' key in vtkRenderWindowwInteractor and sync the others
 
@@ -409,8 +404,8 @@ class QVTKWidget(QtGui.QWidget):
         # Ignore 'q' or 'e' or Ctrl-anykey
 
         ctrl = bool(e.modifiers() & QtCore.Qt.ControlModifier)
-        shift = bool(e.modifiers()&QtCore.Qt.ShiftModifier)
-        if (keysym in ['q','e'] or ctrl):
+        shift = bool(e.modifiers() & QtCore.Qt.ShiftModifier)
+        if (keysym in ['q', 'e'] or ctrl):
             e.ignore()
             return
 
@@ -418,7 +413,7 @@ class QVTKWidget(QtGui.QWidget):
 
         self.iren.InvokeEvent("KeyReleaseEvent")
 
-    def wheelEvent(self,e):
+    def wheelEvent(self, e):
         """ wheelEvent(e: QWheelEvent) -> None
         Zoom in/out while scrolling the mouse
 
@@ -428,10 +423,11 @@ class QVTKWidget(QtGui.QWidget):
             return
 
         ctrl = bool(e.modifiers() & QtCore.Qt.ControlModifier)
-        self.iren.SetEventInformationFlipY(e.x(),e.y(),
-                                      ctrl,
-                                      bool(e.modifiers()&QtCore.Qt.ShiftModifier),
-                                      chr(0),0,None)
+        self.iren.SetEventInformationFlipY(e.x(),
+                                           e.y(),
+                                           ctrl,
+                                           bool(e.modifiers() & QtCore.Qt.ShiftModifier),
+                                           chr(0), 0, None)
 
         self.SelectActiveRenderer(self.iren)
 
@@ -440,21 +436,21 @@ class QVTKWidget(QtGui.QWidget):
         else:
             self.iren.InvokeEvent("MouseWheelBackwardEvent")
 
-    def focusInEvent(self,e):
+    def focusInEvent(self, e):
         """ focusInEvent(e: QFocusEvent) -> None
         Ignore focus event
 
         """
         pass
 
-    def focusOutEvent(self,e):
+    def focusOutEvent(self, e):
         """ focusOutEvent(e: QFocusEvent) -> None
         Ignore focus event
 
         """
         pass
 
-    def contextMenuEvent(self,e):
+    def contextMenuEvent(self, e):
         """ contextMenuEvent(e: QContextMenuEvent) -> None
         Make sure to get the right mouse position for the context menu
         event, i.e. also the right click
@@ -469,7 +465,7 @@ class QVTKWidget(QtGui.QWidget):
         self.iren.SetEventInformationFlipY(e.x(),e.y(),ctrl,shift,chr(0),0,None)
         self.iren.InvokeEvent("ContextMenuEvent")
 
-    def ascii_to_key_sym(self,i):
+    def ascii_to_key_sym(self, i):
         """ ascii_to_key_sym(i: int) -> str
         Convert ASCII code into key name
 
@@ -477,100 +473,100 @@ class QVTKWidget(QtGui.QWidget):
         global AsciiToKeySymTable
         return AsciiToKeySymTable[i]
 
-    def qt_key_to_key_sym(self,i):
+    def qt_key_to_key_sym(self, i):
         """ qt_key_to_key_sym(i: QtCore.Qt.Keycode) -> str
         Convert Qt key code into key name
 
         """
-        handler = {QtCore.Qt.Key_Backspace:"Backspace",
-                   QtCore.Qt.Key_Tab:"Tab",
-                   QtCore.Qt.Key_Backtab:"Tab",
-                   QtCore.Qt.Key_Return:"Return",
-                   QtCore.Qt.Key_Enter:"Return",
-                   QtCore.Qt.Key_Shift:"Shift_L",
-                   QtCore.Qt.Key_Control:"Control_L",
-                   QtCore.Qt.Key_Alt:"Alt_L",
-                   QtCore.Qt.Key_Pause:"Pause",
-                   QtCore.Qt.Key_CapsLock:"Caps_Lock",
-                   QtCore.Qt.Key_Escape:"Escape",
-                   QtCore.Qt.Key_Space:"space",
-                   QtCore.Qt.Key_End:"End",
-                   QtCore.Qt.Key_Home:"Home",
-                   QtCore.Qt.Key_Left:"Left",
-                   QtCore.Qt.Key_Up:"Up",
-                   QtCore.Qt.Key_Right:"Right",
-                   QtCore.Qt.Key_Down:"Down",
-                   QtCore.Qt.Key_SysReq:"Snapshot",
-                   QtCore.Qt.Key_Insert:"Insert",
-                   QtCore.Qt.Key_Delete:"Delete",
-                   QtCore.Qt.Key_Help:"Help",
-                   QtCore.Qt.Key_0:"0",
-                   QtCore.Qt.Key_1:"1",
-                   QtCore.Qt.Key_2:"2",
-                   QtCore.Qt.Key_3:"3",
-                   QtCore.Qt.Key_4:"4",
-                   QtCore.Qt.Key_5:"5",
-                   QtCore.Qt.Key_6:"6",
-                   QtCore.Qt.Key_7:"7",
-                   QtCore.Qt.Key_8:"8",
-                   QtCore.Qt.Key_9:"9",
-                   QtCore.Qt.Key_A:"a",
-                   QtCore.Qt.Key_B:"b",
-                   QtCore.Qt.Key_C:"c",
-                   QtCore.Qt.Key_D:"d",
-                   QtCore.Qt.Key_E:"e",
-                   QtCore.Qt.Key_F:"f",
-                   QtCore.Qt.Key_G:"g",
-                   QtCore.Qt.Key_H:"h",
-                   QtCore.Qt.Key_I:"i",
-                   QtCore.Qt.Key_J:"h",
-                   QtCore.Qt.Key_K:"k",
-                   QtCore.Qt.Key_L:"l",
-                   QtCore.Qt.Key_M:"m",
-                   QtCore.Qt.Key_N:"n",
-                   QtCore.Qt.Key_O:"o",
-                   QtCore.Qt.Key_P:"p",
-                   QtCore.Qt.Key_Q:"q",
-                   QtCore.Qt.Key_R:"r",
-                   QtCore.Qt.Key_S:"s",
-                   QtCore.Qt.Key_T:"t",
-                   QtCore.Qt.Key_U:"u",
-                   QtCore.Qt.Key_V:"v",
-                   QtCore.Qt.Key_W:"w",
-                   QtCore.Qt.Key_X:"x",
-                   QtCore.Qt.Key_Y:"y",
-                   QtCore.Qt.Key_Z:"z",
-                   QtCore.Qt.Key_Asterisk:"asterisk",
-                   QtCore.Qt.Key_Plus:"plus",
-                   QtCore.Qt.Key_Minus:"minus",
-                   QtCore.Qt.Key_Period:"period",
-                   QtCore.Qt.Key_Slash:"slash",
-                   QtCore.Qt.Key_F1:"F1",
-                   QtCore.Qt.Key_F2:"F2",
-                   QtCore.Qt.Key_F3:"F3",
-                   QtCore.Qt.Key_F4:"F4",
-                   QtCore.Qt.Key_F5:"F5",
-                   QtCore.Qt.Key_F6:"F6",
-                   QtCore.Qt.Key_F7:"F7",
-                   QtCore.Qt.Key_F8:"F8",
-                   QtCore.Qt.Key_F9:"F9",
-                   QtCore.Qt.Key_F10:"F10",
-                   QtCore.Qt.Key_F11:"F11",
-                   QtCore.Qt.Key_F12:"F12",
-                   QtCore.Qt.Key_F13:"F13",
-                   QtCore.Qt.Key_F14:"F14",
-                   QtCore.Qt.Key_F15:"F15",
-                   QtCore.Qt.Key_F16:"F16",
-                   QtCore.Qt.Key_F17:"F17",
-                   QtCore.Qt.Key_F18:"F18",
-                   QtCore.Qt.Key_F19:"F19",
-                   QtCore.Qt.Key_F20:"F20",
-                   QtCore.Qt.Key_F21:"F21",
-                   QtCore.Qt.Key_F22:"F22",
-                   QtCore.Qt.Key_F23:"F23",
-                   QtCore.Qt.Key_F24:"F24",
-                   QtCore.Qt.Key_NumLock:"Num_Lock",
-                   QtCore.Qt.Key_ScrollLock:"Scroll_Lock"}
+        handler = {QtCore.Qt.Key_Backspace: "Backspace",
+                   QtCore.Qt.Key_Tab: "Tab",
+                   QtCore.Qt.Key_Backtab: "Tab",
+                   QtCore.Qt.Key_Return: "Return",
+                   QtCore.Qt.Key_Enter: "Return",
+                   QtCore.Qt.Key_Shift: "Shift_L",
+                   QtCore.Qt.Key_Control: "Control_L",
+                   QtCore.Qt.Key_Alt: "Alt_L",
+                   QtCore.Qt.Key_Pause: "Pause",
+                   QtCore.Qt.Key_CapsLock: "Caps_Lock",
+                   QtCore.Qt.Key_Escape: "Escape",
+                   QtCore.Qt.Key_Space: "space",
+                   QtCore.Qt.Key_End: "End",
+                   QtCore.Qt.Key_Home: "Home",
+                   QtCore.Qt.Key_Left: "Left",
+                   QtCore.Qt.Key_Up: "Up",
+                   QtCore.Qt.Key_Right: "Right",
+                   QtCore.Qt.Key_Down: "Down",
+                   QtCore.Qt.Key_SysReq: "Snapshot",
+                   QtCore.Qt.Key_Insert: "Insert",
+                   QtCore.Qt.Key_Delete: "Delete",
+                   QtCore.Qt.Key_Help: "Help",
+                   QtCore.Qt.Key_0: "0",
+                   QtCore.Qt.Key_1: "1",
+                   QtCore.Qt.Key_2: "2",
+                   QtCore.Qt.Key_3: "3",
+                   QtCore.Qt.Key_4: "4",
+                   QtCore.Qt.Key_5: "5",
+                   QtCore.Qt.Key_6: "6",
+                   QtCore.Qt.Key_7: "7",
+                   QtCore.Qt.Key_8: "8",
+                   QtCore.Qt.Key_9: "9",
+                   QtCore.Qt.Key_A: "a",
+                   QtCore.Qt.Key_B: "b",
+                   QtCore.Qt.Key_C: "c",
+                   QtCore.Qt.Key_D: "d",
+                   QtCore.Qt.Key_E: "e",
+                   QtCore.Qt.Key_F: "f",
+                   QtCore.Qt.Key_G: "g",
+                   QtCore.Qt.Key_H: "h",
+                   QtCore.Qt.Key_I: "i",
+                   QtCore.Qt.Key_J: "h",
+                   QtCore.Qt.Key_K: "k",
+                   QtCore.Qt.Key_L: "l",
+                   QtCore.Qt.Key_M: "m",
+                   QtCore.Qt.Key_N: "n",
+                   QtCore.Qt.Key_O: "o",
+                   QtCore.Qt.Key_P: "p",
+                   QtCore.Qt.Key_Q: "q",
+                   QtCore.Qt.Key_R: "r",
+                   QtCore.Qt.Key_S: "s",
+                   QtCore.Qt.Key_T: "t",
+                   QtCore.Qt.Key_U: "u",
+                   QtCore.Qt.Key_V: "v",
+                   QtCore.Qt.Key_W: "w",
+                   QtCore.Qt.Key_X: "x",
+                   QtCore.Qt.Key_Y: "y",
+                   QtCore.Qt.Key_Z: "z",
+                   QtCore.Qt.Key_Asterisk: "asterisk",
+                   QtCore.Qt.Key_Plus: "plus",
+                   QtCore.Qt.Key_Minus: "minus",
+                   QtCore.Qt.Key_Period: "period",
+                   QtCore.Qt.Key_Slash: "slash",
+                   QtCore.Qt.Key_F1: "F1",
+                   QtCore.Qt.Key_F2: "F2",
+                   QtCore.Qt.Key_F3: "F3",
+                   QtCore.Qt.Key_F4: "F4",
+                   QtCore.Qt.Key_F5: "F5",
+                   QtCore.Qt.Key_F6: "F6",
+                   QtCore.Qt.Key_F7: "F7",
+                   QtCore.Qt.Key_F8: "F8",
+                   QtCore.Qt.Key_F9: "F9",
+                   QtCore.Qt.Key_F10: "F10",
+                   QtCore.Qt.Key_F11: "F11",
+                   QtCore.Qt.Key_F12: "F12",
+                   QtCore.Qt.Key_F13: "F13",
+                   QtCore.Qt.Key_F14: "F14",
+                   QtCore.Qt.Key_F15: "F15",
+                   QtCore.Qt.Key_F16: "F16",
+                   QtCore.Qt.Key_F17: "F17",
+                   QtCore.Qt.Key_F18: "F18",
+                   QtCore.Qt.Key_F19: "F19",
+                   QtCore.Qt.Key_F20: "F20",
+                   QtCore.Qt.Key_F21: "F21",
+                   QtCore.Qt.Key_F22: "F22",
+                   QtCore.Qt.Key_F23: "F23",
+                   QtCore.Qt.Key_F24: "F24",
+                   QtCore.Qt.Key_NumLock: "Num_Lock",
+                   QtCore.Qt.Key_ScrollLock: "Scroll_Lock"}
         if i in handler:
             return handler[i]
         else:
@@ -678,14 +674,14 @@ class QVTKWidget(QtGui.QWidget):
     def charEvent(self, istyle, name):
         """ charEvent(istyle: vtkInteractorStyle, name: str) -> None
         Make sure key presses also sync across selected renderers
-
         """
         iren = istyle.GetInteractor()
         ren = self.interacting
-        if not ren: ren = self.getActiveRenderer(iren)
+        if not ren:
+            ren = self.getActiveRenderer(iren)
         if ren:
             keyCode = iren.GetKeyCode()
-            if keyCode in ['w','W','s','S','r','R','p','P']:
+            if keyCode in ['w', 'W', 's', 'S', 'r', 'R', 'p', 'P']:
                 for cell in self.getSelectedCellWidgets():
                     if hasattr(cell, 'GetInteractor'):
                         selectedIren = cell.GetInteractor()
@@ -796,7 +792,6 @@ AsciiToKeySymTable = ( None, None, None, None, None, None, None,
                        None, None, None, None, None, None, None, None)
 
 
-
 class QVTKWidgetToolBar(QtGui.QToolBar):
     """
     QVTKWidgetToolBar derives from QCellToolBar to give the VTKCell
@@ -811,18 +806,19 @@ class QVTKWidgetToolBar(QtGui.QToolBar):
         self.addAnimationButtons()
         self.appendAction(QVTKWidgetSaveCamera(self))
 
+
 class QCDATWidget(QVTKWidget):
     """ QCDATWidget is the spreadsheet cell widget where the plots are displayed.
     The widget interacts with the underlying C++, VCSQtManager through SIP.
     This enables QCDATWidget to get a reference to the Qt MainWindow that the
     plot will be displayed in and send signals (events) to that window widget.
-    windowIndex is an index to the VCSQtManager window array so we can 
-    communicate with the C++ Qt windows which the plots show up in.  If this 
-    number is no longer consistent with the number of C++ Qt windows due to 
+    windowIndex is an index to the VCSQtManager window array so we can
+    communicate with the C++ Qt windows which the plots show up in.  If this
+    number is no longer consistent with the number of C++ Qt windows due to
     adding or removing vcs.init() calls, then when you plot, it will plot into a
     separate window instead of in the cell and may crash.
     vcdat already creates 5 canvas objects
-    
+
     """
     save_formats = ["PNG file (*.png)",
                     "GIF file (*.gif)",
@@ -830,100 +826,64 @@ class QCDATWidget(QVTKWidget):
                     "Postscript file (*.ps)",
                     "SVG file (*.svg)"]
 
-    #startIndex = 2 #this should be the current number of canvas objects created 
-    #maxIndex = 9999999999
-    #usedIndexes = []
-    
     def __init__(self, parent=None):
         QVTKWidget.__init__(self, parent)
-        #self.toolBarType = QCDATWidgetToolBar
-        # self.window = None
-        self.canvas =  None
-        #self.windowId = -1
-        #self.createCanvas()
-        #layout = QtGui.QVBoxLayout()
-        #self.setLayout(layout)
+        self.canvas = None
 
     def createCanvas(self):
         if self.canvas is not None:
-          return
+            return
         self.canvas = vcs.init(backend=self.GetRenderWindow())
-        ren = vtk.vtkRenderer()
-        r,g,b = self.canvas.backgroundcolor
-        ren.SetBackground(r/255.,g/255.,b/255.)
-        self.canvas.backend.renWin.AddRenderer(ren)
-        self.canvas.backend.createDefaultInteractor()
-        i = self.canvas.backend.renWin.GetInteractor()
-        """
-        i.RemoveObservers("ConfigureEvent")
-        try:
-          i.RemoveObservers("ModifiedEvent")
-        except:
-          pass
-        i.AddObserver("ModifiedEvent",self.canvas.backend.configureEvent)
-        """
 
     def prepExtraDims(self, var):
-        k={}
-        for d,i in zip(self.extraDimsNames,self.extraDimsIndex):
+        k = {}
+        for d, i in zip(self.extraDimsNames, self.extraDimsIndex):
             if d in var.getAxisIds():
-                k[d]=slice(i,None)
+                k[d] = slice(i, None)
         return k
-    
+
     def get_graphics_method(self, plotType, gmName):
-        method_name = "get"+str(plotType).lower()
-        return getattr(self.canvas,method_name)(gmName)
-    
+        method_name = "get" + str(plotType).lower()
+        return getattr(self.canvas, method_name)(gmName)
+
     def deleteLater(self):
-        """ deleteLater() -> None        
+        """ deleteLater() -> None
         Make sure to free render window resource when
         deallocating. Overriding PyQt deleteLater to free up
         resources
         """
-        #we need to re-parent self.window or it will be deleted together with
-        #this widget. We'll put it on the mainwindow
-        #if self.window is not None:
-        #    if hasattr(_app, 'uvcdatWindow'):
-        #        self.window.setParent(_app.uvcdatWindow)
-        #    else: #uvcdatWindow is not setup when running in batch mode
-        #        self.window.setParent(QtGui.QApplication.activeWindow())
-        #    self.window.setVisible(False)
-            #reparentedVCSWindows[self.windowId] = self.window
-        # FIXME Cell coords not set yet
-        #self.canvas.onClosing( self.cell_coordinates )
-        self.canvas.onClosing( (0,0) )
+
+        self.canvas.onClosing((0, 0))
 
         self.canvas = None
-        #self.window = None
-        
+
         QtGui.QWidget.deleteLater(self)
-        
+
     def dumpToFile(self, filename):
         """ dumpToFile(filename: str, dump_as_pdf: bool) -> None
         Dumps itself as an image to a file, calling grabWindowPixmap """
-        (_,ext) = os.path.splitext(filename)
-        if  ext.upper() == '.PDF':
-            self.canvas.pdf(filename)#, width=11.5)
+        (_, ext) = os.path.splitext(filename)
+        if ext.upper() == '.PDF':
+            self.canvas.pdf(filename)
         elif ext.upper() == ".PNG":
-            self.canvas.png(filename)#, width=11.5)
+            self.canvas.png(filename)
         elif ext.upper() == ".SVG":
-            self.canvas.svg(filename)#, width=11.5)
+            self.canvas.svg(filename)
         elif ext.upper() == ".GIF":
-            self.canvas.gif(filename)#, width=11.5)
+            self.canvas.gif(filename)
         elif ext.upper() == ".PS":
-            self.canvas.postscript(filename)#, width=11.5)
+            self.canvas.postscript(filename)
 
     def saveToPNG(self, filename):
         """ saveToPNG(filename: str) -> bool
         Save the current widget contents to an image file
-        
+
         """
         return self.canvas.png(filename)
-        
+
     def saveToPDF(self, filename):
         """ saveToPDF(filename: str) -> bool
         Save the current widget contents to a pdf file
-        
-        """   
-        self.canvas.pdf(filename)#, width=11.5)
 
+        """
+        self.canvas.pdf(filename)
