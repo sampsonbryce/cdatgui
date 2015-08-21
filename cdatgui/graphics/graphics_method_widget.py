@@ -5,7 +5,6 @@ from vcs_gm_list import GraphicsMethodList
 
 
 class GraphicsMethodWidget(StaticDockWidget):
-    selectedGraphicsMethod = QtCore.Signal(object)
 
     def __init__(self, parent=None, flags=0):
         super(GraphicsMethodWidget, self).__init__("Graphics Methods", parent=parent, flags=flags)
@@ -16,7 +15,6 @@ class GraphicsMethodWidget(StaticDockWidget):
                                                     self.edit_gm,
                                                     self.remove_gm))
         self.list = GraphicsMethodList()
-        self.list.itemSelectionChanged.connect(self.selection_change)
         self.setWidget(self.list)
 
     def selection_change(self):

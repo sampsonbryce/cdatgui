@@ -1,25 +1,15 @@
 import vcs
 from PySide import QtGui, QtCore
+from models import VCSGraphicsMethodModel
 
 
-class GraphicsMethodList(QtGui.QTreeWidget):
+class GraphicsMethodList(QtGui.QTreeView):
     def __init__(self, parent=None):
         super(GraphicsMethodList, self).__init__(parent=parent)
-        # Get all of the available graphics methods
-        self.types = {gmtype: vcs.elements[gmtype]
-                      for gmtype in vcs.graphicsmethodlist()}
-
-        self.setColumnCount(1)
+        self.setModel(VCSGraphicsMethodModel())
+        self.setDragEnabled(True)
         self.header().close()
-
-        for gmtype in self.types:
-            item = QtGui.QTreeWidgetItem()
-            item.setText(0, gmtype)
-            self.addTopLevelItem(item)
-            for gm in self.types[gmtype]:
-                child = QtGui.QTreeWidgetItem()
-                child.setText(0, gm)
-                item.addChild(child)
+        self.setIndentation(10)
 
     def get_selected(self):
         items = self.selectedItems()
