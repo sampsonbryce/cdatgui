@@ -7,7 +7,7 @@ from cdatgui.utils import icon
 
 
 app = QtGui.QApplication(sys.argv)
-QtGui.QApplication.setWindowIcon(icon("uvcdat-icon.png"))
+QtGui.QApplication.setWindowIcon(icon("beta-uvcdat-icon.png"))
 
 window = MainWindow()
 window.show()
