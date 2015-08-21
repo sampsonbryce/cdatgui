@@ -14,7 +14,6 @@ class PlotManager(object):
     def canvas(self):
         return self.cell.canvas
 
-
     def gm(self):
         return self._gm
 
@@ -82,5 +81,5 @@ class PlotManager(object):
             args.append(self.template.name)
             args.append(vcs.graphicsmethodtype(self.graphics_method))
             args.append(self.graphics_method.name)
-            self.dp = self.canvas.plot(*args)
+            self.dp = self.canvas.plot(*args, ratio="autot")
             self.dp_ind = self.canvas.display_names.index(self.dp.name)
