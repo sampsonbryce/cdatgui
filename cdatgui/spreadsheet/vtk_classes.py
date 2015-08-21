@@ -5,10 +5,17 @@ import vcs
 from vtk.qt4.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from functools import partial
 
+cdms_mime = "application/x-cdms-variable-list"
+vcs_gm_mime = "application/x-vcs-gm"
+vcs_template_mime = "application/x-vcs-template"
+
 
 class QCDATWidget(QtGui.QFrame):
 
     visiblityChanged = QtCore.Signal(bool)
+    setVariables = QtCore.Signal(list)
+    setGraphicsMethod = QtCore.Signal(object)
+    setTemplate = QtCore.Signal(object)
 
     save_formats = ["PNG file (*.png)",
                     "GIF file (*.gif)",
@@ -18,6 +25,8 @@ class QCDATWidget(QtGui.QFrame):
 
     def __init__(self, parent=None):
         super(QCDATWidget, self).__init__(parent=parent)
+
+        self.setAcceptDrops(True)
 
         self.mRenWin = vtk.vtkRenderWindow()
         self.iren = QVTKRenderWindowInteractor(parent=self, rw=self.mRenWin)
@@ -38,6 +47,18 @@ class QCDATWidget(QtGui.QFrame):
 
         # Just need a callable that returns something
         self.toolBarType = lambda x: None
+
+    def dragEnterEvent(self, event):
+        accepted = set([cdms_mime, vcs_gm_mime, vcs_template_mime])
+
+        if set(event.mimeData().formats()) & accepted:
+            event.accept()
+        else:
+            event.reject()
+
+    def dropEvent(self, event):
+        if cdms_mime in event.mimeData().formats():
+            self.setVariables.emit(event.source().model().get_dropped(event.mimeData()))
 
     def manageCanvas(self, showing):
         if showing and self.canvas is None:

@@ -23,7 +23,6 @@ class VariableWidget(StaticDockWidget):
                                                     self.remove_variable))
 
         self.variable_widget = CDMSVariableList(self)
-        self.variable_widget.currentRowChanged.connect(self.select_variable)
         self.setWidget(self.variable_widget)
 
     def select_variable(self, index):

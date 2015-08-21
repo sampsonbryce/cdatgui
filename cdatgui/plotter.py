@@ -4,11 +4,19 @@ import vcs
 class PlotManager(object):
     def __init__(self, cell):
         self.cell = cell
+
         self.dp = None
         self.dp_ind = 0
         self._gm = None
         self._vars = None
         self._template = None
+
+        self.cell.setVariables.connect(self.set_vars)
+        self.cell.setGraphicsMethod.connect(self.set_gm)
+        self.cell.setTemplate.connect(self.set_templ)
+
+    def can_plot(self):
+        return self.dp is not None or (self._template is not None and self._vars is not None and self._gm is not None)
 
     @property
     def canvas(self):
@@ -20,6 +28,8 @@ class PlotManager(object):
     def set_gm(self, gm):
         # check gm vs vars
         self._gm = gm
+        if self.can_plot():
+            self.plot()
 
     graphics_method = property(gm, set_gm)
 
@@ -31,6 +41,11 @@ class PlotManager(object):
             self._vars = (v[0], v[1])
         except TypeError:
             self._vars = (v, None)
+        except IndexError:
+            self._vars = (v[0], None)
+
+        if self.can_plot():
+            self.plot()
 
     variables = property(get_vars, set_vars)
 
@@ -40,6 +55,8 @@ class PlotManager(object):
     def set_templ(self, template):
         # Check if gm supports templates
         self._template = template
+        if self.can_plot():
+            self.plot()
 
     template = property(templ, set_templ)
 

@@ -37,24 +37,12 @@ class MainWindow(QtGui.QMainWindow):
 
     def update_var_on_main(self, var):
         self.manager.variables = (var, None)
-        try:
-            self.manager.plot()
-        except ValueError:
-            print "Waiting on GM"
 
     def update_gm_on_main(self, gm):
         self.manager.graphics_method = gm
-        try:
-            self.manager.plot()
-        except ValueError:
-            print "Waiting on variables"
 
     def update_tmpl_on_main(self, tmpl):
         self.manager.template = tmpl
-        try:
-            self.manager.plot()
-        except ValueError:
-            print "Waiting on gm/variables"
 
     def add_left_dock(self, widget):
         self.addDockWidget(DockWidgetArea.LeftDockWidgetArea, widget)
