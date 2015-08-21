@@ -59,6 +59,8 @@ class QCDATWidget(QtGui.QFrame):
     def dropEvent(self, event):
         if cdms_mime in event.mimeData().formats():
             self.setVariables.emit(event.source().model().get_dropped(event.mimeData()))
+        if vcs_template_mime in event.mimeData().formats():
+            self.setTemplate.emit(event.source().model().get_dropped(event.mimeData()))
 
     def manageCanvas(self, showing):
         if showing and self.canvas is None:

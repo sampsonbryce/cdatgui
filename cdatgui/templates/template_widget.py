@@ -5,7 +5,6 @@ from template_list import TemplateList
 
 
 class TemplateWidget(StaticDockWidget):
-    selectedTemplate = QtCore.Signal(object)
 
     def __init__(self, parent=None):
         super(TemplateWidget, self).__init__("Templates", parent=parent)
@@ -16,7 +15,6 @@ class TemplateWidget(StaticDockWidget):
                                                     self.edit_template,
                                                     self.remove_template))
         self.list = TemplateList()
-        self.list.itemSelectionChanged.connect(self.selection_change)
         self.setWidget(self.list)
 
     def selection_change(self):

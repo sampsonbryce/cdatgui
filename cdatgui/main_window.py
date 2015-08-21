@@ -24,25 +24,13 @@ class MainWindow(QtGui.QMainWindow):
         self.setCentralWidget(self.spreadsheet)
 
         var_widget = VariableWidget(parent=self)
-        var_widget.selectedVariable.connect(self.update_var_on_main)
         self.add_left_dock(var_widget)
 
         gm_widget = GraphicsMethodWidget(parent=self)
-        gm_widget.selectedGraphicsMethod.connect(self.update_gm_on_main)
         self.add_left_dock(gm_widget)
 
         tmpl_widget = TemplateWidget(parent=self)
-        tmpl_widget.selectedTemplate.connect(self.update_tmpl_on_main)
         self.add_left_dock(tmpl_widget)
-
-    def update_var_on_main(self, var):
-        self.manager.variables = (var, None)
-
-    def update_gm_on_main(self, gm):
-        self.manager.graphics_method = gm
-
-    def update_tmpl_on_main(self, tmpl):
-        self.manager.template = tmpl
 
     def add_left_dock(self, widget):
         self.addDockWidget(DockWidgetArea.LeftDockWidgetArea, widget)
