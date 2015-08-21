@@ -14,6 +14,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def __init__(self, parent=None, f=QtCore.Qt.WindowFlags()):
         super(MainWindow, self).__init__(parent=parent)
+        self.setWindowTitle(u"CDATGUI")
         self.spreadsheet = SpreadsheetWindow(f=QtCore.Qt.Widget)
 
         self.manager = PlotManager(self.spreadsheet.getCell(0, 0))

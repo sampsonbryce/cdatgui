@@ -62,7 +62,6 @@ class SpreadsheetWindow(QtGui.QMainWindow):
 
         """
         QtGui.QMainWindow.__init__(self, parent, f)
-        self.setWindowTitle('UV-CDAT - Untitled')
         self.shownConfig = False #flag to control the window setup code is done only once
         # The stack of current spreadsheets
         self.stackedCentralWidget = QtGui.QStackedWidget(self)

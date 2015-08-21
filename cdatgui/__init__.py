@@ -1,2 +1,2 @@
-from main_window import MainWindow  # noqa
+from application import CDATGUIApp
 import utils
