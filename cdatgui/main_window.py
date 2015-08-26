@@ -4,7 +4,6 @@ from spreadsheet.window import SpreadsheetWindow
 from variables import VariableWidget
 from graphics import GraphicsMethodWidget
 from templates import TemplateWidget
-from plotter import PlotManager
 import vcs
 
 DockWidgetArea = QtCore.Qt.DockWidgetArea
@@ -16,10 +15,6 @@ class MainWindow(QtGui.QMainWindow):
         super(MainWindow, self).__init__(parent=parent)
         self.setWindowTitle(u"CDATGUI")
         self.spreadsheet = SpreadsheetWindow(f=QtCore.Qt.Widget)
-
-        self.manager = PlotManager(self.spreadsheet.getCell(0, 0))
-        self.manager.graphics_method = vcs.getboxfill()
-        self.manager.template = vcs.gettemplate('default')
 
         self.setCentralWidget(self.spreadsheet)
 

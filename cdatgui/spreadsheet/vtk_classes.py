@@ -3,6 +3,7 @@ import os
 from PySide import QtCore, QtGui
 import vcs
 from vtk.qt4.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+from cdatgui.cdat import PlotManager
 from functools import partial
 
 cdms_mime = "application/x-cdms-variable-list"
@@ -44,6 +45,8 @@ class QCDATWidget(QtGui.QFrame):
                                              QtGui.QSizePolicy.Expanding))
 
         self.visiblityChanged.connect(self.manageCanvas)
+
+        self.plots = [PlotManager(self)]
 
         # Just need a callable that returns something
         self.toolBarType = lambda x: None
