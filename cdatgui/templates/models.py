@@ -1,6 +1,8 @@
 from PySide import QtCore
 import vcs
+import re
 
+tmpl_group_rx = re.compile("(.*)(\d+)of(\d+)(.*)")
 mimetype = "application/x-vcs-template"
 
 
@@ -11,6 +13,15 @@ class VCSTemplateListModel(QtCore.QAbstractListModel):
             self.templates = [template for template in vcs.elements["template"].values() if tmpl_filter.search(template.name) is None]
         else:
             self.templates = vcs.elements["template"].values()
+
+        def template_key(tmpl):
+            m = tmpl_group_rx.search(tmpl.name)
+            if m is None:
+                return tmpl.name.lower()
+            else:
+                return (m.group(1) + m.group(3) + m.group(2) + m.group(4)).lower()
+
+        self.templates = sorted(self.templates, key=template_key)
 
     def add_template(self, template):
         self.insertRows(self.rowCount(), 1, [template])

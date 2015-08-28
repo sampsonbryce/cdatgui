@@ -1,9 +1,103 @@
 import vcs
+from PySide import QtGui, QtCore
+from cdatgui.utils import header_label, label, icon
+
+cdms_mime = "application/x-cdms-variable-list"
+vcs_gm_mime = "application/x-vcs-gm"
+vcs_template_mime = "application/x-vcs-template"
+
+
+class PlotInfo(QtGui.QFrame):
+    initialized = QtCore.Signal()
+
+    def __init__(self, canvas, parent=None, f=0):
+        super(PlotInfo, self).__init__(parent=parent, f=f)
+
+        if callable(canvas):
+            self._canvasfunc = canvas
+        else:
+            self._canvas = canvas
+
+        self.manager = PlotManager(self)
+
+        # Icon to display till we actually get some data
+        self.newIcon = QtGui.QLabel(self)
+        self.newIcon.setPixmap(icon("add_plot.svg").pixmap(128, 128))
+
+        layout = QtGui.QVBoxLayout()
+        # Cache for later
+        self.dataLayout = layout
+
+        # Variables
+        l = header_label("Variables:")
+        layout.addWidget(l)
+
+        var_widget = QtGui.QWidget()
+        layout.addWidget(var_widget)
+
+        self.var_layout = QtGui.QHBoxLayout()
+        var_widget.setLayout(self.var_layout)
+
+        # GM
+        self.gm_label = QtGui.QLabel()
+        layout.addWidget(header_label("Graphics Method:"))
+        layout.addWidget(self.gm_label)
+
+        # Template
+        self.tmpl_label = QtGui.QLabel()
+        layout.addWidget(header_label("Template:"))
+        layout.addWidget(self.tmpl_label)
+
+    @QtCore.Slot(object)
+    def template(self, template):
+        self.manager.template = template
+        self.tmpl_label.setText(template.name)
+        self.init_layout()
+
+    @QtCore.Slot(object)
+    def graphics_method(self, gm):
+        self.manager.graphics_method = gm
+        self.gm_label.setText(gm.name)
+        self.init_layout()
+
+    @QtCore.Slot(list)
+    def variables(self, vars):
+        self.manager.variables = vars
+        self.variableSync(vars)
+        self.init_layout()
+
+    @property
+    def canvas(self):
+        try:
+            return self._canvasfunc()
+        except AttributeError:
+            return self._canvas
+
+    def deleteLater(self):
+        if self.dataLayout is not None:
+            self.dataLayout.deleteLater()
+        super(PlotInfo, self).deleteLater()
+
+    def init_layout(self):
+        if self.dataLayout is not None:
+            self.newIcon.setParent(None)
+            self.newIcon.deleteLater()
+            self.newIcon = None
+            self.setLayout(self.dataLayout)
+            self.dataLayout = None
+            self.initialized.emit()
+
+    def variableSync(self, variables):
+        for ind in range(self.var_layout.count()):
+            self.var_layout.removeWidget(self.var_layout.itemAt(ind))
+
+        for var in variables:
+            self.var_layout.addWidget(label(var.id))
 
 
 class PlotManager(object):
-    def __init__(self, cell):
-        self.cell = cell
+    def __init__(self, source):
+        self.source = source
 
         self.dp = None
         self.dp_ind = 0
@@ -11,16 +105,12 @@ class PlotManager(object):
         self._vars = None
         self._template = None
 
-        self.cell.setVariables.connect(self.set_vars)
-        self.cell.setGraphicsMethod.connect(self.set_gm)
-        self.cell.setTemplate.connect(self.set_templ)
-
     def can_plot(self):
         return self.dp is not None or (self._template is not None and self._vars is not None and self._gm is not None)
 
     @property
     def canvas(self):
-        return self.cell.canvas
+        return self.source.canvas
 
     def gm(self):
         return self._gm

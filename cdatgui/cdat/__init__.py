@@ -1,1 +1,1 @@
-from plotter import PlotManager  # noqa
+from plotter import PlotInfo  # noqa
