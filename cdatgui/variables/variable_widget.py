@@ -34,6 +34,11 @@ class VariableWidget(StaticDockWidget):
         for var in new_variables:
             self.variable_widget.add_variable(var)
 
+    def load(self, files, vars):
+        self.add_dialog.load(files)
+        for var in vars:
+            self.variable_widget.add_variable(var)
+
     def edit_variable(self):
         # Edit variable dialog
         pass  # pragma: nocover

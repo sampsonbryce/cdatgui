@@ -35,8 +35,11 @@ class PlotInfo(QtGui.QFrame):
         var_widget = QtGui.QWidget()
         layout.addWidget(var_widget)
 
-        self.var_layout = QtGui.QHBoxLayout()
-        var_widget.setLayout(self.var_layout)
+        var_layout = QtGui.QHBoxLayout()
+        var_widget.setLayout(var_layout)
+        self.var_labels = (QtGui.QLabel(), QtGui.QLabel(), QtGui.QLabel())
+        for label in self.var_labels:
+            var_layout.addWidget(label)
 
         # GM
         self.gm_label = QtGui.QLabel()
@@ -47,6 +50,15 @@ class PlotInfo(QtGui.QFrame):
         self.tmpl_label = QtGui.QLabel()
         layout.addWidget(header_label("Template:"))
         layout.addWidget(self.tmpl_label)
+
+    def load(self, display):
+        # Set up the labels correctly
+        self.tmpl_label.setText(display._template_origin)
+        self.gm_label.setText(display.g_name)
+        self.variableSync([a for a in display.array if a is not None])
+        self.init_layout()
+
+        self.manager.load(display)
 
     @QtCore.Slot(object)
     def template(self, template):
@@ -88,11 +100,8 @@ class PlotInfo(QtGui.QFrame):
             self.initialized.emit()
 
     def variableSync(self, variables):
-        for ind in range(self.var_layout.count()):
-            self.var_layout.removeWidget(self.var_layout.itemAt(ind))
-
-        for var in variables:
-            self.var_layout.addWidget(label(var.id))
+        for ind, var in enumerate(variables):
+            self.var_labels[ind].setText(var.id)
 
 
 class PlotManager(object):
@@ -104,6 +113,12 @@ class PlotManager(object):
         self._gm = None
         self._vars = None
         self._template = None
+
+    def load(self, display):
+        self.dp = display
+        self._gm = vcs.getgraphicsmethod(display.g_type, display.g_name)
+        self._vars = display.array
+        self._template = vcs.gettemplate(display._template_origin)
 
     def can_plot(self):
         return self.dp is not None or (self._template is not None and self._vars is not None and self._gm is not None)

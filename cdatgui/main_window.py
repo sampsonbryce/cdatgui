@@ -4,6 +4,7 @@ from spreadsheet.window import SpreadsheetWindow
 from variables import VariableWidget
 from graphics import GraphicsMethodWidget
 from templates import TemplateWidget
+from main_menu import MainMenu
 import vcs
 
 DockWidgetArea = QtCore.Qt.DockWidgetArea
@@ -26,6 +27,8 @@ class MainWindow(QtGui.QMainWindow):
 
         tmpl_widget = TemplateWidget(parent=self)
         self.add_left_dock(tmpl_widget)
+
+        self.setMenuBar(MainMenu(self.spreadsheet, var_widget, gm_widget, tmpl_widget))
 
     def add_left_dock(self, widget):
         self.addDockWidget(DockWidgetArea.LeftDockWidgetArea, widget)

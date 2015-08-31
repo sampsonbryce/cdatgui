@@ -78,11 +78,6 @@ class SpreadsheetWindow(QtGui.QMainWindow):
 
         self.tabController.needChangeTitle.connect(self.setWindowTitle)
 
-        self.quitAction = QtGui.QAction('&Quit Spreadsheet', self)
-        self.addAction(self.quitAction)
-        self.quitAction.setShortcut('Ctrl+Q')
-        self.quitAction.triggered.connect(self.quitActionTriggered)
-
     def quitActionTriggered(self):
         self.close()
 
@@ -216,6 +211,38 @@ class SpreadsheetWindow(QtGui.QMainWindow):
         sheet = self.tabController.findSheet(reference)
         cell = sheet.getCell(row, col)
         return cell
+
+    def load(self, rows, columns, min_cells):
+        """
+        Loads a layout from a save file
+        """
+        while min_cells > rows * columns:
+            if rows < columns:
+                rows += 1
+            else:
+                columns += 1
+
+        self.setRowsAndColumns(rows, columns)
+
+        row = 0
+        col = 0
+        cells = []
+        while min_cells > 0:
+            cells.append(self.getCell(row, col))
+            col += 1
+            if col == columns:
+                col = 0
+                row += 1
+            min_cells -= 1
+        return cells
+
+    def setRowsAndColumns(self, rows, columns):
+        reference = StandardSheetReference()
+        sheet = self.tabController.findSheet(reference)
+        sheet.toolBar.rowSpinBox.setValue(rows)
+        sheet.toolBar.colSpinBox.setValue(columns)
+        sheet.rowSpinBoxChanged()
+        sheet.colSpinBoxChanged()
 
     def getCanvas(self, row=0, col=0):
         # return canvas for specified position in current sheet

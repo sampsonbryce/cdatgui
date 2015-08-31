@@ -45,6 +45,10 @@ class AddDialog(QtGui.QDialog):
         self.chooser = CDMSFileChooser()
         self.chooser.accepted.connect(self.added_files)
 
+    def load(self, files):
+        for file in files:
+            self.tree.add_file(file)
+
     def selected_variables(self):
         return self.tree.get_selected()
 

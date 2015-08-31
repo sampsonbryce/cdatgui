@@ -66,6 +66,12 @@ class QCDATWidget(QtGui.QFrame):
                 return plot
         return None
 
+    def load(self, displays):
+        for display in displays:
+            info = self.plots[-1]
+            info.load(display)
+
+
     def dragMoveEvent(self, event):
         plot = self.plot_at_point(event.pos())
         if plot:
