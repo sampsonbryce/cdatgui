@@ -236,6 +236,11 @@ class SpreadsheetWindow(QtGui.QMainWindow):
             min_cells -= 1
         return cells
 
+    def getRowsAndColumns(self):
+        ref = StandardSheetReference()
+        sheet = self.tabController.findSheet(ref)
+        return sheet.getDimension()
+
     def setRowsAndColumns(self, rows, columns):
         reference = StandardSheetReference()
         sheet = self.tabController.findSheet(reference)

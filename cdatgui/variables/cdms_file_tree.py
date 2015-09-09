@@ -1,6 +1,7 @@
 from PySide import QtGui, QtCore
 import os.path
 from cdatgui.utils import icon
+import urlparse
 
 clickcount = 0
 label_font = None
@@ -40,14 +41,16 @@ class CDMSFileTree(QtGui.QTreeWidget):
         self.header().close()
 
     def add_file(self, cdmsfile):
-        if cdmsfile.id in self.files:
-            raise ValueError("File '%s' already loaded" % cdmsfile.id)
+        if cdmsfile.uri in self.files:
+            return
 
-        self.files[cdmsfile.id] = cdmsfile
+        self.files[cdmsfile.uri] = cdmsfile
 
         self.files_ordered.append(cdmsfile)
 
-        file_name = os.path.basename(cdmsfile.id)
+        parsed = urlparse.urlparse(cdmsfile.uri)
+
+        file_name = os.path.basename(parsed.path)
 
         file_item = CDMSFileItem(file_name)
 

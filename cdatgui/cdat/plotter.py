@@ -116,6 +116,7 @@ class PlotManager(object):
 
     def load(self, display):
         self.dp = display
+        self.dp_ind = self.canvas.display_names.index(display.name)
         self._gm = vcs.getgraphicsmethod(display.g_type, display.g_name)
         self._vars = display.array
         self._template = vcs.gettemplate(display._template_origin)

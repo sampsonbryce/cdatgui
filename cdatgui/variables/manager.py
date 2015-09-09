@@ -1,5 +1,7 @@
 import cdms2
-import os.path
+from cdatgui.persistence.db import get_data_sources, add_data_source
+import cdatgui.cdat
+from PySide import QtCore
 
 __man__ = None
 
@@ -11,21 +13,31 @@ def manager():
     return __man__
 
 
-class Manager(object):
+class Manager(QtCore.QObject):
+
+    addedFile = QtCore.Signal(object)
 
     def __init__(self):
+        super(Manager, self).__init__()
         self.files = {}
-        self.file_modified = {}
 
-    def get_file(self, filepath):
-        if filepath in self.files:
-            return self.files[filepath]
-        if not os.path.exists(filepath):
-            raise IOError("No data file found at '%s'" % filepath)
+        uris = get_data_sources()
+        for uri in uris:
+            self.add_file(cdms2.open(uri))
 
-        try:
-            self.files[filepath] = cdms2.open(filepath)
-        except cdms2.CDMSError:
-            raise IOError("File at '%s' not of a supported format" % filepath)
+    def get_file(self, uri):
+        if uri not in self.files:
+            self.files[uri] = cdatgui.cdat.FileMetadataWrapper(cdms2.open(uri))
+            self.addedFile.emit(self.files[uri])
 
-        return self.files[filepath]
+        add_data_source(uri)
+        return self.files[uri]
+
+    def add_file(self, file):
+        if file.uri in self.files:
+            self.addedFile.emit(self.files[file.uri])
+            return self.files[file.uri]
+
+        self.files[file.uri] = cdatgui.cdat.FileMetadataWrapper(file)
+        add_data_source(file.uri)
+        return self.files[file.uri]
