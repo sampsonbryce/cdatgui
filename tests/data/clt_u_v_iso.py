@@ -13,7 +13,7 @@ def get_files():
     """
     Returns all the files used in the visualizations in this project
     """
-    file_0 = cdms2.open('file:///Users/fries2/Downloads/clt.nc')
+    file_0 = cdms2.open("file://%s/clt.nc" % vcs.sample_data)
     return file_0
 
 

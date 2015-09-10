@@ -95,13 +95,21 @@ def test_save_loaded_script(tmpdir):
     mocks.PlotInfo.canvas.close()
 
     export_script(str(save_file), loaded.variables.values(), plot_managers)
-    # Compare the generated script with the existing one
-    with save_file.open() as saved:
-        sf = saved.read()
-    with open(load_file) as loaded:
-        l = loaded.read()
 
-    assert sf == l
+    saved = import_script(str(save_file))
+
+    assert saved.rows == loaded.rows
+    assert saved.columns == loaded.columns
+    assert saved.num_canvases == loaded.num_canvases
+    assert len(saved.files) == len(loaded.files)
+    assert saved.files[0].id == loaded.files[0].id
+    assert len(saved.variables) == len(loaded.variables)
+
+    for save_var, load_var in zip(saved.variables.values(), loaded.variables.values()):
+        assert save_var.id == load_var.id
+
+    assert len(saved.graphics_methods) == len(loaded.graphics_methods)
+    assert len(saved.templates) == len(loaded.templates)
 
 
 def closest(descendant, ancestors):
