@@ -33,8 +33,9 @@ def test_cdms_file_tree_add_file(qtbot, cdmsfile):
         assert file_variables.index(child.text(1)) == i
 
     # we can't add the same file twice
-    with pytest.raises(ValueError):
-        tree.add_file(cdmsfile)
+    before = tree.topLevelItemCount()
+    tree.add_file(cdmsfile)
+    assert tree.topLevelItemCount() == before
 
 
 def test_cdms_file_tree_get_selected(qtbot, cdmsfile):
@@ -70,12 +71,12 @@ def test_cdms_var_list_add_var(qtbot, clt):
     varlist.add_variable(clt)
 
     # it has an item in the list
-    assert varlist.count() == 1
+    assert varlist.model().rowCount() == 1
 
-    item = varlist.item(0)
+    modelItem = varlist.model().get_variable(0)
 
     # it has the variable name as the text
-    assert item.text() == "clt"
+    assert modelItem.id == "clt"
 
 
 def test_cdms_var_list_get_var(qtbot, clt):
@@ -117,23 +118,23 @@ def test_cdms_file_chooser_browse(qtbot):
     assert chooser.accepted_button.isEnabled() is False
 
 
-def test_manager():
-    man = cdatgui.variables.manager.Manager()
-    clt = man.get_file(vcs.sample_data + "/clt.nc")
+def test_manager(var_manager):
+    clt = var_manager.get_file(vcs.sample_data + "/clt.nc")
 
     # The file is the same as the one requested
     assert clt.id == vcs.sample_data + "/clt.nc"
     # Retrieving the same file returns the exact same object
-    assert id(clt) == id(man.get_file(vcs.sample_data + "/clt.nc"))
+    assert id(clt) == id(var_manager.get_file(vcs.sample_data + "/clt.nc"))
     # Retrieving a nonexistant object gives an IOError
-    with pytest.raises(IOError):
-        man.get_file("/tmp/filedoesnotexist")
+    with pytest.raises(cdms2.CDMSError):
+        var_manager.get_file("/tmp/filedoesnotexist")
     # Will only retrieve correct file types
-    with pytest.raises(IOError):
-        man.get_file(__file__)
+    with pytest.raises(cdms2.CDMSError):
+        var_manager.get_file(__file__)
 
 
-def test_add_dialog(qtbot):
+def test_add_dialog(qtbot, var_manager):
+
     dia = cdatgui.variables.variable_add.AddDialog()
     qtbot.addWidget(dia)
 
@@ -142,6 +143,7 @@ def test_add_dialog(qtbot):
 
     dia.chooser = mocks.CDMSFileChooser
 
+    print dia.tree
     assert dia.tree.topLevelItemCount() == 0
 
     dia.added_files()

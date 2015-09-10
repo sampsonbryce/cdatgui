@@ -143,7 +143,7 @@ class QCDATWidget(QtGui.QFrame):
         return getattr(self.canvas, method_name)(gmName)
 
     def getPlotters(self):
-        return [plot.manager for plot in self.plots]
+        return [plot.manager for plot in self.plots if plot.manager.can_plot()]
 
     def deleteLater(self):
         """ deleteLater() -> None

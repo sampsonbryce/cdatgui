@@ -64,7 +64,7 @@ class MainMenu(QtGui.QMenuBar):
             for c in range(columns):
                 cell = self.ss.getCell(r, c)
                 cells.append(cell)
-                plotters.extend(cell.getPlotters())
+                plotters.append(cell.getPlotters())
 
         var_manager = manager()
         all_files = var_manager.files.values()
@@ -73,21 +73,20 @@ class MainMenu(QtGui.QMenuBar):
             for var in f.vars:
                 all_variables[var.data_key()] = var
 
-        print all_variables.keys()
         used_variables = []
         # Now that we have all variables sorted out, let's grab relevant ones
-        for plotter in plotters:
-            if plotter.can_plot() is False:
-                continue
-            for v in plotter.variables:
-                if v is None:
+        for pgroup in plotters:
+            for plotter in pgroup:
+                if plotter.can_plot() is False:
                     continue
-                v_key = v.id
-                print v_key
-                if v_key in all_variables:
-                    used_variables.append(all_variables[v_key])
-                    del all_variables[v_key]
+                for v in plotter.variables:
+                    if v is None:
+                        continue
+                    v_key = v.id
 
-        canvases = [c.canvas for c in cells]
-        export_script(filePath[0], used_variables, canvases,
+                    if v_key in all_variables:
+                        used_variables.append(all_variables[v_key])
+                        del all_variables[v_key]
+
+        export_script(filePath[0], used_variables, plotters,
                       rows=rows, columns=columns)

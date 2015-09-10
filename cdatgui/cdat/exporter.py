@@ -9,7 +9,6 @@ import os
 
 def diff(obj, base):
     if type(obj) != type(base):
-        print repr(obj), repr(base)
         raise ValueError("Type mismatch between object (%s) and base (%s)" % (type(obj), type(base)))
     different_props = OrderedDict()
 
@@ -164,7 +163,7 @@ class VariableTree(object):
     def file_name(self, file):
         fid = file.uri
         for i, f in enumerate(self.files):
-            if f.uri == file.uri:
+            if f.uri == fid:
                 return "file_%d" % i
         self.files.append(file)
         return "file_%d" % (len(self.files) - 1)
@@ -252,13 +251,13 @@ if __name__ == "__main__":
 plot_format = "{canvas}.plot({variables}, templates[{t_ind}], graphics_methods[{gm_ind}])".format # noqa
 
 
-def serialize_plot(display_plot, canvas_name, all_vars, all_gms, all_templs):
-    template_index = all_templs.index(display_plot.template)
-    gm_index = all_gms.index((display_plot.g_type, display_plot.g_name))
+def serialize_plot(plotter, canvas_name, all_vars, all_gms, all_templs):
+    template_index = all_templs.index(plotter.template.name)
+    gm_index = all_gms.index((plotter.dp.g_type, plotter.graphics_method.name))
 
     variable_statements = []
 
-    for v in display_plot.array:
+    for v in plotter.variables:
         if v is None:
             continue
 
@@ -270,12 +269,17 @@ def serialize_plot(display_plot, canvas_name, all_vars, all_gms, all_templs):
                        t_ind=template_index, gm_ind=gm_index)
 
 
-def export_script(path, variables, canvases, rows=1, columns=1):
+def export_script(path, variables, plotters, rows=1, columns=1):
 
-    files = []
+    files = {}
     for var in variables:
-        files.extend(var.get_files())
-    print files, variables
+        new_files = var.get_files()
+        for f in new_files:
+            if f.uri not in files:
+                files[f.uri] = f
+
+    files = files.values()
+
     v = variables
     tree = VariableTree(variables, files)
     # Have to call tree.serialize before file_loads, in case of any hidden file references
@@ -291,20 +295,22 @@ def export_script(path, variables, canvases, rows=1, columns=1):
     gms = OrderedDict()
     tmpls = OrderedDict()
     default_template = vcs.gettemplate("default")
-    for canvas in canvases:
-        for dname in canvas.display_names:
-            dp = vcs.elements["display"][dname]
+    for plotter_group in plotters:
+        for plotter in plotter_group:
+            dp = plotter.dp
 
-            if dp.g_type not in vcs.graphicsmethodlist():
+            if dp is None or dp.g_type not in vcs.graphicsmethodlist():
                 # TODO: Support Secondaries
                 continue
+            gm = plotter.graphics_method
+            key = (dp.g_type, gm.name)
 
-            key = (dp.g_type, dp.g_name)
             if key not in gms:
-                gms[key] = diff_gm(vcs.getgraphicsmethod(dp.g_type, dp.g_name))
+                gms[key] = diff_gm(gm)
 
-            if dp.template not in tmpls:
-                tmpls[dp.template] = diff(vcs.gettemplate(dp.template), default_template)
+            template = plotter.template
+            if template.name not in tmpls:
+                tmpls[template.name] = diff(template, default_template)
 
     gm_body = []
     for gm_key, gm_props in gms.iteritems():
@@ -325,13 +331,12 @@ def export_script(path, variables, canvases, rows=1, columns=1):
 
     plot_calls = []
 
-    for i, c in enumerate(canvases):
-        for dname in c.display_names:
-            dp = vcs.elements["display"][dname]
-            plot_calls.append(serialize_plot(dp, "canvases[%d]" % i, v, gms.keys(), tmpls.keys()))
+    for i, plotter_group in enumerate(plotters):
+        for plot in plotter_group:
+            plot_calls.append(serialize_plot(plot, "canvases[%d]" % i, v, gms.keys(), tmpls.keys()))
 
     plot_calls = "\n    ".join(plot_calls)
-
+    num_canvases = len(plotters)
     with open(path, "w") as script:
         script.write(get_template().format(shell_script=sys.executable,
                                            files=file_script,
@@ -343,7 +348,7 @@ def export_script(path, variables, canvases, rows=1, columns=1):
                                            tmpls=tmpl_body,
                                            template_ret=tmpl_names,
                                            plot_calls=plot_calls,
-                                           num_canvas=len(canvases),
+                                           num_canvas=num_canvases,
                                            rows=rows,
                                            cols=columns))
         script.write(main)

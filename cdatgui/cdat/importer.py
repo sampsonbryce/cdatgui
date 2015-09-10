@@ -19,7 +19,6 @@ def module_name(path):
 
 def ensure_iterable(item):
     if type(item) not in (list, tuple):
-        print type(item)
         return [item]
     else:
         return item
@@ -47,8 +46,6 @@ class Script(object):
 
         # Strip off metadata wrapper before plotting
         variables = {var: self.variables[var].var for var in self.variables}
-        for varid in variables:
-            print varid, variables[varid].id
         self._plot(canvases, variables, self.graphics_methods, self.templates)
 
         for canvas in canvases:
@@ -56,9 +53,6 @@ class Script(object):
             for dp in canvas.display_names:
                 if dp not in existing_dps:
                     c_dps.append(vcs.elements["display"][dp])
-                    for a in vcs.elements["display"][dp].array:
-                        if a is not None:
-                            print id(a), a.id
             dps.append(c_dps)
 
         return dps
