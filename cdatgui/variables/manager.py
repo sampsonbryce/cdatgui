@@ -27,8 +27,7 @@ class Manager(QtCore.QObject):
 
     def get_file(self, uri):
         if uri not in self.files:
-            self.files[uri] = cdatgui.cdat.FileMetadataWrapper(cdms2.open(uri))
-            self.addedFile.emit(self.files[uri])
+            return self.add_file(cdatgui.cdat.FileMetadataWrapper(cdms2.open(uri)))
 
         add_data_source(uri)
         return self.files[uri]
@@ -40,4 +39,5 @@ class Manager(QtCore.QObject):
 
         self.files[file.uri] = cdatgui.cdat.FileMetadataWrapper(file)
         add_data_source(file.uri)
+        self.addedFile.emit(self.files[file.uri])
         return self.files[file.uri]

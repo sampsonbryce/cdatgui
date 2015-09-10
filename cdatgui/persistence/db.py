@@ -78,7 +78,6 @@ def get_data_sources():
 
 def add_data_source(uri):
     db = connect()
-    print "Adding", uri
 
     matching = db.query(DataSource).filter_by(uri=uri).first()
     if matching is None:

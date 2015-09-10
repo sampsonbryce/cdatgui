@@ -2,6 +2,7 @@ from PySide import QtGui, QtCore
 from cdatgui.cdat import import_script, export_script
 from cdatgui.variables.manager import manager
 import os
+import numpy
 
 
 class MainMenu(QtGui.QMenuBar):
@@ -70,17 +71,23 @@ class MainMenu(QtGui.QMenuBar):
         all_variables = {}
         for f in all_files:
             for var in f.vars:
-                all_variables[id(var.var)] = var
+                all_variables[var.data_key()] = var
 
+        print all_variables.keys()
         used_variables = []
         # Now that we have all variables sorted out, let's grab relevant ones
         for plotter in plotters:
             if plotter.can_plot() is False:
                 continue
             for v in plotter.variables:
-                if v is not None and id(v) in all_variables:
-                    used_variables.append(all_variables[id(v)])
-                    del all_variables[id(v)]
+                if v is None:
+                    continue
+                v_key = v.id
+                print v_key
+                if v_key in all_variables:
+                    used_variables.append(all_variables[v_key])
+                    del all_variables[v_key]
+
         canvases = [c.canvas for c in cells]
         export_script(filePath[0], used_variables, canvases,
                       rows=rows, columns=columns)

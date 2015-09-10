@@ -36,6 +36,7 @@ class VariableWidget(StaticDockWidget):
 
     def load(self, vars):
         for var in vars:
+            print var.var.id, id(var.var)
             self.variable_widget.add_variable(var)
 
     def edit_variable(self):

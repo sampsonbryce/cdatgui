@@ -204,5 +204,5 @@ class PlotManager(object):
             args.append(self.template.name)
             args.append(vcs.graphicsmethodtype(self.graphics_method))
             args.append(self.graphics_method.name)
-            self.dp = self.canvas.plot(*args, ratio="autot")
+            self.dp = self.canvas.plot(*args)
             self.dp_ind = self.canvas.display_names.index(self.dp.name)

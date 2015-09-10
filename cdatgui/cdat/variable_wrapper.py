@@ -4,6 +4,7 @@ collecting metadata necessary for saving/loading transient
 variables.
 """
 import cdms2
+import numpy
 from weaklist import WeakList
 
 
@@ -44,7 +45,6 @@ class FileMetadataWrapper(object):
 
 def attr_wrap(a, parent, name):
     def call(*args, **kwargs):
-        print a, "calling wrapped"
         v = a(*args, **kwargs)
         if isinstance(v, cdms2.tvariable.TransientVariable):
             return VariableMetadataWrapper(v, parent, args,
@@ -72,6 +72,10 @@ class VariableMetadataWrapper(object):
             source = source.source
         source.vars.append(self)
 
+    def data_key(self):
+        """Returns the start and end of the memory region of the array"""
+        return self.var.id
+
     def get_files(self):
         if type(self.source) == FileMetadataWrapper:
             return [self.source]
@@ -92,10 +96,8 @@ class VariableMetadataWrapper(object):
     def __getattr__(self, name):
         a = getattr(self.var, name)
         if not callable(a) or type(a) == type:
-            print name, "not wrapped"
             return a
         else:
-            print name, "wrapped"
             return attr_wrap(a, self, name)
 
     def __setattr__(self, name, value):
