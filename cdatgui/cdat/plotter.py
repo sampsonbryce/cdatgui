@@ -114,6 +114,26 @@ class PlotManager(object):
         self._vars = None
         self._template = None
 
+    def name(self):
+        if self.can_plot() is False:
+            return "(Untitled)"
+
+        vars = []
+        for v in self._vars:
+            if v is None:
+                continue
+            try:
+                vars.append(v.long_name)
+            except AttributeError:
+                try:
+                    vars.append(v.title)
+                except AttributeError:
+                    vars.append(v.id)
+
+        gm_type = vcs.graphicsmethodtype(self._gm)
+        vars = " x ".join(vars)
+        return "%s (%s)" % (vars, gm_type)
+
     def load(self, display):
         self.dp = display
         self.dp_ind = self.canvas.display_names.index(display.name)

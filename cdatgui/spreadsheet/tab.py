@@ -439,6 +439,9 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
     displaying the spreadsheet.
 
     """
+
+    selectionChanged = QtCore.Signal(list)
+
     def __init__(self, tabWidget,row=None , col=None):
         """ StandardWidgetSheet(tabWidget: QTabWidget,
                                 row: int,
@@ -455,6 +458,7 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
         self.type = 'StandardWidgetSheetTab'
         self.tabWidget = tabWidget
         self.sheet = StandardWidgetSheet(row, col, self)
+        self.sheet.itemSelectionChanged.connect(self.selectionChange)
         self.sheet.setFitToWindow(True)
         self.toolBar = StandardWidgetToolBar(self)
         self.vLayout = QtGui.QVBoxLayout()
@@ -465,6 +469,14 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
         self.setLayout(self.vLayout)
         self.setAcceptDrops(True)
         self.createContainers()
+
+    def selectionChange(self):
+        # Get selection
+        indices = self.sheet.selectedIndexes()
+        selected_cells = []
+        for index in indices:
+            selected_cells.append(self.sheet.cellWidget(index.row(), index.column()))
+        self.selectionChanged.emit(selected_cells)
 
     def createContainers(self):
         row_count, col_count = self.getDimension()

@@ -4,6 +4,7 @@ from spreadsheet.window import SpreadsheetWindow
 from variables import VariableWidget
 from graphics import GraphicsMethodWidget
 from templates import TemplateWidget
+from inspector import InspectorWidget
 from main_menu import MainMenu
 import vcs
 
@@ -28,7 +29,11 @@ class MainWindow(QtGui.QMainWindow):
         tmpl_widget = TemplateWidget(parent=self)
         self.add_left_dock(tmpl_widget)
 
-        self.setMenuBar(MainMenu(self.spreadsheet, var_widget, gm_widget, tmpl_widget))
+        inspector = InspectorWidget(self.spreadsheet, parent=self)
+        self.add_right_dock(inspector)
+
+        self.setMenuBar(MainMenu(self.spreadsheet, var_widget,
+                                 gm_widget, tmpl_widget))
 
     def add_left_dock(self, widget):
         self.addDockWidget(DockWidgetArea.LeftDockWidgetArea, widget)

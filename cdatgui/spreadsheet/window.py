@@ -50,6 +50,9 @@ from .tabcontroller import StandardWidgetTabController
 
 
 class SpreadsheetWindow(QtGui.QMainWindow):
+
+    selectionChanged = QtCore.Signal(list)
+
     """
     SpreadsheetWindow is the top-level main window containing a
     stacked widget of QTabWidget
@@ -67,6 +70,7 @@ class SpreadsheetWindow(QtGui.QMainWindow):
         self.stackedCentralWidget = QtGui.QStackedWidget(self)
         # The controller that handles the spreadsheets
         self.tabController = StandardWidgetTabController(self.stackedCentralWidget)
+        self.tabController.selectionChanged.connect(self.selectionChanged.emit)
         self.stackedCentralWidget.addWidget(self.tabController)
         self.setCentralWidget(self.stackedCentralWidget)
         self.setStatusBar(QtGui.QStatusBar(self))
