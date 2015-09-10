@@ -49,18 +49,6 @@ def serialize_tmpl(name, props):
         lines.append("%s.%s = %s" % (name, prop, repr(props[prop])))
     return "\n    ".join(lines)
 
-
-def dump_vcs_obj(obj):
-    tmpfile, path = mkstemp(suffix=".py")
-    tmpfile = os.fdopen(tmpfile)
-    tmpfile.close()
-    obj.script(path)
-    with open(path) as f:
-        script = f.readlines()
-        script = "".join(script[9:])
-    os.remove(path)
-    return script
-
 operator_format = {
     "__call__": "{parent}({args})",
     "__getitem__": "{parent}[{args}]",
