@@ -1,6 +1,7 @@
 import pytest  # noqa
 from cdatgui.cdat import import_script, export_script, VariableMetadataWrapper, FileMetadataWrapper
 from cdatgui.cdat.plotter import PlotManager
+from cdatgui.cdat.exporter import diff
 import mocks
 import cdms2
 import vcs
@@ -64,3 +65,57 @@ def test_save_and_load_script(tmpdir):
         assert type(variable) == VariableMetadataWrapper
     assert len(obj.graphics_methods) == 1
     assert len(obj.templates) == 1
+
+
+def test_save_loaded_script(tmpdir):
+    _ = vcs.init()
+    dirpath = os.path.dirname(__file__)
+    load_file = os.path.join(dirpath, "data", "clt_u_v_iso.py")
+    save_file = tmpdir.join("clt_u_v_iso.py")
+
+    loaded = import_script(load_file)
+
+    canvases = [vcs.init() for _ in range(loaded.num_canvases)]
+    canvas_displays = loaded.plot(canvases)
+    for canvas in canvases:
+        canvas.close()
+
+    plot_managers = []
+    for display_group in canvas_displays:
+        pm_group = []
+        for display in display_group:
+            pm = PlotManager(mocks.PlotInfo)
+            # Determine which of the graphics methods created in loaded
+            gm = vcs.getgraphicsmethod(display.g_type, display.g_name)
+            pm.graphics_method = closest(gm, loaded.graphics_methods)
+            pm.template = vcs.gettemplate(display._template_origin)
+            pm.variables = display.array
+            pm_group.append(pm)
+        plot_managers.append(pm_group)
+    mocks.PlotInfo.canvas.close()
+
+    export_script(str(save_file), loaded.variables.values(), plot_managers)
+    # Compare the generated script with the existing one
+    with save_file.open() as saved:
+        sf = saved.read()
+    with open(load_file) as loaded:
+        l = loaded.read()
+
+    assert sf == l
+
+
+def closest(descendant, ancestors):
+    if len(ancestors) == 1:
+        return ancestors[0]
+
+    least_different = None
+    min_diffs = None
+    for ancient in ancestors:
+        if type(ancient) != type(descendant):
+            continue
+
+        diffs = diff(descendant, ancient)
+        if min_diffs is None or len(diffs) < min_diffs:
+            min_diffs = len(diffs)
+            least_different = ancient
+    return least_different
