@@ -1,31 +1,52 @@
 import cdms2
-import os.path
+from cdatgui.persistence.db import get_data_sources, add_data_source
+import cdatgui.cdat
+from PySide import QtCore
 
 __man__ = None
+
+
+def update_db(f):
+    add_data_source(f.uri)
 
 
 def manager():
     global __man__
     if __man__ is None:
-        __man__ = Manager()
+        __man__ = Manager(initial_uris=get_data_sources())
+        __man__.usedFile.connect(update_db)
     return __man__
 
 
-class Manager(object):
+class Manager(QtCore.QObject):
 
-    def __init__(self):
+    addedFile = QtCore.Signal(object)
+    usedFile = QtCore.Signal(object)
+
+    def __init__(self, initial_uris=None):
+        super(Manager, self).__init__()
         self.files = {}
-        self.file_modified = {}
 
-    def get_file(self, filepath):
-        if filepath in self.files:
-            return self.files[filepath]
-        if not os.path.exists(filepath):
-            raise IOError("No data file found at '%s'" % filepath)
+        if initial_uris is not None:
+            for uri in initial_uris:
+                self.add_file(cdms2.open(uri))
 
-        try:
-            self.files[filepath] = cdms2.open(filepath)
-        except cdms2.CDMSError:
-            raise IOError("File at '%s' not of a supported format" % filepath)
+    def get_file(self, uri):
+        if uri not in self.files:
+            f = cdms2.open(uri)
+            return self.add_file(f)
 
-        return self.files[filepath]
+        self.usedFile.emit(self.files[uri])
+        return self.files[uri]
+
+    def add_file(self, file):
+        if file.uri in self.files:
+            fmw = self.files[file.uri]
+        else:
+            fmw = cdatgui.cdat.FileMetadataWrapper(file)
+            self.files[file.uri] = fmw
+
+        self.addedFile.emit(fmw)
+        self.usedFile.emit(fmw)
+
+        return fmw

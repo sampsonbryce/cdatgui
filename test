@@ -1,2 +1,0 @@
-#!/bin/bash
-py.test --cov-config .coveragerc --cov=cdatgui tests --cov-report html

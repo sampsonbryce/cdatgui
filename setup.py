@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 setup(
     name="CDAT GUI",
@@ -8,14 +8,8 @@ setup(
     description="A Graphical User Interface for CDAT",
     author="Sam Fries",
     author_email="fries2@llnl.gov",
-    packages=["cdatgui",
-              "cdatgui.bases",
-              "cdatgui.variables",
-              "cdatgui.spreadsheet",
-              "cdatgui.graphics",
-              "cdatgui.templates",
-              "cdatgui.cdat",
-              ],
+    packages=find_packages(exclude="tests"),
     scripts=["scripts/cdatgui"],
-    package_data={"cdatgui": ["resources/*.png"]}
+    package_data={"cdatgui": ["resources/*"]},
+    install_requires=["sqlalchemy>=1.0"]
 )
