@@ -15,6 +15,8 @@ class CDATGUIApp(QtGui.QApplication):
         self.win = None
         self.splash = LoadingSplash()
         self.splash.show()
+        self.splash.raise_()
+        self.splash.activateWindow()
         self.preloadModules()
 
     def preloadModules(self):
