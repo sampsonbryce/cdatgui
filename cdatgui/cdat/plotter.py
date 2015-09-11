@@ -147,7 +147,7 @@ class PlotManager(QtCore.QObject):
         self._template = vcs.gettemplate(display._template_origin)
 
     def can_plot(self):
-        return self.dp is not None or (self._template is not None and self._vars is not None and self._gm is not None)
+        return self.dp is not None or (self._vars is not None and any((v is not None for v in self._vars)))
 
     @property
     def canvas(self):
@@ -201,11 +201,6 @@ class PlotManager(QtCore.QObject):
     def plot(self):
         if self.variables is None:
             raise ValueError("No variables specified")
-        if self.graphics_method is None:
-            raise ValueError("No graphics method specified")
-        # Check if gm supports templates
-        if self.template is None:
-            raise ValueError("No template specified")
 
         if self.dp is not None:
             # Set the slabs appropriately
@@ -227,8 +222,13 @@ class PlotManager(QtCore.QObject):
             for var in self.variables:
                 if var is not None:
                     args.append(var)
-            args.append(self.template.name)
-            args.append(vcs.graphicsmethodtype(self.graphics_method))
-            args.append(self.graphics_method.name)
+            if self.template is not None:
+                args.append(self.template.name)
+            if self.graphics_method is not None:
+                args.append(vcs.graphicsmethodtype(self.graphics_method))
+                args.append(self.graphics_method.name)
             self.dp = self.canvas.plot(*args)
-            self.dp_ind = self.canvas.display_names.index(self.dp.name)
+            if self.template is None:
+                self._template = vcs.gettemplate(self.dp._template_origin)
+            if self.graphics_method is None:
+                self._gm = vcs.getgraphicsmethod(self.dp.g_type, self.dp.g_name)

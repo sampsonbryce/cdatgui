@@ -15,6 +15,8 @@ class PlotItem(QtGui.QWidget):
         b = QtGui.QPushButton()
         b.setIcon(icon("editdelete.png"))
         b.setIconSize(QtCore.QSize(16, 16))
+        b.setFlat(True)
+        b.resize(QtCore.QSize(16, 16))
         l.addWidget(b)
         b.clicked.connect(self.remove)
         l.addWidget(label(self.plotter.name()))
