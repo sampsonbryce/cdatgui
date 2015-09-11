@@ -9,6 +9,7 @@ vcs_template_mime = "application/x-vcs-template"
 
 class PlotInfo(QtGui.QFrame):
     initialized = QtCore.Signal()
+    removed = QtCore.Signal(object)
 
     def __init__(self, canvas, parent=None, f=0):
         super(PlotInfo, self).__init__(parent=parent, f=f)
@@ -19,7 +20,7 @@ class PlotInfo(QtGui.QFrame):
             self._canvas = canvas
 
         self.manager = PlotManager(self)
-
+        self.manager.removed.connect(self.removeSelf)
         # Icon to display till we actually get some data
         self.newIcon = QtGui.QLabel(self)
         self.newIcon.setPixmap(icon("add_plot.svg").pixmap(128, 128))
@@ -50,6 +51,9 @@ class PlotInfo(QtGui.QFrame):
         self.tmpl_label = QtGui.QLabel()
         layout.addWidget(header_label("Template:"))
         layout.addWidget(self.tmpl_label)
+
+    def removeSelf(self):
+        self.removed.emit(self)
 
     def load(self, display):
         # Set up the labels correctly
@@ -104,12 +108,14 @@ class PlotInfo(QtGui.QFrame):
             self.var_labels[ind].setText(var.id)
 
 
-class PlotManager(object):
+class PlotManager(QtCore.QObject):
+    removed = QtCore.Signal()
+
     def __init__(self, source):
+        super(PlotManager, self).__init__()
         self.source = source
 
         self.dp = None
-        self.dp_ind = 0
         self._gm = None
         self._vars = None
         self._template = None
@@ -136,7 +142,6 @@ class PlotManager(object):
 
     def load(self, display):
         self.dp = display
-        self.dp_ind = self.canvas.display_names.index(display.name)
         self._gm = vcs.getgraphicsmethod(display.g_type, display.g_name)
         self._vars = display.array
         self._template = vcs.gettemplate(display._template_origin)
@@ -186,6 +191,13 @@ class PlotManager(object):
 
     template = property(templ, set_templ)
 
+    def remove(self):
+        if self.dp is not None:
+            self.canvas.display_names.remove(self.dp.name)
+            self.canvas.update()
+            self.dp = None
+            self.removed.emit()
+
     def plot(self):
         if self.variables is None:
             raise ValueError("No variables specified")
@@ -196,8 +208,6 @@ class PlotManager(object):
             raise ValueError("No template specified")
 
         if self.dp is not None:
-            if self.dp.name not in self.canvas.display_names:
-                self.dp = vcs.elements["display"][self.canvas.display_names[self.dp_ind]]
             # Set the slabs appropriately
             self.dp.array[0] = self.variables[0]
             self.dp.array[1] = self.variables[1]
@@ -209,12 +219,8 @@ class PlotManager(object):
             self.dp.g_name = self.graphics_method.name
             self.dp.g_type = vcs.graphicsmethodtype(self.graphics_method)
 
-            ind = self.canvas.display_names.index(self.dp.name)
-
             # Update the canvas
             self.canvas.update()
-
-            self.dp = vcs.elements["display"][self.canvas.display_names[ind]]
 
         else:
             args = []

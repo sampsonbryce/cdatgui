@@ -114,6 +114,12 @@ class QCDATWidget(QtGui.QFrame):
         self.dragLayout.addWidget(new_widget)
         self.plots.append(new_widget)
         new_widget.initialized.connect(self.addedPlot)
+        new_widget.removed.connect(self.removeWidget)
+
+    def removeWidget(self, widget):
+        self.plots.remove(widget)
+        self.dragLayout.removeWidget(widget)
+        widget.deleteLater()
 
     def manageCanvas(self, showing):
         if showing and self.canvas is None:
