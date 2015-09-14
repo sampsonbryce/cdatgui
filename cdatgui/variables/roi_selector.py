@@ -64,6 +64,8 @@ MapFrames = [  QtROISelectorMapFrame( 'Double Map', defaultMapDir, 'WorldMap2.jp
  
 class MapGraphicsView(QtGui.QGraphicsView):
 
+    ROISelected = QtCore.Signal(QtCore.QPointF, QtCore.QPointF, QtCore.QPointF, QtCore.QPointF)
+
     def __init__(self, imageGraphicsItem, imageContentExtents, pt0, pt1, parent=None):
         super(MapGraphicsView, self).__init__(parent)
         self.Extent = ( pt0.x(), pt0.y(), pt1.x(), pt1.y() ) 
@@ -154,7 +156,7 @@ class MapGraphicsView(QtGui.QGraphicsView):
             ( self.roiCorner1, self.scenePt1 ) = self.GetPointCoords()
             if self.roiCorner0 != None and self.roiCorner1 != None:
                 self.orderCoords( self.roiCorner0, self.roiCorner1 )
-                self.emit( QtCore.SIGNAL("ROISelected"), self.roiCorner0, self.roiCorner1, self.scenePt0, self.scenePt1 )
+                self.ROISelected.emit(self.roiCorner0, self.roiCorner1, self.scenePt0, self.scenePt1)
             if self.scenePt1 != None:
                 self.emit( QtCore.SIGNAL("PointSelected"), self.scenePt1, self.roiCorner1 )
         QtGui.QGraphicsView.mouseReleaseEvent(self, event)
@@ -181,7 +183,7 @@ class ROISelectionDialog(QtGui.QDialog):
         
         for mapFrame in MapFrames: 
             view = mapFrame.getView( self )            
-            self.connect( view, QtCore.SIGNAL("ROISelected"), self.UpdateGeoCoords )
+            view.ROISelected.connect(self.UpdateGeoCoords)
             self.tabbedWidget.addTab( view, mapFrame.name ) 
                        
         w = QtGui.QWidget()
