@@ -907,7 +907,7 @@ class QAxisComboWidget(QtGui.QComboBox):
         index = self.findData(['variables', str(axisValue)])
         # If user entered a value into the lineEdit.
         if 1:#index == -1:
-            self.updateValueFromLineEditText(axisValue)
+            self.updateValueFromLineEditText(str(axisValue))
             return
 
         # If user selected a value from the combo box.
