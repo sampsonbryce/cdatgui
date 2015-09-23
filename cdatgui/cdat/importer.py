@@ -2,6 +2,7 @@ import imp
 import hashlib
 import os
 import vcs
+from cdatgui.variables.manager import manager
 
 
 def module_name(path):
@@ -18,7 +19,6 @@ def module_name(path):
 
 def ensure_iterable(item):
     if type(item) not in (list, tuple):
-        print type(item)
         return [item]
     else:
         return item
@@ -44,7 +44,9 @@ class Script(object):
         for canvas in canvases:
             existing_dps.extend(canvas.display_names)
 
-        self._plot(canvases, self.variables, self.graphics_methods, self.templates)
+        # Strip off metadata wrapper before plotting
+        variables = {var: self.variables[var].var for var in self.variables}
+        self._plot(canvases, variables, self.graphics_methods, self.templates)
 
         for canvas in canvases:
             c_dps = []
@@ -78,20 +80,18 @@ class Script(object):
     @property
     def files(self):
         if self._files is None:
-            self._files = ensure_iterable(self.module.get_files())
+            f = ensure_iterable(self.module.get_files())
+            m = manager()
+            self._files = [m.add_file(file) for file in f]
         return self._files
 
     @property
     def variables(self):
         if self._vars is None:
+            # Wrap each of the files in a metadata tracker
             variables = self.module.get_variables(self.files)
             variables = ensure_iterable(variables)
-            var_dict = {var.id: var for var in variables}
-            self.module.modify_variables(var_dict)
-            for name, var in var_dict.items():
-                if name != var.id:
-                    var.id = name
-            self._vars = var_dict
+            self._vars = {var.id: var for var in variables}
         return self._vars
 
     @property

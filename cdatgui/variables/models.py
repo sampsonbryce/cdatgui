@@ -22,7 +22,7 @@ class CDMSVariableListModel(QtCore.QAbstractListModel):
             parts.append(char)
 
         indices = "".join(parts).split(",")
-        variables = [self.variables[int(ind)] for ind in indices]
+        variables = [self.variables[int(ind)].var for ind in indices]
 
         return variables
 

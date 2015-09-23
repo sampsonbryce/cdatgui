@@ -1,7 +1,9 @@
 *.pyc
+*.egg-info
 guitest.py
 build/
 .DS_Store
 pytestdebug.log
 .coverage
 htmlcov
+dist/

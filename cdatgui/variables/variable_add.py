@@ -2,6 +2,7 @@ from PySide import QtGui
 from cdms_file_tree import CDMSFileTree
 from cdatgui.toolbars import AddEditRemoveToolbar
 from cdms_file_chooser import CDMSFileChooser
+from manager import manager
 
 
 class AddDialog(QtGui.QDialog):
@@ -30,7 +31,6 @@ class AddDialog(QtGui.QDialog):
 
         self.setLayout(wrap)
 
-        # Should persist available files here...
         self.tree = CDMSFileTree()
         tree_layout = QtGui.QVBoxLayout()
         toolbar = AddEditRemoveToolbar(u"Available Files",
@@ -39,15 +39,19 @@ class AddDialog(QtGui.QDialog):
 
         tree_layout.addWidget(toolbar, 0)
         tree_layout.addWidget(self.tree, 10)
+        m = manager()
+        for f in m.files:
+            self.tree.add_file(m.files[f])
+
+        m.addedFile.connect(self.addFileToTree)
 
         horiz.addLayout(tree_layout, 2)
 
         self.chooser = CDMSFileChooser()
         self.chooser.accepted.connect(self.added_files)
 
-    def load(self, files):
-        for file in files:
-            self.tree.add_file(file)
+    def addFileToTree(self, file):
+        self.tree.add_file(file)
 
     def selected_variables(self):
         return self.tree.get_selected()
