@@ -33,7 +33,7 @@ class AnimationControls(QtGui.QWidget):
         self.scrubber.valueChanged.connect(self.changeFrame)
         scrubber_labeled = LabeledWidget()
         scrubber_labeled.widget = self.scrubber
-        scrubber_labeled.label = "Frame"
+        scrubber_labeled.label = "Current Frame"
         row.addWidget(scrubber_labeled)
 
         skipForward = QtGui.QPushButton(icon("skipForward.png"), '')
@@ -74,7 +74,7 @@ class AnimationControls(QtGui.QWidget):
         self.speed.valueChanged.connect(self.speedChanged.emit)
         speed_labeled = LabeledWidget()
         speed_labeled.widget = self.speed
-        speed_labeled.label = "Delay (in milliseconds)"
+        speed_labeled.label = "Frames per Second"
 
         layout.addWidget(speed_labeled)
         self.setLayout(layout)
@@ -114,7 +114,12 @@ class AnimationControls(QtGui.QWidget):
         self.scrubber.setEnabled(enabled)
         self.speed.setEnabled(enabled)
 
+    def setFrame(self, value):
+        self.scrubber.setValue(value)
+
     def changeFrame(self, value):
+        self.playpause.setChecked(False)
+        self.togglePlayback()
         if value == self.scrubber.maximum():
             self.stepForward.setEnabled(False)
             self.skipForward.setEnabled(False)

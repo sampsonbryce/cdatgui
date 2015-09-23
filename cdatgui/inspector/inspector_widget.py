@@ -1,27 +1,22 @@
 from PySide import QtCore, QtGui
 from cdatgui.bases import StaticDockWidget
-from plot_list import PlotList
-from animation import AnimationControls
+from plot_inspect import PlotInspector
 
 
 class InspectorWidget(StaticDockWidget):
+    plotters_updated = QtCore.Signal(list)
 
     def __init__(self, spreadsheet, parent=None):
         super(InspectorWidget, self).__init__("Inspector", parent=parent)
         self.allowed_sides = [QtCore.Qt.DockWidgetArea.RightDockWidgetArea]
+        spreadsheet.selectionChanged.connect(self.selection_change)
 
-        w = QtGui.QWidget()
-        l = QtGui.QVBoxLayout()
-        w.setLayout(l)
-
-        self.plot_list = PlotList(parent=self)
-        l.addWidget(self.plot_list)
-
-        self.animation = AnimationControls()
-        l.addWidget(self.animation)
+        w = QtGui.QTabWidget()
+        pi = PlotInspector()
+        self.plotters_updated.connect(pi.setPlots)
+        w.addTab(pi, "Plots")
 
         self.setWidget(w)
-        spreadsheet.selectionChanged.connect(self.selection_change)
 
     def selection_change(self, selected):
         plots = []
@@ -30,4 +25,5 @@ class InspectorWidget(StaticDockWidget):
             # cell is now a QCDATWidget
             plots.extend(cell.getPlotters())
 
-        self.plot_list.plots = plots
+        self.plots = plots
+        self.plotters_updated.emit(self.plots)
