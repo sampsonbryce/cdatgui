@@ -171,3 +171,34 @@ def test_variable_widget(qtbot):
                           timeout=1000,
                           raising=True):
         w.select_variable(0)
+
+
+def test_axis_bounds_chooser(qtbot, cdmsfile):
+    axis = cdmsfile.getAxis("time")
+    w = cdatgui.variables.axis_bounds.AxisBoundsChooser(axis)
+    qtbot.addWidget(w)
+
+    assert w.getSelector() == ("time", ("1979-01", "1988-12"))
+    w.range.lowerBoundText.setText("1980-12")
+    w.range.lowerBoundText.textEdited.emit("1980-12")
+    assert w.getSelector() == ("time", ("1980-12", "1988-12"))
+
+    axis2 = cdmsfile.getAxis("latitude")
+    w = cdatgui.variables.axis_bounds.AxisBoundsChooser(axis2)
+    qtbot.addWidget(w)
+
+    assert w.getSelector() == ("latitude", (-90, 90))
+    w.range.lowerBoundText.setText(u"2.00\N{DEGREE SIGN}")
+    w.range.lowerBoundText.textEdited.emit(u"2.00\N{DEGREE SIGN}")
+    assert w.getSelector() == ("latitude", (2.0, 90.0))
+
+
+def test_axis_list(qtbot, cdmsfile):
+    f = cdatgui.cdat.metadata.FileMetadataWrapper(cdmsfile)
+    clt = f["clt"]
+    w = cdatgui.variables.axes_widgets.QAxisList(f, clt)
+    kwargs = w.getKwargs()
+    assert kwargs["time"] == ("1979-01", "1988-12")
+    assert kwargs["latitude"] == (-90, 90)
+    assert kwargs["longitude"] == (-180, 175)
+

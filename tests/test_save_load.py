@@ -1,7 +1,8 @@
 import pytest  # noqa
-from cdatgui.cdat import import_script, export_script, VariableMetadataWrapper, FileMetadataWrapper
+from cdatgui.cdat.importer import import_script
 from cdatgui.cdat.plotter import PlotManager
-from cdatgui.cdat.exporter import diff
+from cdatgui.cdat.exporter import diff, export_script
+from cdatgui.cdat.metadata import VariableMetadataWrapper, FileMetadataWrapper
 import mocks
 import cdms2
 import vcs

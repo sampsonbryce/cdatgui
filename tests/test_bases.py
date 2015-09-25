@@ -186,3 +186,21 @@ def test_static_dock_widget_sides(qtbot):
     assert len(w.allowed_sides) == 2
     for side in [QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, QtCore.Qt.DockWidgetArea.RightDockWidgetArea]:
         assert side in w.allowed_sides
+
+
+def test_range_widget(qtbot):
+    w = cdatgui.bases.RangeWidget([str(i) for i in range(50)], 10, 40)
+    qtbot.addWidget(w)
+
+    assert w.getBounds() == (10, 40)
+    w.updateLower(41)
+    assert w.getBounds() == (40, 40)
+    w.lowerBoundText.setText("12")
+    w.lowerBoundText.textEdited.emit("12")
+    assert w.getBounds() == (12, 40)
+    w.updateUpper(11)
+    assert w.getBounds() == (12, 12)
+    w.upperBoundText.setText("30")
+    w.upperBoundText.textEdited.emit("30")
+    assert w.getBounds() == (12, 30)
+

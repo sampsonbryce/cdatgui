@@ -1,6 +1,6 @@
 import cdms2
 from cdatgui.persistence.db import get_data_sources, add_data_source
-import cdatgui.cdat
+import cdatgui.cdat.metadata
 from PySide import QtCore
 
 __man__ = None
@@ -43,7 +43,7 @@ class Manager(QtCore.QObject):
         if file.uri in self.files:
             fmw = self.files[file.uri]
         else:
-            fmw = cdatgui.cdat.FileMetadataWrapper(file)
+            fmw = cdatgui.cdat.metadata.FileMetadataWrapper(file)
             self.files[file.uri] = fmw
 
         self.addedFile.emit(fmw)

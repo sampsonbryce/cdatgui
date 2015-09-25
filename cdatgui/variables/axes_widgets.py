@@ -35,7 +35,13 @@ class QAxisList(QtGui.QWidget):
             widget.deleteLater()
 
         self.axisWidgets = []
-        self.axesNames = []
+
+    def getKwargs(self):
+        kwargs = {}
+        for widget in self.axisWidgets:
+            key, bounds = widget.getSelector()
+            kwargs[key] = bounds
+        return kwargs
 
     def getVar(self):
         return self._var

@@ -1,6 +1,6 @@
 import sys
 import cdatgui.utils
-from variable_wrapper import FileMetadataWrapper, VariableMetadataWrapper
+from metadata import FileMetadataWrapper, VariableMetadataWrapper
 from collections import OrderedDict
 import vcs
 from tempfile import mkstemp

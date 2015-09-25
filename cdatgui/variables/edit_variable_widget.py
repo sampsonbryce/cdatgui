@@ -74,8 +74,8 @@ class EditVariableDialog(QtGui.QDialog):
         self.layout = v
         self.setLayout(v)
 
-        axisList = QAxisList(None, var, self)
-        axisList.setupVariableAxes()
+        self.axisList = QAxisList(None, var, self)
+        self.axisList.setupVariableAxes()
         self.axisListHolder = axisList
         self.fillDimensionsWidget(axisList)
         self.updateVarInfo(axisList)
@@ -96,19 +96,9 @@ class EditVariableDialog(QtGui.QDialog):
         self.btnSaveEditsAs.clicked.connect(self.saveEditsAsClicked)
         self.selectRoiButton.clicked.connect(self.selectRoi)
 
-    def checkTargetVarName(self):
-        result = None
-        while result is None:
-            result = self.ask.result()
-            value = self.ask.textValue()
-        if result == 1: # make sure we pressed Ok and not Cancel
-            if str(value) != self.checkAgainst:
-                self.getUpdatedVarCheck(str(value))
-            else:
-                self.getUpdatedVar(str(value))
-
     def selectRoi( self ):
-        if self.roi: self.roiSelector.setROI( self.roi )
+        if self.roi:
+            self.roiSelector.setROI( self.roi )
         self.roiSelector.show()
 
     def setRoi(self):
@@ -176,8 +166,6 @@ class EditVariableDialog(QtGui.QDialog):
         it = self.dimsLayout.takeAt(0)
         if it:
             it.widget().deleteLater()
-    ##             it.widget().destroy()
-#            self.dimsLayout.removeItem(it)
             del(it)
 
     def fillDimensionsWidget(self, axisList):
@@ -207,149 +195,14 @@ class EditVariableDialog(QtGui.QDialog):
         else:
             self.selectRoiButton.setHidden(True)
 
-    def getUpdatedVarCheck(self, targetId=None):
-        """ Return a new tvariable object with the updated information from
-        evaluating the var with the current user selected args / options
-        """
-        axisList = self.dimsLayout.itemAt(0).widget()
-
-        if targetId is not None:
-            tid = targetId
-        elif axisList.cdmsFile is None:
-            tid = axisList.var.id
-        else:
-            tid = axisList.var
-
-        exists = False
-        for it in self.root.dockVariable.widget().getItems(project=False):
-            if tid == str(it.text()).split()[1]:
-                exists = True
-        ## Ok at that point we need to figure out if
-        if exists:
-            self.checkAgainst = tid
-            self.ask.setTextValue(tid)
-            self.ask.show()
-            self.ask.exec_()
-        else:
-            self.getUpdatedVar(tid)
-
     def getUpdatedVar(self, targetId):
-        axisList = self.dimsLayout.itemAt(0).widget()
-        kwargs = self.generateKwArgs()
-        # Here we try to remove useless keywords as we record them
-        cmds = ""
-        for k in kwargs:
-            if k=='order':
-                o = kwargs[k]
-                skip = True
-                for i in range(len(o)):
-                    if int(o[i])!=i:
-                        skip = False
-                        break
-                if skip:
-                    continue
-            cmds += "%s=%s," % (k, repr(kwargs[k]))
-        cmds = cmds[:-1]
-#        uvar=axisList.getVar()
-#        if isinstance(uvar,cdms2.axis.FileAxis):
-#            updatedVar = cdms2.MV2.array(uvar)
-#        else:
-#            updatedVar = uvar(**kwargs)
-
-        # Get the variable after carrying out the: def, sum, avg... operations
-#        updatedVar = axisList.execAxesOperations(updatedVar)
-        updatedVar = axisList.getVar()
-
-        if axisList.cdmsFile is None:
-            oid = updatedVar.id
-        else:
-            oid = "cdmsFileVariable"
-        ## Squeeze?
-        if updatedVar.rank() !=0:
-            if self.root.preferences.squeeze.isChecked():
-                #updatedVar=updatedVar(squeeze=1)
-                self.root.record("%s = %s(squeeze=1)" % (targetId,targetId))
-                kwargs['squeeze']=1
-        else:
-            val = QtGui.QMessageBox()
-            val.setText("%s = %f" % (updatedVar.id,float(updatedVar)))
-            val.exec_()
-
-
-
-
-        # Send information to controller so the Variable can be reconstructed
-        # later. The best way is by emitting a signal to be processed by the
-        # main window. When this panel becomes a global panel, then we will do
-        # that. For now I will talk to the main window directly.
-
-        #_app = get_vistrails_application()
-        #controller = _app.uvcdatWindow.get_current_project_controller()
-        def get_kwargs_str(kwargs_dict):
-            kwargs_str = ""
-            for k, v in kwargs_dict.iteritems():
-                if k == 'order':
-                    o = kwargs_dict[k]
-                    skip = True
-                    for i in range(len(o)):
-                        if int(o[i])!=i:
-                            skip = False
-                            break
-                    if skip:
-                        continue
-                kwargs_str += "%s=%s," % (k, repr(v))
-            return kwargs_str
-        axes_ops_dict = axisList.getAxesOperations()
-        url = None
-        if hasattr(self.cdmsFile, "uri"):
-            url = self.cdmsFile.uri
-        cdmsVar = None
-        # TODO apply axes to variable here
-        # if not computed_var:
-        #     cdmsVar = CDMSVariable(filename=self.cdmsFile.id, url=url, name=targetId,
-        #                            varNameInFile=original_id,
-        #                            axes=get_kwargs_str(kwargs),
-        #                            axesOperations=str(axes_ops_dict))
-        #     controller.add_defined_variable(cdmsVar)
-        # else:
-        #     controller.copy_computed_variable(original_id, targetId,
-        #                                       axes=get_kwargs_str(kwargs),
-        #                                       axesOperations=str(axes_ops_dict))
-
-        #updatedVar = controller.create_exec_new_variable_pipeline(targetId)
-
-##        if updatedVar is None:
-#            return axisList.getVar()
-
-#        self.emit(QtCore.SIGNAL('definedVariableEvent'),updatedVar)
-
-        # if(self.varEditArea.widget()):
-        #     self.varEditArea.widget().var = updatedVar
-        #     axisList.setVar(updatedVar)
-
-        # self.updateVarInfo(axisList)
-        # return updatedVar
-
-    def generateKwArgs(self, axisList=None):
-        """ Generate and return the variable axes keyword arguments """
-        if axisList is None:
-            axisList = self.dimsLayout.itemAt(0).widget()
-
-        kwargs = {}
-        for axisWidget in axisList.getAxisWidgets():
-            if not axisWidget.isHidden():
-                kwargs[axisWidget.axis.id] = axisWidget.getCurrentValues()
-
-        # Generate additional args
-        #kwargs['squeeze'] = 0
-        kwargs['order'] = axisList.getAxesOrderString()
-        return kwargs
+        new_var = self.var(**self.axisList.getKwargs())
+        new_var.id = targetId
+        return new_var
 
     def applyEditsClicked(self):
-        varname = self.varEditArea.widget().var.id
-        self.getUpdatedVar(varname)
-
-        #controller.variableEdited(varname)
+        # TODO: Update current variable
+        pass
 
     def saveEditsAsClicked(self):
         # TODO: copy to new variable

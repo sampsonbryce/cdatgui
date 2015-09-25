@@ -1,5 +1,5 @@
 from PySide import QtGui, QtCore
-from float_slider import PrecisionSlider
+from value_slider import ValueSlider
 
 
 class RangeValidator(QtGui.QValidator):
@@ -17,8 +17,12 @@ class RangeValidator(QtGui.QValidator):
             return self.Intermediate
 
 
-def __build_slider__(val, min, max):
-    s = PrecisionSlider(value=val, min=min, max=max, precision=1)
+def __build_slider__(val, values):
+    s = ValueSlider(values)
+    if val in values:
+        s.setRealValue(val)
+    else:
+        s.setValue(val)
     s.setTracking(True)
     s.setOrientation(QtCore.Qt.Horizontal)
     s.sizePolicy().setHorizontalPolicy(QtGui.QSizePolicy.MinimumExpanding)
@@ -27,7 +31,7 @@ def __build_slider__(val, min, max):
 
 
 class RangeWidget(QtGui.QWidget):
-    def __init__(self, min, max, bottom, top, formatter=None, parser=None, parent=None):
+    def __init__(self, values, bottom=None, top=None, parent=None):
         """
         min: Minimum value for range
         max: Maximum value for range
@@ -37,23 +41,16 @@ class RangeWidget(QtGui.QWidget):
         parser: Callable that converts a string to a value
         """
         super(RangeWidget, self).__init__(parent=parent)
+        self.values = values
         l = QtGui.QHBoxLayout()
 
-        if formatter is not None and callable(formatter):
-            self.format = formatter
-        else:
-            self.format = str
+        if bottom is None:
+            bottom = 0
 
-        if parser is None:
-            # Slow and cruddy method
-            def parse(value):
-                for v in range(int(min), int(max) + 1):
-                    if self.format(v) == value:
-                        return v
-                return None
-            self.parse = parse
-        else:
-            self.parse = parser
+        if top is None:
+            top = len(values) - 1
+        min = 0
+        max = len(values) - 1
 
         self.lowerBoundText = QtGui.QLineEdit(self.format(bottom))
         self.upperBoundText = QtGui.QLineEdit(self.format(top))
@@ -61,8 +58,8 @@ class RangeWidget(QtGui.QWidget):
         self.lowerBoundText.setValidator(RangeValidator(min, top, self.parse))
         self.upperBoundText.setValidator(RangeValidator(bottom, max, self.parse))
 
-        self.lowerBoundSlider = __build_slider__(bottom, min, max)
-        self.upperBoundSlider = __build_slider__(top, min, max)
+        self.lowerBoundSlider = __build_slider__(bottom, values)
+        self.upperBoundSlider = __build_slider__(top, values)
 
         slayout = QtGui.QVBoxLayout()
         slayout.addWidget(self.lowerBoundSlider, 1)
@@ -72,8 +69,8 @@ class RangeWidget(QtGui.QWidget):
         l.addLayout(slayout, 1)
         l.addWidget(self.upperBoundText)
 
-        self.lowerBoundSlider.preciseValueChanged.connect(self.updateLower)
-        self.upperBoundSlider.preciseValueChanged.connect(self.updateUpper)
+        self.lowerBoundSlider.valueChanged.connect(self.updateLower)
+        self.upperBoundSlider.valueChanged.connect(self.updateUpper)
 
         self.lowerBoundText.textEdited.connect(self.parseLower)
         self.upperBoundText.textEdited.connect(self.parseUpper)
@@ -87,6 +84,12 @@ class RangeWidget(QtGui.QWidget):
         self.validPalette.setColor(self.validPalette.Text, QtCore.Qt.black)
 
         self.setLayout(l)
+
+    def format(self, ind):
+        return self.values[ind]
+
+    def parse(self, value):
+        return self.values.index(value)
 
     def getBounds(self):
         return self.lowerBoundSlider.value(), self.upperBoundSlider.value()
@@ -124,12 +127,14 @@ class RangeWidget(QtGui.QWidget):
             self.upperBoundText.setPalette(self.errorPalette)
 
     def adjustLower(self):
+        print "adjustLower"
         if self.lowerBoundText.hasAcceptableInput():
             # Normalize the value
             value = self.parse(self.lowerBoundText.text())
             self.lowerBoundText.setText(self.format(value))
 
     def adjustUpper(self):
+        print "adjustUpper"
         if self.upperBoundText.hasAcceptableInput():
             # Normalize the value
             value = self.parse(self.upperBoundText.text())

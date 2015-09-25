@@ -1,18 +1,46 @@
 import cdtime
 
 
+def axis_values(axis):
+    formatter = format_axis(axis)
+    values = []
+    for value in axis:
+        values.append(formatter(value))
+    return values
+
+
+def selector_value(index, axis):
+    if axis.isTime():
+        return format_time_axis(axis)(axis[index])    
+    return axis[index]
+
+
 def format_axis(axis):
+    """Returns a function that converts values from this axis into human readable values"""
     if axis.isTime():
         return format_time_axis(axis)
+    elif axis.isLatitude() or axis.isLongitude():
+        return format_degrees
     else:
-        return None
+        return unicode
 
 
 def parse_axis(axis):
+    """Returns a function that converts human readable values from this axis to axis values"""
     if axis.isTime():
         return parse_time_axis(axis)
-    else:
-        return None
+    elif axis.isLatitude() or axis.isLongitude():
+        return parse_degrees
+    return float
+
+
+def parse_degrees(value):
+    f = value[:-1]
+    return float(f)
+
+
+def format_degrees(value):
+    return u"%.02f\N{DEGREE SIGN}" % value
 
 
 def format_time_axis(axis):
@@ -25,15 +53,15 @@ def format_time_axis(axis):
         reltime = cdtime.reltime(value, units)
         comptime = reltime.tocomp(calendar)
         if time_increment[0:6] == "second":
-            return "%d-%d-%d %d:%d:%d" % (comptime.year, comptime.month, comptime.day, comptime.hour, comptime.minute, comptime.second)
+            return "%d-%02d-%02d %02d:%02d:%02d" % (comptime.year, comptime.month, comptime.day, comptime.hour, comptime.minute, comptime.second)
         elif time_increment[0:6] == "minute":
-            return "%d-%d-%d %d:%d" % (comptime.year, comptime.month, comptime.day, comptime.hour, comptime.minute)
+            return "%d-%02d-%02d %02d:%02d" % (comptime.year, comptime.month, comptime.day, comptime.hour, comptime.minute)
         elif time_increment[0:4] == "hour":
-            return "%d-%d-%d %d:00" % (comptime.year, comptime.month, comptime.day, comptime.hour)
+            return "%d-%02d-%02d %02d:00" % (comptime.year, comptime.month, comptime.day, comptime.hour)
         elif time_increment[0:3] == "day" or time_increment[0:4] == "week":
-            return "%d-%d-%d" % (comptime.year, comptime.month, comptime.day)
+            return "%d-%02d-%02d" % (comptime.year, comptime.month, comptime.day)
         elif time_increment[0:5] == "month" or time_increment[0:6] == "season":
-            return "%d-%d" % (comptime.year, comptime.month)
+            return "%d-%02d" % (comptime.year, comptime.month)
         elif time_increment[0:4] == "year":
             return comptime.year
 

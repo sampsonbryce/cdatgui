@@ -1,5 +1,6 @@
 from PySide import QtGui, QtCore
-from cdatgui.cdat import import_script, export_script
+from cdatgui.cdat.importer import import_script
+from cdatgui.cdat.exporter import export_script
 from cdatgui.variables.manager import manager
 import os
 import numpy
