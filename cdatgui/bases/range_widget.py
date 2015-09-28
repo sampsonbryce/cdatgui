@@ -31,6 +31,9 @@ def __build_slider__(val, values):
 
 
 class RangeWidget(QtGui.QWidget):
+
+    boundsEdited = QtCore.Signal()
+
     def __init__(self, values, bottom=None, top=None, parent=None):
         """
         min: Minimum value for range
@@ -99,6 +102,7 @@ class RangeWidget(QtGui.QWidget):
             self.lowerBoundSlider.setValue(self.upperBoundSlider.value())
             return
         self.upperBoundText.validator().min = value
+        self.boundsEdited.emit()
         if value != self.parse(self.lowerBoundText.text()):
             self.lowerBoundText.setText(self.format(value))
 
@@ -107,6 +111,7 @@ class RangeWidget(QtGui.QWidget):
             self.upperBoundSlider.setValue(self.lowerBoundSlider.value())
             return
         self.lowerBoundText.validator().max = value
+        self.boundsEdited.emit()
         if value != self.parse(self.upperBoundText.text()):
             self.upperBoundText.setText(self.format(value))
 
@@ -127,14 +132,12 @@ class RangeWidget(QtGui.QWidget):
             self.upperBoundText.setPalette(self.errorPalette)
 
     def adjustLower(self):
-        print "adjustLower"
         if self.lowerBoundText.hasAcceptableInput():
             # Normalize the value
             value = self.parse(self.lowerBoundText.text())
             self.lowerBoundText.setText(self.format(value))
 
     def adjustUpper(self):
-        print "adjustUpper"
         if self.upperBoundText.hasAcceptableInput():
             # Normalize the value
             value = self.parse(self.upperBoundText.text())

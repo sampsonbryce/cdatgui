@@ -5,6 +5,7 @@ from variable_add import AddDialog
 from cdms_var_list import CDMSVariableList
 from edit_variable_widget import EditVariableDialog
 
+
 class VariableWidget(StaticDockWidget):
 
     selectedVariable = QtCore.Signal(object)
@@ -46,6 +47,8 @@ class VariableWidget(StaticDockWidget):
         index = indexes[0].row()
         variable = self.variable_widget.get_variable(index)
         e = EditVariableDialog(variable, self)
+        e.editedVariable.connect(self.variable_widget.update_variable)
+        e.createdVariable.connect(self.variable_widget.add_variable)
         e.show()
 
     def remove_variable(self):

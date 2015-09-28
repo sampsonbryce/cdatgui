@@ -1,12 +1,11 @@
 
 from PySide import QtGui, QtCore
-import numpy
-import cdms2
 from axis_bounds import AxisBoundsChooser
-from cdatgui.utils import label, header_label
+from cdatgui.utils import header_label
 
 
 class QAxisList(QtGui.QWidget):
+    axisEdited = QtCore.Signal(object)
     """ Widget containing a list of axis widgets for the selected variable """
 
     def __init__(self, cdmsFile=None, var=None, parent=None):
@@ -44,7 +43,7 @@ class QAxisList(QtGui.QWidget):
         return kwargs
 
     def getVar(self):
-        return self._var
+        return self._var.get_original()(**self.getKwargs())
 
     def setVar(self, var):
         """ Iterate through the variable's axes and create and initialize an Axis
@@ -57,8 +56,12 @@ class QAxisList(QtGui.QWidget):
         if var is None:
             return
 
-        for axis in var.getAxisList():
-            w = AxisBoundsChooser(axis)
+        orig = var.get_original()
+        var_axes = {ax.id: ax for ax in var.getAxisList()}
+
+        for axis in orig.getAxisList():
+            w = AxisBoundsChooser(var_axes[axis.id], source_axis=axis)
+            w.boundsEdited.connect(self.axisEdited.emit)
             self.axisWidgets.append(w)
             self.vbox.addWidget(w)
 

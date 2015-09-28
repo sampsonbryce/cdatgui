@@ -3,8 +3,6 @@ import cdatgui.utils
 from metadata import FileMetadataWrapper, VariableMetadataWrapper
 from collections import OrderedDict
 import vcs
-from tempfile import mkstemp
-import os
 
 
 def diff(obj, base):
@@ -82,7 +80,7 @@ class VariableNode(object):
     def __init__(self, variable, tree):
         self.var = variable
         self.serialized = False
-        self.op = variable.operation
+        self.op = variable.operation_name
         self.args = variable.args
         self.kwargs = variable.kwargs
         if self.kwargs is None:
@@ -121,11 +119,14 @@ class VariableNode(object):
                 self.tree.node(arg)
                 args_clean.append(self.tree.var_name(arg))
             else:
+                if type(arg) == slice:
+                    parts = arg.start, arg.end, arg.step
+                    args_clean.append(":".join(parts))
                 args_clean.append(repr(arg))
 
         statement = """{name} = {expression}\n    {name}.id = {varid}"""
-        if self.op.im_func.func_name in operator_format:
-            expression = operator_format[self.op.im_func.func_name]
+        if self.op in operator_format:
+            expression = operator_format[self.op]
         else:
             expression = """{parent}.{func}({args})"""
         args = ", ".join(args_clean + [str(key) + "=" + repr(value) for key, value in self.kwargs.items()])
