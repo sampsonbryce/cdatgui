@@ -103,8 +103,10 @@ class VariableMetadataWrapper(object):
         if type(s.source) == FileMetadataWrapper:
             if len(s.args) > 1 or len(s.kwargs) > 0:
                 return s.source[s.id]
+            else:
+                return s
 
-        return s
+        return s.source
 
     def __call__(self, *args, **kwargs):
         v = self.var.__call__(*args, **kwargs)

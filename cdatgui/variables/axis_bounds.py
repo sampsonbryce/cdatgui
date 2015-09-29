@@ -11,7 +11,10 @@ class AxisBoundsChooser(QtGui.QWidget):
 
     def __init__(self, axis, source_axis=None, parent=None):
         super(AxisBoundsChooser, self).__init__(parent=parent)
-        self.axis = axis
+        if source_axis is not None:
+            self.axis = source_axis
+        else:
+            self.axis = axis
         l = QtGui.QVBoxLayout()
         l.addWidget(header_label(axis.id))
 
