@@ -12,6 +12,15 @@ class CDMSVariableListModel(QtCore.QAbstractListModel):
     def get_variable(self, index):
         return self.variables[index]
 
+    def update_variable(self, variable):
+        for ind, var in enumerate(self.variables):
+            if var.id == variable.id:
+                break
+        else:
+            raise ValueError("No variable found with ID %s" % variable.id)
+
+        self.variables[ind] = variable
+
     def get_dropped(self, md):
         variables = []
 

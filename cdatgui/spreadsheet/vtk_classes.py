@@ -3,7 +3,7 @@ import os
 from PySide import QtCore, QtGui
 import vcs
 from vtk.qt4.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
-from cdatgui.cdat import PlotInfo
+from cdatgui.cdat.plotter import PlotInfo
 from functools import partial
 
 cdms_mime = "application/x-cdms-variable-list"

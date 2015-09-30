@@ -68,6 +68,7 @@ class VariableMetadataWrapper(object):
         self.kwargs = var_kwargs
         self.source = source
         self.operation = operation
+        self.operation_name = operation.im_func.func_name
         while type(source) != FileMetadataWrapper:
             source = source.source
         source.vars.append(self)
@@ -89,6 +90,24 @@ class VariableMetadataWrapper(object):
 
         return files
 
+    def get_original(self):
+        """Returns the widest version of the variable"""
+        s = self
+
+        while type(s.source) != FileMetadataWrapper and s.operation_name in ("__call__", "__getitem__"):
+            s = s.source
+
+        if s.operation_name not in ("__call__", "__getitem__"):
+            return s
+
+        if type(s.source) == FileMetadataWrapper:
+            if len(s.args) > 1 or len(s.kwargs) > 0:
+                return s.source[s.id]
+            else:
+                return s
+
+        return s.source
+
     def __call__(self, *args, **kwargs):
         v = self.var.__call__(*args, **kwargs)
         return VariableMetadataWrapper(v, self, args, var_kwargs=kwargs, operation=self.__call__)
@@ -101,7 +120,7 @@ class VariableMetadataWrapper(object):
             return attr_wrap(a, self, name)
 
     def __setattr__(self, name, value):
-        if name not in ("var", "args", "kwargs", "source", "operation"):
+        if name not in ("var", "args", "kwargs", "source", "operation", "operation_name"):
             setattr(self.var, name, value)
         else:
             super(VariableMetadataWrapper, self).__setattr__(name, value)

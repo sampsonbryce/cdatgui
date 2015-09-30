@@ -13,3 +13,6 @@ class CDMSVariableList(QtGui.QListView):
 
     def get_variable(self, index):
         return self.model().variables[index]
+
+    def update_variable(self, cdmsvar):
+        self.model().update_variable(cdmsvar)
