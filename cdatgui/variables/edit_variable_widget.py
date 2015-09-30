@@ -30,7 +30,6 @@ class EditVariableDialog(QtGui.QDialog):
         self.modified = False
 
         self.setWindowTitle('Edit Variable "%s"' % var.id)
-        self.roi = [-180.0, -90.0, 180.0, 90.0]
 
         v = QtGui.QVBoxLayout()
         self.resize(QtCore.QSize(800, 600))
@@ -46,8 +45,6 @@ class EditVariableDialog(QtGui.QDialog):
         self.roiSelector.setWindowFlags(self.roiSelector.windowFlags() |
                                         QtCore.Qt.WindowStaysOnTopHint)
         self.roiSelector.doneConfigure.connect(self.setRoi)
-        if self.roi:
-            self.roiSelector.setROI(self.roi)
 
         self.axisList = QAxisList(None, var, self)
         v.addWidget(self.axisList)
@@ -56,6 +53,11 @@ class EditVariableDialog(QtGui.QDialog):
         self.selectRoiButton = QtGui.QPushButton('Select Region Of Interest')
         self.selectRoiButton.setDefault(False)
         self.selectRoiButton.setHidden(True)
+        for axis in self.var.getAxisList():
+            if axis.isLatitude() or axis.isLongitude():
+                self.selectRoiButton.setHidden(False)
+                break
+
         h.addWidget(self.selectRoiButton)
 
         s = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding,
@@ -87,13 +89,14 @@ class EditVariableDialog(QtGui.QDialog):
         self.btnApplyEdits.setEnabled(True)
 
     def selectRoi(self):
-        if self.roi:
-            self.roiSelector.setROI(self.roi)
+        (lat0, lat1), (lon0, lon1) = self.axisList.getROI()
+        self.roiSelector.setROI((lon0, lat0, lon1, lat1))
         self.roiSelector.show()
 
     def setRoi(self):
-        self.roi = self.roiSelector.getROI()
-        self.updateAxesFromRoi()
+        roi = self.roiSelector.getROI()
+        lon0, lat0, lon1, lat1 = roi
+        self.axisList.setROI((lat0, lat1), (lon0, lon1))
 
     def applyEditsClicked(self):
         newvar = self.axisList.var

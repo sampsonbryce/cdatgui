@@ -24,6 +24,9 @@ class QAxisList(QtGui.QWidget):
         vbox.setContentsMargins(5, 5, 5, 5)
         self.setLayout(vbox)
 
+        self.latitude = None
+        self.longitude = None
+
         self.var = var
 
     def clear(self):
@@ -41,6 +44,36 @@ class QAxisList(QtGui.QWidget):
             key, bounds = widget.getSelector()
             kwargs[key] = bounds
         return kwargs
+
+    def getLatLon(self):
+        if self._var is None:
+            return None, None
+        lat_ax = None
+        lon_ax = None
+        for axis in self._var.getAxisList():
+            if axis.isLatitude():
+                lat_ax = axis
+            if axis.isLongitude():
+                lon_ax = axis
+        return lat_ax, lon_ax
+
+    def getROI(self):
+        if self._var is None:
+            return
+
+        for w in self.axisWidgets:
+            if w.axis.isLatitude():
+                lat_bot, lat_top = w.getBotTop()
+            if w.axis.isLongitude():
+                lon_bot, lon_top = w.getBotTop()
+
+        return (lat_bot, lat_top), (lon_bot, lon_top)
+
+    def setROI(self, latitude=None, longitude=None):
+        if latitude is not None and self.latitude is not None:
+            self.latitude.setBotTop(*latitude)
+        if longitude is not None and self.longitude is not None:
+            self.longitude.setBotTop(*longitude)
 
     def getVar(self):
         return self._var.get_original()(**self.getKwargs())
@@ -61,6 +94,10 @@ class QAxisList(QtGui.QWidget):
 
         for axis in orig.getAxisList():
             w = AxisBoundsChooser(var_axes[axis.id], source_axis=axis)
+            if axis.isLatitude():
+                self.latitude = w
+            if axis.isLongitude():
+                self.longitude = w
             w.boundsEdited.connect(self.axisEdited.emit)
             self.axisWidgets.append(w)
             self.vbox.addWidget(w)

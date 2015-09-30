@@ -38,6 +38,33 @@ class AxisBoundsChooser(QtGui.QWidget):
 
         self.range.boundsEdited.connect(emitter)
 
+    def getMinMax(self):
+        indices = self.range.getBounds()
+        values = [self.axis[index] for index in indices]
+        return values
+
+    def getBotTop(self):
+        indices = self.range.getBounds()
+        values = [self.axis[index] for index in indices]
+        return values
+
+    def setBotTop(self, bottom, top):
+        # Round bottom and top to actual values
+        min_lower_diff = None
+        min_upper_diff = None
+        lower_ind, upper_ind = None, None
+        for ind, val in enumerate(self.axis):
+            low_diff = abs(bottom - val)
+            up_diff = abs(top - val)
+            if min_lower_diff is None or min_lower_diff >= low_diff:
+                lower_ind = ind
+                min_lower_diff = low_diff
+            if min_upper_diff is None or min_upper_diff >= up_diff:
+                upper_ind = ind
+                min_upper_diff = up_diff
+
+        self.range.setBounds(lower_ind, upper_ind)
+
     def getSelector(self):
         lower, upper = self.range.getBounds()
         lower = selector_value(lower, self.axis)

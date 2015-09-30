@@ -88,14 +88,23 @@ class RangeWidget(QtGui.QWidget):
 
         self.setLayout(l)
 
+    def getLimits(self):
+        return self.lowerBoundSlider.minimum(), self.lowerBoundSlider.maximum()
+
     def format(self, ind):
         return self.values[ind]
 
     def parse(self, value):
-        return self.values.index(value)
+        for i, v in enumerate(self.values):
+            if v.startswith(value):
+                return i
 
     def getBounds(self):
         return self.lowerBoundSlider.value(), self.upperBoundSlider.value()
+
+    def setBounds(self, low, high):
+        self.lowerBoundSlider.setValue(low)
+        self.upperBoundSlider.setValue(high)
 
     def updateLower(self, value):
         if value > self.upperBoundSlider.value():
