@@ -77,6 +77,7 @@ class SpreadsheetWindow(QtGui.QMainWindow):
 
         self.App = QtCore.QCoreApplication.instance()
         self.App.installEventFilter(self)
+        self.setMouseTracking(True)
 
         self.setupMenu()
 
@@ -136,6 +137,29 @@ class SpreadsheetWindow(QtGui.QMainWindow):
         """
         self.tabController.currentWidget().sheet.setFitToWindow(checked)
 
+    def eventFilter(self, q, e):
+        """ eventFilter(q: QObject, e: QEvent) -> depends on event type
+        An application-wide eventfilter to capture mouse/keyboard events
+        """
+        eType = e.type()
+        tabController = self.tabController
+        # Handle Show/Hide cell resizer on MouseMove
+        if eType == QtCore.QEvent.MouseMove:
+            sheetWidget = tabController.tabWidgetUnderMouse()
+            if sheetWidget:
+                sheetWidget.showHelpers(True, QtGui.QCursor.pos())
+        # Perform single-click event on the spreadsheet
+        if (eType == QtCore.QEvent.MouseButtonPress):
+            if isinstance(q, QCellContainer):
+                return q.containedWidget!=None
+            p = q
+            while (p and (not p.isModal()) and not isinstance(p, StandardWidgetSheet) and p.parent):
+                p = p.parent()
+            if p and isinstance(p, StandardWidgetSheet) and not p.isModal():
+                pos = p.viewport().mapFromGlobal(e.globalPos())
+                p.activateCell.emit(p.rowAt(pos.y()), p.columnAt(pos.x()),
+                                    e.modifiers() == QtCore.Qt.ControlModifier)
+        return False
 
     def showEvent(self, e):
         """ showEvent(e: QShowEvent) -> None
