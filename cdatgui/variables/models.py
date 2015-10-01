@@ -21,6 +21,12 @@ class CDMSVariableListModel(QtCore.QAbstractListModel):
 
         self.variables[ind] = variable
 
+    def remove_variable(self, ind):
+        self.removeRows(ind, 1)
+
+    def clear(self):
+        self.removeRows(0, len(self.variables))
+
     def get_dropped(self, md):
         variables = []
 
@@ -39,6 +45,11 @@ class CDMSVariableListModel(QtCore.QAbstractListModel):
         self.beginInsertRows(parent, row, row + count)
         self.variables = self.variables[:row] + variables + self.variables[row:]
         self.endInsertRows()
+
+    def removeRows(self, row, count, parent=QtCore.QModelIndex()):
+        self.beginRemoveRows(parent, row, row + count)
+        self.variables = self.variables[:row] + self.variables[row + count:]
+        self.endRemoveRows()
 
     def rowCount(self, modelIndex=None):
         return len(self.variables)

@@ -1,6 +1,10 @@
 from PySide import QtCore, QtGui
 from cdatgui.bases import StaticDockWidget
-from plot_inspect import PlotInspector
+from .plot import PlotInspector
+from .var import VariableInspector
+from .gm import GraphicsMethodInspector
+from .templ import TemplateInspector
+from .console import ConsoleInspector
 
 
 class InspectorWidget(StaticDockWidget):
@@ -15,6 +19,19 @@ class InspectorWidget(StaticDockWidget):
         pi = PlotInspector()
         self.plotters_updated.connect(pi.setPlots)
         w.addTab(pi, "Plots")
+
+        v = VariableInspector()
+        self.plotters_updated.connect(v.setPlots)
+        w.addTab(v, "Data")
+
+        gm = GraphicsMethodInspector()
+        w.addTab(gm, "Viz")
+
+        tmpl = TemplateInspector()
+        w.addTab(tmpl, "Layout")
+
+        con = ConsoleInspector()
+        w.addTab(con, "Python")
 
         self.setWidget(w)
 
