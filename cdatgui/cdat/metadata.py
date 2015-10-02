@@ -101,7 +101,11 @@ class VariableMetadataWrapper(object):
             return s
 
         if type(s.source) == FileMetadataWrapper:
-            if len(s.args) > 1 or len(s.kwargs) > 0:
+
+            if s.args is None and s.kwargs is None:
+                return s
+
+            if len(s.args) > 1 or s.kwargs is not None and len(s.kwargs) > 0:
                 return s.source[s.id]
             else:
                 return s
