@@ -4,15 +4,13 @@ from models import CDMSVariableListModel
 
 class CDMSVariableList(QtGui.QListView):
 
-    selectionChanged = QtCore.Signal(object)
+    selected = QtCore.Signal(object)
 
     def __init__(self, parent=None):
         super(CDMSVariableList, self).__init__(parent=parent)
         self.setModel(CDMSVariableListModel())
         self.setDragEnabled(True)
-        selection = QtGui.QItemSelectionModel(self.model())
-        self.setSelectionModel(selection)
-        self.selectionModel().currentChanged.connect(self.changed_selection)
+        self.activated.connect(self.sel)
 
     def remove_variable(self, variable):
         if isinstance(variable, int):
@@ -39,5 +37,6 @@ class CDMSVariableList(QtGui.QListView):
     def clear(self):
         self.model().clear()
 
-    def changed_selection(self, current, previous):
-        self.selectionChanged.emit(self.get_variable(current.row()))
+    def sel(self, index):
+        i = index.row()
+        self.selected.emit(self.get_variable(i))
