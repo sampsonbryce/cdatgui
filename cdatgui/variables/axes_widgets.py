@@ -1,7 +1,7 @@
 from PySide import QtGui, QtCore
 from axis_bounds import AxisBoundsChooser
 from cdatgui.utils import header_label
-from var_region_list import ROIPreview
+from region import ROIPreview
 
 
 class QAxisList(QtGui.QWidget):
