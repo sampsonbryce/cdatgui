@@ -8,7 +8,7 @@ __continents__ = None
 def continents():
     global __continents__
     if __continents__ is None:
-        __continents__ = QtGui.QImage(data_file("resources/continents.png"))
+        __continents__ = QtGui.QImage(data_file("resources/continents.jpeg"))
     return __continents__
 
 

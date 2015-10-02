@@ -7,35 +7,36 @@ from __future__ import division
 import sys
 import os
 from PySide import QtCore, QtGui
+from cdatgui.utils import data_file
 
-packagePath = os.path.dirname( __file__ )
-defaultMapDir = os.path.join( packagePath, '../resources' )
+defaultMapDir = data_file("resources")
+
 
 class QtROISelectorMapFrame(object):
 
-     def __init__( self, name, map_dir, map_file, grid_extent, latlon_bounds, map_scale ):
-         self.name = name
-         self.map_dir = map_dir
-         self.map_file = map_file
-         self.grid_extent = grid_extent
-         self.latlon_bounds = latlon_bounds
-         self.mapScale = map_scale
-         self.view = None
+    def __init__( self, name, map_dir, map_file, grid_extent, latlon_bounds, map_scale ):
+        self.name = name
+        self.map_dir = map_dir
+        self.map_file = map_file
+        self.grid_extent = grid_extent
+        self.latlon_bounds = latlon_bounds
+        self.mapScale = map_scale
+        self.view = None
 
-     def getMapGridExtent(self):
+    def getMapGridExtent(self):
         return self.grid_extent
 
-     def getMapFilePath(self):
-         return os.path.join( self.map_dir, self.map_file )
+    def getMapFilePath(self):
+        return os.path.join( self.map_dir, self.map_file )
 
-     def getPixmap(self):
-         worldMapFile = self.getMapFilePath()
-         return QtGui.QPixmap(worldMapFile)
+    def getPixmap(self):
+        worldMapFile = self.getMapFilePath()
+        return QtGui.QPixmap(worldMapFile)
 
-     def getCornerPoint( self, index ):
-         return QtCore.QPointF( self.latlon_bounds[ 2*index ], self.latlon_bounds[ 2*index + 1 ] )
+    def getCornerPoint( self, index ):
+        return QtCore.QPointF( self.latlon_bounds[ 2*index ], self.latlon_bounds[ 2*index + 1 ] )
 
-     def createView( self, parent ):
+    def createView( self, parent ):
         self.scene = QtGui.QGraphicsScene(parent)
         self.item = QtGui.QGraphicsPixmapItem( self.getPixmap(), None, self.scene )
         self.item.setFlags( QtGui.QGraphicsItem.ItemIsMovable )
@@ -51,13 +52,13 @@ class QtROISelectorMapFrame(object):
         self.roiRect.setPen( pen )
         self.roiRect.setZValue(1)
 
-     def getView( self, parent ):
-         if not self.view: self.createView( parent )
-         return self.view
+    def getView( self, parent ):
+        if not self.view: self.createView( parent )
+        return self.view
 
-     def setRect( self, x0, y0, dx, dy ):
-         self.roiRect.setRect ( x0, y0, dx, dy )
-         self.view.update()
+    def setRect( self, x0, y0, dx, dy ):
+        self.roiRect.setRect ( x0, y0, dx, dy )
+        self.view.update()
 
 MapFrames = [  QtROISelectorMapFrame( 'Double Map', defaultMapDir, 'WorldMap2.jpg', ( 0, 0, 2048, 512 ), ( -180, -90 , 540.0, 90.0), (1.2,1.2) ),
                QtROISelectorMapFrame( 'Gridded Map', defaultMapDir, 'WorldMap.jpg', ( 106, 72, 2902, 1470 ), ( -180, -90 , 180.0, 90.0), (0.4,0.4) ) ]
@@ -81,7 +82,7 @@ class MapGraphicsView(QtGui.QGraphicsView):
                               imageGraphicsItem.pixmap().height() )
         imagePixelDims = imageExtentOffset - self.imageOriginOffset
         self.imageLatLonScale = ((self.Extent[2] - self.Extent[0]) / imagePixelDims.x(),
-                                 (self.Extent[3] - self.Extent[1]) / imagePixelDims.y())
+                                (self.Extent[3] - self.Extent[1]) / imagePixelDims.y())
         self.roiCorner0 = None
         self.roiCorner1 = None
         self.imageGraphicsItem = imageGraphicsItem
@@ -129,7 +130,7 @@ class MapGraphicsView(QtGui.QGraphicsView):
         if geoPt.y() > self.Extent[3]:
             geoPt.setY( self.Extent[3] )
         return QtCore.QPointF((geoPt.x() - self.Extent[0]) / self.imageLatLonScale[0] + self.imageOriginOffset.x(),
-                         (self.Extent[3] - geoPt.y()) / self.imageLatLonScale[1] + self.imageOriginOffset.y())
+                        (self.Extent[3] - geoPt.y()) / self.imageLatLonScale[1] + self.imageOriginOffset.y())
 
     def mousePressEvent(self, event):
         self.roiCorner0, self.scenePt0 = self.GetPointCoords()
@@ -289,7 +290,7 @@ class ROISelectionDialog(QtGui.QDialog):
         self.close()
 
     def getROI(self):
-         return [ float(self.ROICornerLon0.text()), float(self.ROICornerLat0.text()), float(self.ROICornerLon1.text()), float(self.ROICornerLat1.text())   ]
+        return [ float(self.ROICornerLon0.text()), float(self.ROICornerLat0.text()), float(self.ROICornerLon1.text()), float(self.ROICornerLat1.text())   ]
 
     def adjustROIRect( self, index = 0 ):
         try:
