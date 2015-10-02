@@ -191,8 +191,8 @@ class ROISelectionDialog(QtGui.QDialog):
         panelLayout = QtGui.QHBoxLayout()
         w.setLayout( panelLayout )
 
-        ROICorner0Label = QtGui.QLabel("<b><u>ROI Corner0:</u></b>")
-        ROICorner1Label = QtGui.QLabel("<b><u>ROI Corner1:</u></b>")
+        ROICorner0Label = QtGui.QLabel("<b><u>Top Left:</u></b>")
+        ROICorner1Label = QtGui.QLabel("<b><u>Bottom Right:</u></b>")
 
         self.connect( self.ROICornerLon0, QtCore.SIGNAL("editingFinished()"), self.adjustROIRect )
         self.connect( self.ROICornerLat0, QtCore.SIGNAL("editingFinished()"), self.adjustROIRect )
@@ -207,7 +207,7 @@ class ROISelectionDialog(QtGui.QDialog):
         grid0.addWidget( LatLabel0 )
         grid0.addWidget( self.ROICornerLat0 )
 
-        w0 = QtGui.QGroupBox("ROI Corner0:")
+        w0 = QtGui.QGroupBox("Top Left:")
         w0.setLayout( grid0 )
         panelLayout.addWidget( w0 )
 
@@ -219,7 +219,7 @@ class ROISelectionDialog(QtGui.QDialog):
         grid1.addWidget( LatLabel1 )
         grid1.addWidget( self.ROICornerLat1 )
 
-        w1 = QtGui.QGroupBox("ROI Corner1:")
+        w1 = QtGui.QGroupBox("Top Right:")
         w1.setLayout( grid1 )
         panelLayout.addWidget( w1 )
 
