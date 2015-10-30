@@ -3,7 +3,8 @@ from cdatgui.variables.cdms_var_list import CDMSVariableList
 
 
 class VariableInspector(QtGui.QWidget):
-    variablesUpdated = QtCore.Signal(list)
+    variableUpdated = QtCore.Signal(object)
+    variableListUpdated = QtCore.Signal(list)
     currentChanged = QtCore.Signal(object)
 
     def __init__(self, parent=None):
@@ -13,7 +14,8 @@ class VariableInspector(QtGui.QWidget):
         self.plots = []
         self.var_list = CDMSVariableList()
         layout.addWidget(self.var_list)
-        self.variablesUpdated.connect(self.updateVarList)
+        self.variableListUpdated.connect(self.updateVarList)
+        self.var_list.selected.connect(self.setCurrentVar)
         self.current_var = None
 
     def setCurrentVar(self, var):
@@ -33,4 +35,4 @@ class VariableInspector(QtGui.QWidget):
                 if var is not None:
                     variables.append(var)
         self.plots = plots
-        self.variablesUpdated.emit(variables)
+        self.variableListUpdated.emit(variables)

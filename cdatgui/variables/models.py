@@ -1,31 +1,20 @@
 from PySide import QtCore
+from cdatgui.bases.list_model import ListModel
 
 
-class CDMSVariableListModel(QtCore.QAbstractListModel):
-    def __init__(self, parent=None):
-        super(CDMSVariableListModel, self).__init__(parent=parent)
-        self.variables = []
+class CDMSVariableListModel(ListModel):
 
-    def add_variable(self, variable):
-        self.insertRows(self.rowCount(), 1, [variable])
-
-    def get_variable(self, index):
-        return self.variables[index]
+    add_variable = ListModel.append
+    get_variable = ListModel.get
+    remove_variable = ListModel.remove
 
     def update_variable(self, variable):
-        for ind, var in enumerate(self.variables):
+        for ind, var in enumerate(self.values):
             if var.id == variable.id:
                 break
         else:
             raise ValueError("No variable found with ID %s" % variable.id)
-
-        self.variables[ind] = variable
-
-    def remove_variable(self, ind):
-        self.removeRows(ind, 1)
-
-    def clear(self):
-        self.removeRows(0, len(self.variables))
+        self.replace(ind, variable)
 
     def get_dropped(self, md):
         variables = []
@@ -41,22 +30,8 @@ class CDMSVariableListModel(QtCore.QAbstractListModel):
 
         return variables
 
-    def insertRows(self, row, count, variables, parent=QtCore.QModelIndex()):
-        self.beginInsertRows(parent, row, row + count)
-        self.variables = self.variables[:row] + variables + self.variables[row:]
-        self.endInsertRows()
-
-    def removeRows(self, row, count, parent=QtCore.QModelIndex()):
-        self.beginRemoveRows(parent, row, row + count)
-        self.variables = self.variables[:row] + self.variables[row + count:]
-        self.endRemoveRows()
-
-    def rowCount(self, modelIndex=None):
-        return len(self.variables)
-
-    def data(self, index, role=QtCore.Qt.DisplayRole):
-        if role == QtCore.Qt.DisplayRole:
-            return unicode(self.variables[index.row()].id)
+    def format_for_display(self, variable):
+        return unicode(variable.id)
 
     def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
         return u"Variable Name"

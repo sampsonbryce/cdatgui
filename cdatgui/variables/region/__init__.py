@@ -1,2 +1,3 @@
-from var_region_list import ROIPreview  # noqa
-from roi_selector import ROISelectionDialog  # noqa
+from preview import ROIPreview  # noqa
+from selector import ROISelectionDialog  # noqa
+from picker import ROIPicker
