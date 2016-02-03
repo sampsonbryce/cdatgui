@@ -26,7 +26,7 @@ class CDMSVariableListModel(ListModel):
             parts.append(char)
 
         indices = "".join(parts).split(",")
-        variables = [self.variables[int(ind)].var for ind in indices]
+        variables = [self.values[int(ind)].var for ind in indices]
 
         return variables
 
@@ -57,3 +57,7 @@ class CDMSVariableListModel(ListModel):
 
         md.setData("application/x-cdms-variable-list", ba)
         return md
+
+    def format_for_icon(self, value):
+        print value
+        return None
