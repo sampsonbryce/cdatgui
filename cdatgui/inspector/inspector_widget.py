@@ -25,7 +25,8 @@ class InspectorWidget(StaticDockWidget):
         w.addTab(v, "Data")
 
         gm = GraphicsMethodInspector()
-        w.addTab(gm, "Viz")
+        self.plotters_updated.connect(gm.setPlots)
+        w.addTab(gm, "GM")
 
         tmpl = TemplateInspector()
         w.addTab(tmpl, "Layout")
@@ -41,6 +42,5 @@ class InspectorWidget(StaticDockWidget):
             cell = cell.containedWidget
             # cell is now a QCDATWidget
             plots.extend(cell.getPlotters())
-
         self.plots = plots
         self.plotters_updated.emit(self.plots)

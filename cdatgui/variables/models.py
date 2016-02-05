@@ -59,5 +59,4 @@ class CDMSVariableListModel(ListModel):
         return md
 
     def format_for_icon(self, value):
-        print value
         return None

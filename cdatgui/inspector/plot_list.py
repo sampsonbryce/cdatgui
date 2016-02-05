@@ -27,6 +27,7 @@ class PlotItem(QtGui.QWidget):
 
 
 class PlotList(QtGui.QWidget):
+
     def __init__(self, parent=None):
         super(PlotList, self).__init__(parent=parent)
         l = QtGui.QVBoxLayout()

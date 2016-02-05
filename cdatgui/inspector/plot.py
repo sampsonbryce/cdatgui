@@ -4,6 +4,7 @@ from animation import AnimationControls
 
 
 class PlotInspector(QtGui.QWidget):
+
     def __init__(self, parent=None):
         super(PlotInspector, self).__init__(parent=parent)
         layout = QtGui.QVBoxLayout()
