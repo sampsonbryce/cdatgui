@@ -2,14 +2,14 @@
 
 from cdatgui.cdat.vcswidget import QVCSWidget
 from PySide import QtCore, QtGui
-from .widgets.level_slider import AdjustValues
+from .widgets.level_slider import DictEditor
 import vcsaddons
 import vcs
 import numpy
 
 
 class LevelEditor(QtGui.QWidget):
-    """Uses AdjustValues to select levels for a GM and displays a histogram."""
+    """Uses DictEditor to select levels for a GM and displays a histogram."""
 
     levelsUpdated = QtCore.Signal()
 
@@ -20,8 +20,8 @@ class LevelEditor(QtGui.QWidget):
         self._gm = None
 
         self.canvas = QVCSWidget()
-        self.value_sliders = AdjustValues()
-        self.value_sliders.valuesChanged.connect(self.update_levels)
+        self.value_sliders = DictEditor()
+        self.value_sliders.dictEdited.connect(self.update_levels)
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.canvas)

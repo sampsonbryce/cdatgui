@@ -1,5 +1,5 @@
 import vcs
-from cdatgui.editors.secondary.preview import TextStylePreviewWidget
+from cdatgui.editors.secondary.preview.text import TextStylePreviewWidget
 from PySide import QtCore, QtGui
 from cdatgui.editors.secondary.base import BaseWindowWidget
 

@@ -1,7 +1,7 @@
 import cdms2, vcs
 from PySide import QtGui, QtCore
 from cdatgui.editors.secondary.base import BaseWindowWidget
-from cdatgui.editors.secondary.preview.fill import FillPreviewWidget
+from cdatgui.editors.secondary.preview.fillarea import FillPreviewWidget
 
 
 class FillAreaEditorWidget(BaseWindowWidget):
