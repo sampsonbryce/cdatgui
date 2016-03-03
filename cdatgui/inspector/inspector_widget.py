@@ -36,6 +36,10 @@ class InspectorWidget(StaticDockWidget):
 
         self.setWidget(w)
 
+    def update(self):
+        for plot in self.plots:
+            plot.plot()
+
     def selection_change(self, selected):
         plots = []
         for cell in selected:

@@ -1,7 +1,7 @@
 import vtk
 from PySide import QtCore, QtGui
 import vcs
-from vtk.qt4.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+from qtvtk import QVTKRenderWindowInteractor
 from functools import partial
 
 
@@ -53,6 +53,10 @@ class QVCSWidget(QtGui.QFrame):
         self.displays = []
         self.to_plot = []
 
+    def update(self):
+        if self.canvas:
+            self.canvas.update()
+
     def manageCanvas(self, showing):
         """Make sure that the canvas isn't opened till we're really ready."""
         if showing and self.canvas is None:
@@ -91,3 +95,14 @@ class QVCSWidget(QtGui.QFrame):
         self.canvas.onClosing((0, 0))
         self.canvas = None
         super(QVCSWidget, self).deleteLater()
+
+if __name__ == "__main__":
+    import cdms2
+    f = cdms2.open(vcs.sample_data + "/clt.nc")
+    s = f('clt')
+    app = QtGui.QApplication([])
+    w = QVCSWidget()
+    w.plot(s)
+    w.show()
+    app.exec_()
+
