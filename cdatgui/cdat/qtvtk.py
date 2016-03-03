@@ -210,7 +210,8 @@ class QVTKRenderWindowInteractor(QWidget):
         self._hidden.destroyed.connect(self.Finalize)
 
     def dispatchEvent(self, eventFunc):
-    	QTimer.singleShot(0, eventFunc)
+        eventFunc()
+    	#QTimer.singleShot(0, eventFunc)
 
     def __getattr__(self, attr):
         """Makes the object behave like a vtkGenericRenderWindowInteractor"""
