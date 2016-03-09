@@ -1,11 +1,11 @@
 from PySide import QtGui, QtCore
-from cdatgui.bases.window_widget import BaseOkWindow
+from cdatgui.bases.window_widget import BaseOkWindowWidget
 from cdatgui.editors.preview.axis_preview import AxisPreviewWidget
-from cdatgui.editors.widgets.dict_editor import DictEditor
+from cdatgui.editors.widgets.dict_editor import DictEditorWidget
 import vcs
 
 
-class AxisEditorWidget(BaseOkWindow.BaseOkWindowWidget):
+class AxisEditorWidget(BaseOkWindowWidget):
     def __init__(self, axis, parent=None):
         super(AxisEditorWidget, self).__init__()
         self.axis = axis
@@ -34,7 +34,7 @@ class AxisEditorWidget(BaseOkWindow.BaseOkWindowWidget):
         self.ticks_widget.setLayout(ticks_row)
         self.preset_widget = QtGui.QWidget()
         self.preset_widget.setLayout(preset_row)
-        self.dict_widget = DictEditor.DictEditorWidget()
+        self.dict_widget = DictEditorWidget()
         self.dict_widget.dictEdited.connect(self.updateAxisWithDict)
 
         # set up scrollable for dict editor
