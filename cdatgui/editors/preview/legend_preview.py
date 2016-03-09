@@ -48,9 +48,13 @@ class LegendPreviewWidget(QVCSWidget):
 if __name__ == "__main__":
     from PySide import QtGui, QtCore
     from cdatgui.editors.model.legend import VCSLegend
+    from cdatgui.utils import pattern_thumbnail
     import cdms2
 
     app = QtGui.QApplication([])
+    # 1 through 20
+    thumb = pattern_thumbnail(1)
+
     b = vcs.createboxfill()
     v = cdms2.open(vcs.sample_data + "/clt.nc")("clt")
     legend = VCSLegend(b, v)

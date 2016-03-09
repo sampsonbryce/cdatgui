@@ -1,9 +1,9 @@
 from PySide import QtGui, QtCore
-from cdatgui.bases.window_widget import BaseWindowWidget
+from cdatgui.bases.window_widget import BaseSaveWindowWidget
 from cdatgui.editors.secondary.preview.marker import MarkerPreviewWidget
 
 
-class MarkerEditorWidget(BaseWindowWidget):
+class MarkerEditorWidget(BaseSaveWindowWidget):
 
     def __init__(self):
         super(MarkerEditorWidget, self).__init__()

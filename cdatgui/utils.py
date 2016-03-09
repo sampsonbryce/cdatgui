@@ -9,6 +9,8 @@ def data_file(filename):
     else:
         raise IOError("File '%s' not found" % filename)
 
+def pattern_thumbnail(index):
+    return icon("pattern_thumbs/pattern_%d.png" % index)
 
 def icon(icon_name):
     return QtGui.QIcon(data_file(os.path.join("resources", icon_name)))
