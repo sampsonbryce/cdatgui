@@ -8,7 +8,7 @@ from functools import partial
 class QVCSWidget(QtGui.QFrame):
     """Simple embeddable QWidget that exposes a VCS canvas for use."""
 
-    visiblityChanged = QtCore.Signal(bool)
+    visibilityChanged = QtCore.Signal(bool)
 
     def __init__(self, parent=None):
         """Initialize the widget."""
@@ -23,13 +23,13 @@ class QVCSWidget(QtGui.QFrame):
         self.canvasLayout.addWidget(self.iren)
         self.setLayout(self.canvasLayout)
 
-        self.becameVisible = partial(self.visiblityChanged.emit, True)
-        self.becameHidden = partial(self.visiblityChanged.emit, False)
+        self.becameVisible = partial(self.visibilityChanged.emit, True)
+        self.becameHidden = partial(self.visibilityChanged.emit, False)
 
         self.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
                                              QtGui.QSizePolicy.Expanding))
 
-        self.visiblityChanged.connect(self.manageCanvas)
+        self.visibilityChanged.connect(self.manageCanvas)
         self.displays = []
         self.to_plot = []
 
@@ -96,14 +96,3 @@ class QVCSWidget(QtGui.QFrame):
             self.canvas.onClosing((0, 0))
         self.canvas = None
         super(QVCSWidget, self).deleteLater()
-
-if __name__ == "__main__":
-    import cdms2
-    f = cdms2.open(vcs.sample_data + "/clt.nc")
-    s = f('clt')
-    app = QtGui.QApplication([])
-    w = QVCSWidget()
-    w.plot(s)
-    w.show()
-    app.exec_()
-

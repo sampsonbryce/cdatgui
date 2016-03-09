@@ -2,7 +2,7 @@
 
 from cdatgui.cdat.vcswidget import QVCSWidget
 from PySide import QtCore, QtGui
-from .widgets.level_slider import DictEditor
+from .widgets.dict_editor import DictEditor
 import vcsaddons
 import vcs
 import numpy
