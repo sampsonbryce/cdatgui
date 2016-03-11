@@ -13,6 +13,7 @@ class LegendPreviewWidget(QVCSWidget):
             self.update()
 
     def update(self):
+        print "UPDATING"
         if self.canvas is None:
             return
         self.canvas.clear(render=False)

@@ -5,6 +5,8 @@ from cdatgui.editors.model import legend
 from cdatgui.editors.preview.legend_preview import LegendPreviewWidget
 from cdatgui.bases.window_widget import BaseOkWindowWidget
 from cdatgui.editors.colormap import QColormapEditor
+from cdatgui.utils import pattern_thumbnail
+from functools import partial
 
 
 class LegendEditorWidget(BaseOkWindowWidget):
@@ -29,24 +31,28 @@ class LegendEditorWidget(BaseOkWindowWidget):
         colormap_dropdown.setCurrentIndex(11)
         colormap_dropdown.currentIndexChanged[str].connect(self.updateColormap)
 
+        # tracking for start and end buttons
+        self.start_end_buttons = []
+
         # Create start color spinbox
         self.start_color_spin = QtGui.QSpinBox()
         self.start_color_spin.setRange(1, 255)
         self.start_color_spin.valueChanged.connect(self.updateStartColor)
 
         # Create start colormap editor button
-        start_color_button = QtGui.QPushButton()
-        self.start_colormap_editor = QColormapEditor("color")
-        self.start_colormap_editor.choseColorIndex.connect(self.updateStartColorFromEditor)
-        start_color_button.clicked.connect(self.start_colormap_editor.show)
+        self.start_color_button = QtGui.QPushButton()
+        self.start_color_button.clicked.connect(partial(self.createColormap, self.start_color_button, 0))
+
+        self.start_end_buttons.append(self.start_color_button)
 
         # Create start colormap editor button
-        end_color_button = QtGui.QPushButton()
+        self.end_color_button = QtGui.QPushButton()
         self.end_colormap_editor = QColormapEditor("color")
         self.end_colormap_editor.choseColorIndex.connect(self.updateEndColorFromEditor)
-        end_color_button.clicked.connect(self.end_colormap_editor.show)
+        self.end_color_button.clicked.connect(self.end_colormap_editor.show)
+        self.start_end_buttons.append(self.end_color_button)
 
-        # Create start color spinbox
+        # Create end color spinbox
         self.end_color_spin = QtGui.QSpinBox()
         self.end_color_spin.setRange(1, 255)
         self.end_color_spin.valueChanged.connect(self.updateEndColor)
@@ -71,12 +77,17 @@ class LegendEditorWidget(BaseOkWindowWidget):
             button = QtGui.QRadioButton(text)
             if text == "Solid":
                 button.setChecked(True)
+
             self.fill_button_group.addButton(button)
             fill_style_layout.addWidget(button)
+
         self.fill_button_group.buttonClicked.connect(self.changeFillStyle)
         fill_style_layout.insertWidget(0, QtGui.QLabel("Fill Style"))
 
-        self.custom_vertical_layout.addLayout(fill_style_layout)
+        self.fill_style_widget = QtGui.QWidget()
+        self.fill_style_widget.setLayout(fill_style_layout)
+
+        self.custom_vertical_layout.addWidget(self.fill_style_widget)
 
         # Create layouts
         colormap_layout = QtGui.QHBoxLayout()
@@ -90,11 +101,11 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
         start_color_layout.addWidget(start_color_label)
         start_color_layout.addWidget(self.start_color_spin)
-        start_color_layout.addWidget(start_color_button)
+        start_color_layout.addWidget(self.start_color_button)
 
         end_color_layout.addWidget(end_color_label)
         end_color_layout.addWidget(self.end_color_spin)
-        end_color_layout.addWidget(end_color_button)
+        end_color_layout.addWidget(self.end_color_button)
 
         extend_layout.addWidget(extend_left_check)
         extend_layout.addWidget(extend_left_label)
@@ -119,9 +130,19 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
     def setObject(self, legend):
         self.object = legend
-        cur_color_1 = legend.color_1
-        cur_color_2 = legend.color_2
-        print cur_color_1, cur_color_2
+
+        self.start_color_spin.setValue(self.object.color_1)
+        r, g, b, a = self.object.rgba_from_index(self.object.color_1)
+        style_string = "background-color: rgba(%d, %d, %d, %d);" % (r, g, b, a)
+        self.start_color_button.setStyleSheet(style_string)
+        self.start_color_button.setFixedSize(100, 25)
+
+        self.end_color_spin.setValue(self.object.color_2)
+        r, g, b, a = self.object.rgba_from_index(self.object.color_2)
+        style_string = "background-color: rgba(%d, %d, %d, %d);" % (r, g, b, a)
+        self.end_color_button.setStyleSheet(style_string)
+        self.end_color_button.setFixedSize(100, 25)
+
 
         self.preview.setLegendObject(legend)
         self.preview.update()
@@ -161,39 +182,141 @@ class LegendEditorWidget(BaseOkWindowWidget):
         if self.custom_fill_icon.arrowType() == QtCore.Qt.RightArrow:
             self.custom_fill_icon.setArrowType(QtCore.Qt.DownArrow)
             self.vertical_layout.insertLayout(6, self.custom_vertical_layout)
+            self.fill_style_widget.setVisible(True)
+
             # create layout for custom fill
 
             scroll_area = QtGui.QScrollArea()
             rows_widget = QtGui.QWidget()
             rows_layout = QtGui.QVBoxLayout()
             for index, label in enumerate(self.object.level_names):
+                # Label
                 level_layout = QtGui.QHBoxLayout()
                 level_layout.addWidget(QtGui.QLabel("Level %s" % str(index+1)))
 
+                # Color button
                 color_button = QtGui.QPushButton()
                 l_color = self.object.level_color(index)
                 r, g, b, a = self.object.rgba_from_index(l_color)
                 style_string = "background-color: rgba(%d, %d, %d, %d);" % (r, g, b, a)
                 color_button.setStyleSheet(style_string)
-                level_layout.addWidget(color_button)
-                rows_layout.addLayout(level_layout)
+                color_button.setFixedSize(100, 40)
 
+                color_button.clicked.connect(partial(self.createColormap, color_button, index))
+                level_layout.addWidget(color_button)
+
+                # Pattern
+                pattern = pattern_thumbnail(self.object.level_pattern(index))
+                pattern_button = QtGui.QPushButton()
+                pattern_button.setIcon(pattern)
+                pattern_button.setIconSize(QtCore.QSize(100, 50))
+                pattern_button.setFixedSize(100, 50)
+                pattern_button.clicked.connect(partial(self.createPatternWidget, pattern_button, index))
+                level_layout.addWidget(pattern_button)
+
+                level_layout.insertStretch(1, 2)
+                level_layout.insertStretch(3, 2)
+
+                rows_layout.addLayout(level_layout)
 
             rows_widget.setLayout(rows_layout)
             scroll_area.setWidget(rows_widget)
             self.custom_vertical_layout.addWidget(scroll_area)
+            self.changeFillStyle(QtGui.QPushButton("Solid"))
         else:
+            self.fill_style_widget.setVisible(False)
+            self.deleteCustomFillBox()
             self.custom_fill_icon.setArrowType(QtCore.Qt.RightArrow)
 
         self.preview.update()
 
+    def deleteCustomFillBox(self):
+        print "deleting custom fill"
+        scroll = self.custom_vertical_layout.takeAt(1).widget()
+        w = scroll.takeWidget()
+        l = w.layout()
+        child = l.takeAt(0)
+        while child:
+            sub_child = child.takeAt(0)
+            while sub_child:
+                if isinstance(sub_child, QtGui.QSpacerItem):
+                    child.removeItem(sub_child)
+                else:
+                    widget = sub_child.widget()
+                    widget.deleteLater()
+                sub_child = child.takeAt(0)
+            child = l.takeAt(0)
+
+        l.deleteLater()
+        scroll.deleteLater()
+
     def changeFillStyle(self, button):
-        if button.text() == "Solid":
-            pass
-        elif button.text() == "Hatch":
-            pass
-        elif button.text() == "Pattern":
-            pass
+        self.object.fill_style = button.text()
+        scroll = self.custom_vertical_layout.itemAt(1).widget()
+        w = scroll.takeWidget()
+        l = w.layout()
+        for row_index in range(l.count()):
+            row = l.itemAt(row_index)
+            if not row:
+                break
+
+            if button.text() == "Solid":
+                row.itemAt(2).widget().show()
+                row.itemAt(4).widget().hide()
+
+            elif button.text() == "Hatch":
+                row.itemAt(2).widget().show()
+                row.itemAt(4).widget().show()
+
+            elif button.text() == "Pattern":
+                row.itemAt(2).widget().hide()
+                row.itemAt(4).widget().show()
+
+        scroll.setWidget(w)
+        self.preview.update()
+
+    def createColormap(self, button, index):
+        def changeColor(color_index):
+            r, g, b, a = self.object.rgba_from_index(color_index)
+            print r, g, b, a
+            style_string = "background-color: rgba(%d, %d, %d, %d);" % (r, g, b, a)
+            button.setStyleSheet(style_string)
+            if button != self.start_color_button and button != self.end_color_button:
+                self.object.set_level_color(index, color_index)
+            elif button == self.start_color_button:
+                self.object.color_1 = color_index
+                self.start_color_spin.setValue(color_index)
+            else:
+                self.object.color_2 = color_index
+                self.end_color_spin.setValue(color_index)
+
+
+            self.preview.update()
+        self.colormap_editor = QColormapEditor(mode="color")
+        self.colormap_editor.choseColorIndex.connect(changeColor)
+        self.colormap_editor.show()
+
+    def createPatternWidget(self, button, index):
+        def changePattern(selected_index):
+            button.setIcon(pattern_thumbnail(selected_index))
+            self.object.set_level_pattern(index, selected_index)
+            self.pattern_selector.close()
+            self.preview.update()
+
+        self.pattern_selector = QtGui.QWidget()
+        vertical_layout = QtGui.QVBoxLayout()
+        for i in range(1,21):
+            pattern = pattern_thumbnail(i)
+            pattern_button = QtGui.QPushButton()
+            pattern_button.setIcon(pattern)
+            pattern_button.setIconSize(QtCore.QSize(100, 50))
+            pattern_button.setFixedSize(100, 50)
+            pattern_button.clicked.connect(partial(changePattern, i))
+            vertical_layout.addWidget(pattern_button)
+        self.pattern_selector.setLayout(vertical_layout)
+        self.pattern_selector.show()
+
+
 
 if __name__ == "__main__":
     from cdatgui.utils import pattern_thumbnail

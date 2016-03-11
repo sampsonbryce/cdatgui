@@ -99,8 +99,10 @@ class QColormapEditor(QtGui.QColorDialog):
     def acceptClicked(self):
         # Make sure the colormap changes take effect
         self.applyChanges()
+        print "emitting map:", self.colormap.currentText()
         self.choseColormap.emit(str(self.colormap.currentText()))
         if self.mode == COLOR_MODE:
+            print "emitting color:", self.cell
             self.choseColorIndex.emit(self.cell)
 
     def selectedCell(self, ind):
