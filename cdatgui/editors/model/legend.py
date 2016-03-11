@@ -19,7 +19,7 @@ class VCSLegend(object):
         cmap = None
         if self._gm.colormap:
             cmap = self._gm.colormap
-        if self._canvas and self._canvas.getcolormap():
+        elif self._canvas and self._canvas.getcolormap():
             cmap = self._canvas.getcolormapname()
         else:
             cmap = vcs._colorMap
@@ -27,6 +27,7 @@ class VCSLegend(object):
 
     @colormap.setter
     def colormap(self, cmap):
+        print "setting colormap"
         self._gm.colormap = cmap
     
     def rgba_from_index(self, index):

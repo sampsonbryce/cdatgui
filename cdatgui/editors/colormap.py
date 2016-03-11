@@ -40,6 +40,7 @@ class QColormapEditor(QtGui.QColorDialog):
         l.addWidget(f)
 
         self.mode = mode
+        print "MODE:", self.mode
 
         # Apply/Cancel/Save/Reset/Blend buttons
         buttons = QtGui.QDialogButtonBox()
