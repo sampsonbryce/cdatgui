@@ -1,5 +1,5 @@
 import pytest
-from cdatgui.bases.window_widget import BaseWindowWidget
+from cdatgui.bases.window_widget import BaseSaveWindowWidget
 from cdatgui.editors.secondary.preview.line import LinePreviewWidget
 
 
@@ -10,7 +10,7 @@ class DummyClass(object):
 
 @pytest.fixture
 def window():
-    base = BaseWindowWidget()
+    base = BaseSaveWindowWidget()
     struct = DummyClass("test")
     base.object = struct
     preview = LinePreviewWidget()

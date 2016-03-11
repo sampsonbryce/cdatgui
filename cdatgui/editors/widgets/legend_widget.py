@@ -1,5 +1,4 @@
-import pdb
-# from cdatgui.editors.widgets.dict_editor import DictEditorWidget
+from cdatgui.editors.widgets.dict_editor import DictEditorWidget
 from PySide import QtCore, QtGui
 from cdatgui.editors.model import legend
 from cdatgui.editors.preview.legend_preview import LegendPreviewWidget
@@ -21,18 +20,12 @@ class LegendEditorWidget(BaseOkWindowWidget):
         extend_right_label = QtGui.QLabel("Extend Right")
         custom_fill_label = QtGui.QLabel("Custom Fill")
         labels_label = QtGui.QLabel("Labels:")
-        auto_label = QtGui.QLabel("Auto")
-        manual_label = QtGui.QLabel("Manual")
-        none_label = QtGui.QLabel("None")
 
         # Create colormap dropdown
         colormap_dropdown = QtGui.QComboBox()
         colormap_dropdown.addItems(legend.get_colormaps())
         colormap_dropdown.setCurrentIndex(11)
         colormap_dropdown.currentIndexChanged[str].connect(self.updateColormap)
-
-        # tracking for start and end buttons
-        self.start_end_buttons = []
 
         # Create start color spinbox
         self.start_color_spin = QtGui.QSpinBox()
@@ -43,14 +36,9 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.start_color_button = QtGui.QPushButton()
         self.start_color_button.clicked.connect(partial(self.createColormap, self.start_color_button, 0))
 
-        self.start_end_buttons.append(self.start_color_button)
-
         # Create start colormap editor button
         self.end_color_button = QtGui.QPushButton()
-        self.end_colormap_editor = QColormapEditor("color")
-        self.end_colormap_editor.choseColorIndex.connect(self.updateEndColorFromEditor)
-        self.end_color_button.clicked.connect(self.end_colormap_editor.show)
-        self.start_end_buttons.append(self.end_color_button)
+        self.end_color_button.clicked.connect(partial(self.createColormap, self.end_color_button, 0))
 
         # Create end color spinbox
         self.end_color_spin = QtGui.QSpinBox()
@@ -88,6 +76,20 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.fill_style_widget.setLayout(fill_style_layout)
 
         self.custom_vertical_layout.addWidget(self.fill_style_widget)
+
+        # Create labels section
+        labels_layout = QtGui.QHBoxLayout()
+        labels_layout.addWidget(labels_label)
+        self.labels_button_group = QtGui.QButtonGroup()
+        for text in ["Auto", "Manual", "None"]:
+            button = QtGui.QRadioButton(text)
+            if text == "Auto":
+                button.setChecked(True)
+
+            self.labels_button_group.addButton(button)
+            labels_layout.addWidget(button)
+
+        self.labels_button_group.buttonClicked.connect(self.manageDictEditor)
 
         # Create layouts
         colormap_layout = QtGui.QHBoxLayout()
@@ -127,6 +129,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.vertical_layout.insertLayout(3, end_color_layout)
         self.vertical_layout.insertLayout(4, extend_layout)
         self.vertical_layout.insertLayout(5, custom_fill_layout)
+        self.vertical_layout.insertLayout(6, labels_layout)
 
     def setObject(self, legend):
         self.object = legend
@@ -143,12 +146,10 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.end_color_button.setStyleSheet(style_string)
         self.end_color_button.setFixedSize(100, 25)
 
-
         self.preview.setLegendObject(legend)
         self.preview.update()
 
     def updateColormap(self, cur_item):
-        print cur_item
         self.object.colormap = cur_item
         self.preview.update()
 
@@ -192,7 +193,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
             for index, label in enumerate(self.object.level_names):
                 # Label
                 level_layout = QtGui.QHBoxLayout()
-                level_layout.addWidget(QtGui.QLabel("Level %s" % str(index+1)))
+                level_layout.addWidget(QtGui.QLabel("Level %s" % str(index + 1)))
 
                 # Color button
                 color_button = QtGui.QPushButton()
@@ -231,7 +232,6 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.preview.update()
 
     def deleteCustomFillBox(self):
-        print "deleting custom fill"
         scroll = self.custom_vertical_layout.takeAt(1).widget()
         w = scroll.takeWidget()
         l = w.layout()
@@ -278,7 +278,6 @@ class LegendEditorWidget(BaseOkWindowWidget):
     def createColormap(self, button, index):
         def changeColor(color_index):
             r, g, b, a = self.object.rgba_from_index(color_index)
-            print r, g, b, a
             style_string = "background-color: rgba(%d, %d, %d, %d);" % (r, g, b, a)
             button.setStyleSheet(style_string)
             if button != self.start_color_button and button != self.end_color_button:
@@ -290,8 +289,8 @@ class LegendEditorWidget(BaseOkWindowWidget):
                 self.object.color_2 = color_index
                 self.end_color_spin.setValue(color_index)
 
-
             self.preview.update()
+
         self.colormap_editor = QColormapEditor(mode="color")
         self.colormap_editor.choseColorIndex.connect(changeColor)
         self.colormap_editor.show()
@@ -305,7 +304,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
         self.pattern_selector = QtGui.QWidget()
         vertical_layout = QtGui.QVBoxLayout()
-        for i in range(1,21):
+        for i in range(1, 21):
             pattern = pattern_thumbnail(i)
             pattern_button = QtGui.QPushButton()
             pattern_button.setIcon(pattern)
@@ -316,10 +315,32 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.pattern_selector.setLayout(vertical_layout)
         self.pattern_selector.show()
 
+    def manageDictEditor(self, button):
+        self.object.label_mode = button.text()
+        if button.text() == "Manual":
+            label_editor = DictEditorWidget()
+            labels = self.object.labels
+            label_editor.setDict(labels)
+            label_editor.dictEdited.connect(self.updateLabels)
+            scroll_area = QtGui.QScrollArea()
+            scroll_area.setWidget(label_editor)
+            self.vertical_layout.insertWidget(self.vertical_layout.count()-1, scroll_area)
+        elif isinstance(self.vertical_layout.itemAt(self.vertical_layout.count()-2).widget(), QtGui.QScrollArea):
+            scroll_area = self.vertical_layout.itemAt(self.vertical_layout.count()-2).widget()
+            scroll_area.takeWidget().deleteLater()
+            scroll_area.deleteLater()
 
+    def updateLabels(self, dict):
+        print dict
+        try:
+            d = {float(key): value for key, value in dict.items()}
+            self.object.labels = d
+        except ValueError:
+            pass
+
+        self.preview.update()
 
 if __name__ == "__main__":
-    from cdatgui.utils import pattern_thumbnail
     import cdms2, vcs
 
     app = QtGui.QApplication([])

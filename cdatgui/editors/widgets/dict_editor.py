@@ -197,20 +197,11 @@ class DictEditorWidget(QWidget):
 
     # set inital dictionary values
     def setDict(self, dictionary):
-
-        self.clearing = True
-        if self.rows.count() > 0:
-            row = self.rows.takeAt(0)
-
-            while row:
-                row_widget = row.widget()
-                self.removeRow(row_widget)
-                row = self.rows.takeAt(0)
+        self.deleteLater()
+        self.rows = QVBoxLayout()
 
         for key in sorted(dictionary.keys()):
             self.insertRow(key, dictionary[key])
-
-        self.clearing = False
 
     # return valid keys
     def validKeys(self):
@@ -224,3 +215,16 @@ class DictEditorWidget(QWidget):
             keys.append(row.key())
             values.append(row.value())
         return dict(zip(keys, values))
+
+    def deleteLater(self):
+        self.clearing = True
+        if self.rows.count() > 0:
+            row = self.rows.takeAt(0)
+
+            while row:
+                row_widget = row.widget()
+                self.removeRow(row_widget)
+                row = self.rows.takeAt(0)
+
+        self.rows.deleteLater()
+        self.clearing = False
