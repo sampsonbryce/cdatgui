@@ -12,6 +12,9 @@ class LegendEditorWidget(BaseOkWindowWidget):
     def __init__(self, parent=None):
         super(LegendEditorWidget, self).__init__()
 
+        # Variables
+        self.level_count = None
+
         # Create Labels
         colormap_label = QtGui.QLabel("Colormap:")
         start_color_label = QtGui.QLabel("Start Color:")
@@ -63,7 +66,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.fill_button_group = QtGui.QButtonGroup()
         for text in ["Solid", "Hatch", "Pattern"]:
             button = QtGui.QRadioButton(text)
-            if text == "Solid":
+            if text == "Hatch":
                 button.setChecked(True)
 
             self.fill_button_group.addButton(button)
@@ -135,15 +138,11 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.object = legend
 
         self.start_color_spin.setValue(self.object.color_1)
-        r, g, b, a = self.object.rgba_from_index(self.object.color_1)
-        style_string = "background-color: rgba(%d, %d, %d, %d);" % (r, g, b, a)
-        self.start_color_button.setStyleSheet(style_string)
+        self.updateButtonColor(self.start_color_button, self.object.color_1)
         self.start_color_button.setFixedSize(100, 25)
 
         self.end_color_spin.setValue(self.object.color_2)
-        r, g, b, a = self.object.rgba_from_index(self.object.color_2)
-        style_string = "background-color: rgba(%d, %d, %d, %d);" % (r, g, b, a)
-        self.end_color_button.setStyleSheet(style_string)
+        self.updateButtonColor(self.end_color_button, self.object.color_2)
         self.end_color_button.setFixedSize(100, 25)
 
         self.preview.setLegendObject(legend)
@@ -153,14 +152,27 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.object.colormap = cur_item
         self.preview.update()
 
+        self.level_count = len(self.object.levels)
+
+        if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow:
+            self.deleteCustomFillBox()
+            self.custom_vertical_layout.addWidget(self.createCustomFillBox())
+
+        start_color = self.object.level_color(0)
+        end_color = self.object.level_color(self.level_count-1)
+        self.updateButtonColor(self.start_color_button, start_color)
+        self.start_color_spin.setValue(start_color)
+        self.updateButtonColor(self.end_color_button, end_color)
+        self.end_color_spin.setValue(end_color)
+
     def updateStartColor(self, value):
         self.object.color_1 = value
-        self.object._gm.list()
+        self.updateButtonColor(self.start_color_button, value)
         self.preview.update()
 
     def updateEndColor(self, value):
         self.object.color_2 = value
-        self.object._gm.list()
+        self.updateButtonColor(self.end_color_button, value)
         self.preview.update()
 
     def updateStartColorFromEditor(self, value):
@@ -184,52 +196,52 @@ class LegendEditorWidget(BaseOkWindowWidget):
             self.custom_fill_icon.setArrowType(QtCore.Qt.DownArrow)
             self.vertical_layout.insertLayout(6, self.custom_vertical_layout)
             self.fill_style_widget.setVisible(True)
-
-            # create layout for custom fill
-
-            scroll_area = QtGui.QScrollArea()
-            rows_widget = QtGui.QWidget()
-            rows_layout = QtGui.QVBoxLayout()
-            for index, label in enumerate(self.object.level_names):
-                # Label
-                level_layout = QtGui.QHBoxLayout()
-                level_layout.addWidget(QtGui.QLabel("Level %s" % str(index + 1)))
-
-                # Color button
-                color_button = QtGui.QPushButton()
-                l_color = self.object.level_color(index)
-                r, g, b, a = self.object.rgba_from_index(l_color)
-                style_string = "background-color: rgba(%d, %d, %d, %d);" % (r, g, b, a)
-                color_button.setStyleSheet(style_string)
-                color_button.setFixedSize(100, 40)
-
-                color_button.clicked.connect(partial(self.createColormap, color_button, index))
-                level_layout.addWidget(color_button)
-
-                # Pattern
-                pattern = pattern_thumbnail(self.object.level_pattern(index))
-                pattern_button = QtGui.QPushButton()
-                pattern_button.setIcon(pattern)
-                pattern_button.setIconSize(QtCore.QSize(100, 50))
-                pattern_button.setFixedSize(100, 50)
-                pattern_button.clicked.connect(partial(self.createPatternWidget, pattern_button, index))
-                level_layout.addWidget(pattern_button)
-
-                level_layout.insertStretch(1, 2)
-                level_layout.insertStretch(3, 2)
-
-                rows_layout.addLayout(level_layout)
-
-            rows_widget.setLayout(rows_layout)
-            scroll_area.setWidget(rows_widget)
-            self.custom_vertical_layout.addWidget(scroll_area)
-            self.changeFillStyle(QtGui.QPushButton("Solid"))
+            self.custom_vertical_layout.addWidget(self.createCustomFillBox())
         else:
             self.fill_style_widget.setVisible(False)
             self.deleteCustomFillBox()
             self.custom_fill_icon.setArrowType(QtCore.Qt.RightArrow)
 
         self.preview.update()
+
+    def createCustomFillBox(self):
+        # create layout for custom fill
+        scroll_area = QtGui.QScrollArea()
+        rows_widget = QtGui.QWidget()
+        rows_layout = QtGui.QVBoxLayout()
+        level_names = self.object.level_names
+        for index, label in enumerate(level_names):
+            # Label
+            level_layout = QtGui.QHBoxLayout()
+            level_layout.addWidget(QtGui.QLabel("Level %s" % str(index + 1)))
+
+            # Color button
+            color_button = QtGui.QPushButton()
+            l_color = self.object.level_color(index)
+            self.updateButtonColor(color_button, l_color)
+
+            color_button.setFixedSize(100, 40)
+
+            color_button.clicked.connect(partial(self.createColormap, color_button, index))
+            level_layout.addWidget(color_button)
+
+            # Pattern
+            pattern = pattern_thumbnail(self.object.level_pattern(index))
+            pattern_button = QtGui.QPushButton()
+            pattern_button.setIcon(pattern)
+            pattern_button.setIconSize(QtCore.QSize(100, 50))
+            pattern_button.setFixedSize(100, 50)
+            pattern_button.clicked.connect(partial(self.createPatternWidget, pattern_button, index))
+            level_layout.addWidget(pattern_button)
+
+            level_layout.insertStretch(1, 2)
+            level_layout.insertStretch(3, 2)
+
+            rows_layout.addLayout(level_layout)
+
+        rows_widget.setLayout(rows_layout)
+        scroll_area.setWidget(rows_widget)
+        return scroll_area
 
     def deleteCustomFillBox(self):
         scroll = self.custom_vertical_layout.takeAt(1).widget()
@@ -277,9 +289,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
     def createColormap(self, button, index):
         def changeColor(color_index):
-            r, g, b, a = self.object.rgba_from_index(color_index)
-            style_string = "background-color: rgba(%d, %d, %d, %d);" % (r, g, b, a)
-            button.setStyleSheet(style_string)
+            self.updateButtonColor(button, color_index)
             if button != self.start_color_button and button != self.end_color_button:
                 self.object.set_level_color(index, color_index)
             elif button == self.start_color_button:
@@ -331,7 +341,6 @@ class LegendEditorWidget(BaseOkWindowWidget):
             scroll_area.deleteLater()
 
     def updateLabels(self, dict):
-        print dict
         try:
             d = {float(key): value for key, value in dict.items()}
             self.object.labels = d
@@ -339,6 +348,11 @@ class LegendEditorWidget(BaseOkWindowWidget):
             pass
 
         self.preview.update()
+
+    def updateButtonColor(self, button, color_index):
+        r, g, b, a = self.object.rgba_from_index(color_index)
+        style_string = "background-color: rgba(%d, %d, %d, %d);" % (r, g, b, a)
+        button.setStyleSheet(style_string)
 
 if __name__ == "__main__":
     import cdms2, vcs

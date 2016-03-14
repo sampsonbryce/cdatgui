@@ -109,8 +109,9 @@ class QColormapEditor(QtGui.QColorDialog):
         self.cell = ind
         print ind
         if ind is not None:
-            self
+            # self
             color = self.colors.get_cell(ind)
+            print "COLOR:", color
             r, g, b, a = [2.55 * c for c in color]
             col = QtGui.QColor(r, g, b, a)
             self.setCurrentColor(col)

@@ -198,7 +198,6 @@ class DictEditorWidget(QWidget):
     # set inital dictionary values
     def setDict(self, dictionary):
         self.deleteLater()
-        self.rows = QVBoxLayout()
 
         for key in sorted(dictionary.keys()):
             self.insertRow(key, dictionary[key])
@@ -226,5 +225,21 @@ class DictEditorWidget(QWidget):
                 self.removeRow(row_widget)
                 row = self.rows.takeAt(0)
 
-        self.rows.deleteLater()
         self.clearing = False
+
+if __name__ == "__main__":
+    app = QApplication([])
+    editor = DictEditorWidget()
+    d = {}
+    d['taco'] = 23
+    d['potato'] = 30
+    d['chocolate'] = 40
+    editor.setDict(d)
+    editor.show()
+    editor.raise_()
+    b = {}
+    b['cheese'] = 3
+    b['egg'] = 69
+    b['bacon'] = 60
+    editor.setDict(b)
+    app.exec_()

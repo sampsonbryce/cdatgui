@@ -73,6 +73,7 @@ class VCSLegend(object):
     @color_1.setter
     def color_1(self, c):
         if vcs.isboxfill(self._gm):
+            print "setting color1:", c
             self._gm.color_1 = c
 
     @property
@@ -86,6 +87,7 @@ class VCSLegend(object):
     @color_2.setter
     def color_2(self, c):
         if vcs.isboxfill(self._gm):
+            print "setting color2:", c
             self._gm.color_2 = c
 
     @property
