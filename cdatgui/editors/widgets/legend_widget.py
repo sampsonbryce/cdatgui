@@ -157,6 +157,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow:
             self.deleteCustomFillBox()
             self.custom_vertical_layout.addWidget(self.createCustomFillBox())
+            self.vertical_layout.insertLayout(6, self.custom_vertical_layout)
 
         start_color = self.object.level_color(0)
         end_color = self.object.level_color(self.level_count-1)
@@ -332,7 +333,9 @@ class LegendEditorWidget(BaseOkWindowWidget):
             self.vertical_layout.insertWidget(self.vertical_layout.count()-1, scroll_area)
         elif isinstance(self.vertical_layout.itemAt(self.vertical_layout.count()-2).widget(), QtGui.QScrollArea):
             scroll_area = self.vertical_layout.takeAt(self.vertical_layout.count()-2).widget()
-            scroll_area.takeWidget().deleteLater()
+            dict_editor = scroll_area.takeWidget()
+            dict_editor.clearRows()
+            dict_editor.deleteLater()
             scroll_area.deleteLater()
 
     def updateLabels(self, dict):

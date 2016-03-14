@@ -197,7 +197,7 @@ class DictEditorWidget(QWidget):
 
     # set inital dictionary values
     def setDict(self, dictionary):
-        self.deleteLater()
+        self.clearRows()
 
         for key in sorted(dictionary.keys()):
             self.insertRow(key, dictionary[key])
@@ -215,7 +215,7 @@ class DictEditorWidget(QWidget):
             values.append(row.value())
         return dict(zip(keys, values))
 
-    def deleteLater(self):
+    def clearRows(self):
         self.clearing = True
         if self.rows.count() > 0:
             row = self.rows.takeAt(0)
@@ -227,9 +227,13 @@ class DictEditorWidget(QWidget):
 
         self.clearing = False
 
+def responseDict(dict):
+    print dict
+
 if __name__ == "__main__":
     app = QApplication([])
     editor = DictEditorWidget()
+    editor.dictEdited.connect(responseDict)
     d = {}
     d['taco'] = 23
     d['potato'] = 30

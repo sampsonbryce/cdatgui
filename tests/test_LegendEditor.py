@@ -56,8 +56,8 @@ def test_customFillInsertAndDelete(editors):
     assert editors.vertical_layout.count() == 8
     assert editors.custom_vertical_layout.count() == 1
 
-def test_changeFillStyle(editors):
 
+def test_changeFillStyle(editors):
     editors.custom_fill_icon.setArrowType(QtCore.Qt.RightArrow)
     editors.updateArrowType()
     assert editors.vertical_layout.count() == 9
@@ -74,6 +74,7 @@ def test_changeFillStyle(editors):
     pattern_button = editors.fill_style_widget.layout().itemAt(3).widget()
     editors.changeFillStyle(pattern_button)
     assert editors.object.fill_style == "pattern"
+
 
 def test_createColormap(editors):
     editors.createColormap(editors.start_color_button, 0)
@@ -93,13 +94,28 @@ def test_createColormap(editors):
 
     assert editors.object._gm.fillareacolors[1] == 160
 
+
+def test_createPatternWidget(editors):
+    editors.createPatternWidget(QtGui.QPushButton(), 1)
+    editors.pattern_selector.layout().itemAt(4).widget().clicked.emit()
+
+    assert editors.object._gm.fillareaindices[1] == 5
+
+
 def test_dictEditor(editors):
     editors.manageDictEditor(QtGui.QPushButton("Manual"))
     assert editors.vertical_layout.count() == 9
 
+    dictWidget = editors.vertical_layout.itemAt(editors.vertical_layout.count()-2).widget().takeWidget()
+    dictWidget.emitSignal()
+    editors.vertical_layout.itemAt(editors.vertical_layout.count()-2).widget().setWidget(dictWidget)
+
     editors.manageDictEditor(QtGui.QPushButton())
     assert editors.vertical_layout.count() == 8
 
+def test_updateCustomOnColormapChange(editors):
+    editors.updateArrowType()
 
+    editors.updateColormap("rainbow")
 
-
+    assert editors.vertical_layout.count() == 9
