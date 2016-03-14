@@ -175,14 +175,6 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.updateButtonColor(self.end_color_button, value)
         self.preview.update()
 
-    def updateStartColorFromEditor(self, value):
-        self.start_color_spin.setValue(value)
-        self.preview.update()
-
-    def updateEndColorFromEditor(self, value):
-        self.end_color_spin.setValue(value)
-        self.preview.update()
-
     def updateExtendLeft(self, state):
         self.object.ext_left = state == QtCore.Qt.Checked
         self.preview.update()
@@ -244,6 +236,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         return scroll_area
 
     def deleteCustomFillBox(self):
+        self.vertical_layout.takeAt(6)
         scroll = self.custom_vertical_layout.takeAt(1).widget()
         w = scroll.takeWidget()
         l = w.layout()
@@ -289,8 +282,10 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
     def createColormap(self, button, index):
         def changeColor(color_index):
+            print "changing color"
             self.updateButtonColor(button, color_index)
             if button != self.start_color_button and button != self.end_color_button:
+                print "setting level:", index
                 self.object.set_level_color(index, color_index)
             elif button == self.start_color_button:
                 self.object.color_1 = color_index
@@ -300,7 +295,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
                 self.end_color_spin.setValue(color_index)
 
             self.preview.update()
-
+        print "creating colormap"
         self.colormap_editor = QColormapEditor(mode="color")
         self.colormap_editor.choseColorIndex.connect(changeColor)
         self.colormap_editor.show()
@@ -336,7 +331,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
             scroll_area.setWidget(label_editor)
             self.vertical_layout.insertWidget(self.vertical_layout.count()-1, scroll_area)
         elif isinstance(self.vertical_layout.itemAt(self.vertical_layout.count()-2).widget(), QtGui.QScrollArea):
-            scroll_area = self.vertical_layout.itemAt(self.vertical_layout.count()-2).widget()
+            scroll_area = self.vertical_layout.takeAt(self.vertical_layout.count()-2).widget()
             scroll_area.takeWidget().deleteLater()
             scroll_area.deleteLater()
 

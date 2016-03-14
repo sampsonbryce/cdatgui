@@ -27,7 +27,6 @@ class VCSLegend(object):
 
     @colormap.setter
     def colormap(self, cmap):
-        print "setting colormap"
         self._gm.colormap = cmap
     
     def rgba_from_index(self, index):
@@ -40,12 +39,18 @@ class VCSLegend(object):
         levs = self.levels
         if self._gm.fillareacolors:
             colors = self._gm.fillareacolors
+            # print "COLORS _gm:", colors
         else:
             colors = vcs.getcolors(levs)
+            # print "COLORS vcs:", colors
+        # colors = colors[colors.index(self.color_1):colors.index(self.color_2)]
         if len(colors) < len(levs):
             # Pad out colors to the right number of buckets
-            colors += (len(levs) - len(colors)) * colors[-1:]
-        return colors
+            diff = len(levs) - len(colors)
+            # colors.extend(colors[0: diff])
+            colors += diff * colors[-1:]
+        # print "FINAL COLORS:", colors
+        return sorted(colors)
 
     def set_color(self, index, color):
         """Use to set custom fill color buttons."""
@@ -73,7 +78,6 @@ class VCSLegend(object):
     @color_1.setter
     def color_1(self, c):
         if vcs.isboxfill(self._gm):
-            print "setting color1:", c
             self._gm.color_1 = c
 
     @property
@@ -87,7 +91,6 @@ class VCSLegend(object):
     @color_2.setter
     def color_2(self, c):
         if vcs.isboxfill(self._gm):
-            print "setting color2:", c
             self._gm.color_2 = c
 
     @property
@@ -182,6 +185,9 @@ class VCSLegend(object):
         self._gm.legend = v
 
     def level_color(self, i):
+        # print "index:", i
+        # print "VCSCOLORS:", self.vcs_colors
+        # print "VCSCOLORS[index]:", self.vcs_colors[i]
         return self.vcs_colors[i]
 
     def set_level_color(self, i, v):
