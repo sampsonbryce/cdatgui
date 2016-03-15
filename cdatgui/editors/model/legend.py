@@ -39,18 +39,17 @@ class VCSLegend(object):
         levs = self.levels
         if self._gm.fillareacolors:
             colors = self._gm.fillareacolors
-            # print "COLORS _gm:", colors
+            print "fillareacolors:", colors
+            return colors
         else:
-            colors = vcs.getcolors(levs)
-            # print "COLORS vcs:", colors
-        # colors = colors[colors.index(self.color_1):colors.index(self.color_2)]
-        if len(colors) < len(levs):
-            # Pad out colors to the right number of buckets
-            diff = len(levs) - len(colors)
-            # colors.extend(colors[0: diff])
-            colors += diff * colors[-1:]
-        # print "FINAL COLORS:", colors
-        return sorted(colors)
+            print "vcscolors"
+            colors = vcs.getcolors(levs, colors=range(self.color_1, self.color_2))
+
+            if len(colors) < len(levs):
+                # Pad out colors to the right number of buckets
+                diff = len(levs) - len(colors)
+                colors += diff * colors[-1:]
+            return sorted(colors)
 
     def set_color(self, index, color):
         """Use to set custom fill color buttons."""
@@ -78,6 +77,8 @@ class VCSLegend(object):
     @color_1.setter
     def color_1(self, c):
         if vcs.isboxfill(self._gm):
+            if self._gm.fillareacolors:
+                self._gm.fillareacolors = None
             self._gm.color_1 = c
 
     @property
@@ -91,6 +92,8 @@ class VCSLegend(object):
     @color_2.setter
     def color_2(self, c):
         if vcs.isboxfill(self._gm):
+            if self._gm.fillareacolors:
+                self._gm.fillareacolors = None
             self._gm.color_2 = c
 
     @property
@@ -185,9 +188,6 @@ class VCSLegend(object):
         self._gm.legend = v
 
     def level_color(self, i):
-        # print "index:", i
-        # print "VCSCOLORS:", self.vcs_colors
-        # print "VCSCOLORS[index]:", self.vcs_colors[i]
         return self.vcs_colors[i]
 
     def set_level_color(self, i, v):

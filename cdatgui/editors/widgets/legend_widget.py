@@ -8,6 +8,32 @@ from cdatgui.utils import pattern_thumbnail
 from functools import partial
 
 
+class StartEndSpinBox(QtGui.QSpinBox):
+    def __init__(self, func, parent=None):
+        super(StartEndSpinBox, self).__init__()
+        self.parent = parent
+        self.function = func
+
+    def validate(self, value, index):
+        if self.parent.object == None:
+            return QtGui.QValidator.Acceptable
+        try:
+            value = int(value)
+        except ValueError:
+            return QtGui.QValidator.Intermediate
+        if self.function == "start":
+            if self.parent.object.color_2 > value:
+                return QtGui.QValidator.Acceptable
+            return QtGui.QValidator.Intermediate
+        elif self.function == "end":
+            if self.parent.object.color_1 < value:
+                return QtGui.QValidator.Acceptable
+            return QtGui.QValidator.Intermediate
+
+        raise Exception("Did not crete StartEndSpin with a valid function")
+        return QtGui.QValidator.Invalid
+
+
 class LegendEditorWidget(BaseOkWindowWidget):
     def __init__(self, parent=None):
         super(LegendEditorWidget, self).__init__()
@@ -31,7 +57,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         colormap_dropdown.currentIndexChanged[str].connect(self.updateColormap)
 
         # Create start color spinbox
-        self.start_color_spin = QtGui.QSpinBox()
+        self.start_color_spin = StartEndSpinBox("start", self)
         self.start_color_spin.setRange(1, 255)
         self.start_color_spin.valueChanged.connect(self.updateStartColor)
 
@@ -44,7 +70,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.end_color_button.clicked.connect(partial(self.createColormap, self.end_color_button, 0))
 
         # Create end color spinbox
-        self.end_color_spin = QtGui.QSpinBox()
+        self.end_color_spin = StartEndSpinBox("end", self)
         self.end_color_spin.setRange(1, 255)
         self.end_color_spin.valueChanged.connect(self.updateEndColor)
 
@@ -159,22 +185,29 @@ class LegendEditorWidget(BaseOkWindowWidget):
             self.custom_vertical_layout.addWidget(self.createCustomFillBox())
             self.vertical_layout.insertLayout(6, self.custom_vertical_layout)
 
-        start_color = self.object.level_color(0)
-        end_color = self.object.level_color(self.level_count-1)
-        self.updateButtonColor(self.start_color_button, start_color)
-        self.start_color_spin.setValue(start_color)
-        self.updateButtonColor(self.end_color_button, end_color)
-        self.end_color_spin.setValue(end_color)
+        self.updateStartColor(self.object.level_color(0))
+        self.updateEndColor(self.object.level_color(self.level_count - 1))
 
     def updateStartColor(self, value):
         self.object.color_1 = value
         self.updateButtonColor(self.start_color_button, value)
         self.preview.update()
 
+        if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow:
+            self.deleteCustomFillBox()
+            self.custom_vertical_layout.addWidget(self.createCustomFillBox())
+            self.vertical_layout.insertLayout(6, self.custom_vertical_layout)
+
     def updateEndColor(self, value):
         self.object.color_2 = value
         self.updateButtonColor(self.end_color_button, value)
         self.preview.update()
+
+        if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow:
+            self.deleteCustomFillBox()
+            self.custom_vertical_layout.addWidget(self.createCustomFillBox())
+            self.vertical_layout.insertLayout(6, self.custom_vertical_layout)
+
 
     def updateExtendLeft(self, state):
         self.object.ext_left = state == QtCore.Qt.Checked
@@ -185,6 +218,8 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.preview.update()
 
     def updateArrowType(self):
+
+
         if self.custom_fill_icon.arrowType() == QtCore.Qt.RightArrow:
             self.custom_fill_icon.setArrowType(QtCore.Qt.DownArrow)
             self.vertical_layout.insertLayout(6, self.custom_vertical_layout)
@@ -194,6 +229,10 @@ class LegendEditorWidget(BaseOkWindowWidget):
             self.fill_style_widget.setVisible(False)
             self.deleteCustomFillBox()
             self.custom_fill_icon.setArrowType(QtCore.Qt.RightArrow)
+
+        for button in self.fill_button_group.buttons():
+            if button.text() == "Solid":
+                button.click()
 
         self.preview.update()
 
@@ -258,6 +297,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
     def changeFillStyle(self, button):
         self.object.fill_style = button.text()
+
         scroll = self.custom_vertical_layout.itemAt(1).widget()
         w = scroll.takeWidget()
         l = w.layout()
@@ -265,7 +305,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
             row = l.itemAt(row_index)
             if not row:
                 break
-
+            self.preview.setStyle(button.text())
             if button.text() == "Solid":
                 row.itemAt(2).widget().show()
                 row.itemAt(4).widget().hide()
@@ -296,6 +336,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
                 self.end_color_spin.setValue(color_index)
 
             self.preview.update()
+
         print "creating colormap"
         self.colormap_editor = QColormapEditor(mode="color")
         self.colormap_editor.choseColorIndex.connect(changeColor)
@@ -330,9 +371,9 @@ class LegendEditorWidget(BaseOkWindowWidget):
             label_editor.dictEdited.connect(self.updateLabels)
             scroll_area = QtGui.QScrollArea()
             scroll_area.setWidget(label_editor)
-            self.vertical_layout.insertWidget(self.vertical_layout.count()-1, scroll_area)
-        elif isinstance(self.vertical_layout.itemAt(self.vertical_layout.count()-2).widget(), QtGui.QScrollArea):
-            scroll_area = self.vertical_layout.takeAt(self.vertical_layout.count()-2).widget()
+            self.vertical_layout.insertWidget(self.vertical_layout.count() - 1, scroll_area)
+        elif isinstance(self.vertical_layout.itemAt(self.vertical_layout.count() - 2).widget(), QtGui.QScrollArea):
+            scroll_area = self.vertical_layout.takeAt(self.vertical_layout.count() - 2).widget()
             dict_editor = scroll_area.takeWidget()
             dict_editor.clearRows()
             dict_editor.deleteLater()
@@ -351,6 +392,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         r, g, b, a = self.object.rgba_from_index(color_index)
         style_string = "background-color: rgba(%d, %d, %d, %d);" % (r, g, b, a)
         button.setStyleSheet(style_string)
+
 
 if __name__ == "__main__":
     import cdms2, vcs
