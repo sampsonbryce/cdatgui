@@ -39,10 +39,8 @@ class VCSLegend(object):
         levs = self.levels
         if self._gm.fillareacolors:
             colors = self._gm.fillareacolors
-            print "fillareacolors:", colors
             return colors
         else:
-            print "vcscolors"
             colors = vcs.getcolors(levs, colors=range(self.color_1, self.color_2))
 
             if len(colors) < len(levs):
@@ -118,7 +116,6 @@ class VCSLegend(object):
     def levels(self):
         """Used internally, don't worry about it."""
         levs = list(self._gm.levels)
-        
         # Check if they're autolevels
         if numpy.allclose(levs, 1e20):
             if vcs.isboxfill(self._gm) == 1:
@@ -127,11 +124,18 @@ class VCSLegend(object):
             else:
                 levs = vcs.mkscale(*vcs.minmax(self._var))
 
+        # print "LEVS before:", levs, len(levs)
+
         # Now adjust for ext_1 nad ext_2
         if self.ext_left:
             levs[0] = -1e20
+            # insert not working for some reason. causes colors to be off
+            # levs.insert(0, 1e20)
         if self.ext_right:
-            levs[-1] = 1e20
+            levs.append(1e20)
+
+        # print "LEVS after:", levs, len(levs)
+
         return levs
     
     @property
@@ -139,6 +143,8 @@ class VCSLegend(object):
         """Returns a string repr for each level. Use for Custom Fill's labels."""
         # Get the levels in a new list to mutate
         levs = self.levels
+        print "LENLEVSNAMES:", len(levs)
+        print levs
 
         # Pair up the levels into bounds
         level_bounds = [[levs[i], levs[i+1]] for i in range(len(levs) - 1)]
@@ -155,6 +161,8 @@ class VCSLegend(object):
                     parts.append(str(b))
             level_strings.append("-".join(parts))
 
+        print "LENNAMES:", len(level_strings)
+        print level_strings
         return level_strings
 
     @property

@@ -6,6 +6,7 @@ from cdatgui.bases.window_widget import BaseOkWindowWidget
 from cdatgui.editors.colormap import QColormapEditor
 from cdatgui.utils import pattern_thumbnail
 from functools import partial
+import timeit
 
 
 class StartEndSpinBox(QtGui.QSpinBox):
@@ -50,16 +51,27 @@ class LegendEditorWidget(BaseOkWindowWidget):
         custom_fill_label = QtGui.QLabel("Custom Fill")
         labels_label = QtGui.QLabel("Labels:")
 
+        # Timers
+        self.start_timer = QtCore.QTimer()
+        self.start_timer.setSingleShot(True)
+        self.start_timer.setInterval(1000)
+        self.start_timer.timeout.connect(partial(self.updateStartColor, True, False))
+
+        self.end_timer = QtCore.QTimer()
+        self.end_timer.setSingleShot(True)
+        self.end_timer.setInterval(1000)
+        self.end_timer.timeout.connect(partial(self.updateEndColor, True, False))
+
         # Create colormap dropdown
-        colormap_dropdown = QtGui.QComboBox()
-        colormap_dropdown.addItems(legend.get_colormaps())
-        colormap_dropdown.setCurrentIndex(11)
-        colormap_dropdown.currentIndexChanged[str].connect(self.updateColormap)
+        self.colormap_dropdown = QtGui.QComboBox()
+        self.colormap_dropdown.addItems(legend.get_colormaps())
+        self.colormap_dropdown.setCurrentIndex(11)
+        self.colormap_dropdown.currentIndexChanged[str].connect(self.updateColormap)
 
         # Create start color spinbox
         self.start_color_spin = StartEndSpinBox("start", self)
         self.start_color_spin.setRange(1, 255)
-        self.start_color_spin.valueChanged.connect(self.updateStartColor)
+        self.start_color_spin.valueChanged.connect(lambda: self.start_timer.start())
 
         # Create start colormap editor button
         self.start_color_button = QtGui.QPushButton()
@@ -72,7 +84,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         # Create end color spinbox
         self.end_color_spin = StartEndSpinBox("end", self)
         self.end_color_spin.setRange(1, 255)
-        self.end_color_spin.valueChanged.connect(self.updateEndColor)
+        self.end_color_spin.valueChanged.connect(lambda: self.end_timer.start())
 
         # Create extend check boxes
         extend_left_check = QtGui.QCheckBox()
@@ -92,9 +104,6 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.fill_button_group = QtGui.QButtonGroup()
         for text in ["Solid", "Hatch", "Pattern"]:
             button = QtGui.QRadioButton(text)
-            if text == "Hatch":
-                button.setChecked(True)
-
             self.fill_button_group.addButton(button)
             fill_style_layout.addWidget(button)
 
@@ -128,7 +137,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         custom_fill_layout = QtGui.QHBoxLayout()
 
         colormap_layout.addWidget(colormap_label)
-        colormap_layout.addWidget(colormap_dropdown)
+        colormap_layout.addWidget(self.colormap_dropdown)
 
         start_color_layout.addWidget(start_color_label)
         start_color_layout.addWidget(self.start_color_spin)
@@ -175,77 +184,100 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.preview.update()
 
     def updateColormap(self, cur_item):
+        print "updatecolormap"
+        print self.object.colormap.name, cur_item
+        if self.object.colormap.name == cur_item:
+            return
         self.object.colormap = cur_item
+        items = [self.colormap_dropdown.itemText(i) for i in range(self.colormap_dropdown.count())]
+        self.colormap_dropdown.setCurrentIndex(items.index(cur_item))
         self.preview.update()
 
         self.level_count = len(self.object.levels)
 
-        if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow:
-            self.deleteCustomFillBox()
-            self.custom_vertical_layout.addWidget(self.createCustomFillBox())
-            self.vertical_layout.insertLayout(6, self.custom_vertical_layout)
+        self.updateStartColor(False, True)
+        self.updateEndColor(False, True)
+        self.updateCustomFillBox()
 
-        self.updateStartColor(self.object.level_color(0))
-        self.updateEndColor(self.object.level_color(self.level_count - 1))
-
-    def updateStartColor(self, value):
+    def updateStartColor(self, update_custom, colormap):
+        print "updateStartColor"
+        if not colormap:
+            value = self.start_color_spin.value()
+        else:
+            value = self.object.level_color(0)
+        if value > self.object.color_2:
+            raise ValueError("Start color cannot be higher index than end color")
         self.object.color_1 = value
         self.updateButtonColor(self.start_color_button, value)
         self.preview.update()
 
-        if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow:
-            self.deleteCustomFillBox()
-            self.custom_vertical_layout.addWidget(self.createCustomFillBox())
-            self.vertical_layout.insertLayout(6, self.custom_vertical_layout)
+        if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow and update_custom:
+            self.updateCustomFillBox()
 
-    def updateEndColor(self, value):
+    def updateEndColor(self, update_custom, colormap):
+        print "updateEndColor"
+        if not colormap:
+            value = self.end_color_spin.value()
+        else:
+            value = self.object.level_color(len(self.object.levels)-1)
+        if value < self.object.color_1:
+            raise ValueError("End color cannot be lower index than start color")
         self.object.color_2 = value
         self.updateButtonColor(self.end_color_button, value)
         self.preview.update()
 
-        if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow:
-            self.deleteCustomFillBox()
-            self.custom_vertical_layout.addWidget(self.createCustomFillBox())
-            self.vertical_layout.insertLayout(6, self.custom_vertical_layout)
-
+        if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow and update_custom:
+            self.updateCustomFillBox()
 
     def updateExtendLeft(self, state):
         self.object.ext_left = state == QtCore.Qt.Checked
         self.preview.update()
+        self.updateCustomFillBox()
 
     def updateExtendRight(self, state):
         self.object.ext_right = state == QtCore.Qt.Checked
         self.preview.update()
+        self.updateCustomFillBox()
 
     def updateArrowType(self):
-
-
         if self.custom_fill_icon.arrowType() == QtCore.Qt.RightArrow:
             self.custom_fill_icon.setArrowType(QtCore.Qt.DownArrow)
-            self.vertical_layout.insertLayout(6, self.custom_vertical_layout)
             self.fill_style_widget.setVisible(True)
+            self.vertical_layout.insertLayout(6, self.custom_vertical_layout)
             self.custom_vertical_layout.addWidget(self.createCustomFillBox())
+            self.initateFillStyle()
         else:
             self.fill_style_widget.setVisible(False)
             self.deleteCustomFillBox()
             self.custom_fill_icon.setArrowType(QtCore.Qt.RightArrow)
 
+        self.preview.update()
+
+    def initateFillStyle(self):
+        # Make current fill style solid
         for button in self.fill_button_group.buttons():
             if button.text() == "Solid":
                 button.click()
 
-        self.preview.update()
+    def updateCustomFillBox(self):
+        if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow:
+            self.deleteCustomFillBox()
+            self.custom_vertical_layout.addWidget(self.createCustomFillBox())
+            self.vertical_layout.insertLayout(6, self.custom_vertical_layout)
+            self.initateFillStyle()
 
     def createCustomFillBox(self):
+        print "createCustomFillBox"
         # create layout for custom fill
         scroll_area = QtGui.QScrollArea()
         rows_widget = QtGui.QWidget()
         rows_layout = QtGui.QVBoxLayout()
         level_names = self.object.level_names
+        print "LN:", len(level_names)
         for index, label in enumerate(level_names):
             # Label
             level_layout = QtGui.QHBoxLayout()
-            level_layout.addWidget(QtGui.QLabel("Level %s" % str(index + 1)))
+            level_layout.addWidget(QtGui.QLabel(label))
 
             # Color button
             color_button = QtGui.QPushButton()
@@ -273,9 +305,12 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
         rows_widget.setLayout(rows_layout)
         scroll_area.setWidget(rows_widget)
+
+
         return scroll_area
 
     def deleteCustomFillBox(self):
+        print "deleteCustomFillBox"
         self.vertical_layout.takeAt(6)
         scroll = self.custom_vertical_layout.takeAt(1).widget()
         w = scroll.takeWidget()
@@ -292,33 +327,38 @@ class LegendEditorWidget(BaseOkWindowWidget):
                 sub_child = child.takeAt(0)
             child = l.takeAt(0)
 
+        w.deleteLater()
         l.deleteLater()
         scroll.deleteLater()
 
     def changeFillStyle(self, button):
-        self.object.fill_style = button.text()
-
+        print "changeFillStyle"
+        start_time = timeit.default_timer()
+        print start_time
+        old_fill_style = self.object.fill_style
         scroll = self.custom_vertical_layout.itemAt(1).widget()
-        w = scroll.takeWidget()
+        w = scroll.widget()
         l = w.layout()
         for row_index in range(l.count()):
             row = l.itemAt(row_index)
             if not row:
                 break
-            self.preview.setStyle(button.text())
             if button.text() == "Solid":
                 row.itemAt(2).widget().show()
                 row.itemAt(4).widget().hide()
 
             elif button.text() == "Hatch":
-                row.itemAt(2).widget().show()
-                row.itemAt(4).widget().show()
+                if old_fill_style == "solid":
+                    row.itemAt(4).widget().show()
+                else:
+                    row.itemAt(2).widget().show()
 
             elif button.text() == "Pattern":
                 row.itemAt(2).widget().hide()
                 row.itemAt(4).widget().show()
-
-        scroll.setWidget(w)
+        print timeit.default_timer() - start_time
+        print old_fill_style
+        self.object.fill_style = button.text()
         self.preview.update()
 
     def createColormap(self, button, index):
@@ -326,7 +366,6 @@ class LegendEditorWidget(BaseOkWindowWidget):
             print "changing color"
             self.updateButtonColor(button, color_index)
             if button != self.start_color_button and button != self.end_color_button:
-                print "setting level:", index
                 self.object.set_level_color(index, color_index)
             elif button == self.start_color_button:
                 self.object.color_1 = color_index
@@ -337,8 +376,10 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
             self.preview.update()
 
-        print "creating colormap"
         self.colormap_editor = QColormapEditor(mode="color")
+        items = [self.colormap_editor.colormap.itemText(i) for i in range(self.colormap_editor.colormap.count())]
+        self.colormap_editor.colormap.setCurrentIndex(items.index(self.colormap_dropdown.currentText()))
+        self.colormap_editor.choseColormap.connect(self.updateColormap)
         self.colormap_editor.choseColorIndex.connect(changeColor)
         self.colormap_editor.show()
 

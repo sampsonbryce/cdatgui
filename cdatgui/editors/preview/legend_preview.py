@@ -1,12 +1,12 @@
 import vcs
 from cdatgui.cdat.vcswidget import QVCSWidget
+import pdb
 
 
 class LegendPreviewWidget(QVCSWidget):
     def __init__(self, parent=None):
         super(LegendPreviewWidget, self).__init__(parent=parent)
         self.legend = None
-        self.style = 'solid'
         self.visibilityChanged.connect(self.visibility_toggled)
 
     def visibility_toggled(self, showing):
@@ -33,8 +33,7 @@ class LegendPreviewWidget(QVCSWidget):
         text_orientation.height = legend_size
         text_orientation.halign = "center"
         template.legend.textorientation = text_orientation.name
-
-        template.drawColorBar(self.legend.vcs_colors, self.legend.levels, self.legend.labels, ext_1=self.legend.ext_left, ext_2=self.legend.ext_right, x=self.canvas, cmap=self.legend.colormap, style=[self.style])
+        template.drawColorBar(self.legend.vcs_colors, self.legend.levels, self.legend.labels, ext_1=self.legend.ext_left, ext_2=self.legend.ext_right, x=self.canvas, cmap=self.legend.colormap, style=[self.legend.fill_style], index=self.legend._gm.fillareaindices)
 
         self.canvas.backend.renWin.Render()
 
@@ -44,10 +43,6 @@ class LegendPreviewWidget(QVCSWidget):
 
     def setLegendObject(self, legend):
         self.legend = legend
-
-    def setStyle(self, style):
-        self.style = style.lower()
-
 
 if __name__ == "__main__":
     from PySide import QtGui, QtCore

@@ -21,10 +21,16 @@ def test_updateColormap(qtbot, editors):
 
 
 def test_updateStartAndEndColor(editors):
-    editors.updateStartColor(55)
+    editors.start_color_spin.setValue(55)
+
+    # have to call because of timer
+    editors.updateStartColor(True, False)
     assert editors.object.color_1 == 55
 
-    editors.updateEndColor(176)
+    editors.end_color_spin.setValue(176)
+
+    # have to call because of timer
+    editors.updateEndColor(True, False)
     assert editors.object.color_2 == 176
 
 
