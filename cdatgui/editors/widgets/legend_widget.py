@@ -5,6 +5,7 @@ from cdatgui.editors.preview.legend_preview import LegendPreviewWidget
 from cdatgui.bases.window_widget import BaseOkWindowWidget
 from cdatgui.editors.colormap import QColormapEditor
 from cdatgui.utils import pattern_thumbnail
+from cdatgui.bases.reflow_widget import ReflowWidget
 from functools import partial
 import timeit
 
@@ -170,6 +171,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.vertical_layout.insertLayout(6, labels_layout)
 
     def setObject(self, legend):
+        print "setObject"
         self.object = legend
 
         self.start_color_spin.setValue(self.object.color_1)
@@ -181,6 +183,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.end_color_button.setFixedSize(100, 25)
 
         self.preview.setLegendObject(legend)
+        print "after setLegendObject"
         self.preview.update()
 
     def updateColormap(self, cur_item):
@@ -230,50 +233,55 @@ class LegendEditorWidget(BaseOkWindowWidget):
             self.updateCustomFillBox()
 
     def updateExtendLeft(self, state):
+        print "updateExtendLeft"
         self.object.ext_left = state == QtCore.Qt.Checked
         self.preview.update()
         self.updateCustomFillBox()
 
     def updateExtendRight(self, state):
+        print "updateExtendRight"
         self.object.ext_right = state == QtCore.Qt.Checked
         self.preview.update()
         self.updateCustomFillBox()
 
     def updateArrowType(self):
+        print "updateArrowType"
         if self.custom_fill_icon.arrowType() == QtCore.Qt.RightArrow:
             self.custom_fill_icon.setArrowType(QtCore.Qt.DownArrow)
             self.fill_style_widget.setVisible(True)
             self.vertical_layout.insertLayout(6, self.custom_vertical_layout)
             self.custom_vertical_layout.addWidget(self.createCustomFillBox())
-            self.initateFillStyle()
+            self.initateFillStyle(self.fill_button_group.button(-2))
         else:
+            self.object.fill_style = "Solid"
             self.fill_style_widget.setVisible(False)
             self.deleteCustomFillBox()
             self.custom_fill_icon.setArrowType(QtCore.Qt.RightArrow)
 
         self.preview.update()
 
-    def initateFillStyle(self):
+    def initateFillStyle(self, old_button):
+        print "initiateFillStyle"
         # Make current fill style solid
         for button in self.fill_button_group.buttons():
-            if button.text() == "Solid":
+            if button.text() == old_button.text():
                 button.click()
 
     def updateCustomFillBox(self):
+        print "updateCustomFillBox"
         if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow:
             self.deleteCustomFillBox()
             self.custom_vertical_layout.addWidget(self.createCustomFillBox())
             self.vertical_layout.insertLayout(6, self.custom_vertical_layout)
-            self.initateFillStyle()
+            self.initateFillStyle(self.fill_button_group.checkedButton())
 
     def createCustomFillBox(self):
         print "createCustomFillBox"
         # create layout for custom fill
         scroll_area = QtGui.QScrollArea()
-        rows_widget = QtGui.QWidget()
-        rows_layout = QtGui.QVBoxLayout()
+        grid_widget = ReflowWidget(300)
+        scroll_area.setWidgetResizable(True)
         level_names = self.object.level_names
-        print "LN:", len(level_names)
         for index, label in enumerate(level_names):
             # Label
             level_layout = QtGui.QHBoxLayout()
@@ -301,11 +309,12 @@ class LegendEditorWidget(BaseOkWindowWidget):
             level_layout.insertStretch(1, 2)
             level_layout.insertStretch(3, 2)
 
-            rows_layout.addLayout(level_layout)
+            level_widget = QtGui.QWidget()
+            level_widget.setLayout(level_layout)
 
-        rows_widget.setLayout(rows_layout)
-        scroll_area.setWidget(rows_widget)
+            grid_widget.addWidget(level_widget)
 
+        scroll_area.setWidget(grid_widget)
 
         return scroll_area
 
@@ -314,21 +323,29 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.vertical_layout.takeAt(6)
         scroll = self.custom_vertical_layout.takeAt(1).widget()
         w = scroll.takeWidget()
-        l = w.layout()
-        child = l.takeAt(0)
-        while child:
-            sub_child = child.takeAt(0)
-            while sub_child:
-                if isinstance(sub_child, QtGui.QSpacerItem):
-                    child.removeItem(sub_child)
-                else:
-                    widget = sub_child.widget()
-                    widget.deleteLater()
-                sub_child = child.takeAt(0)
-            child = l.takeAt(0)
+        grid = w.layout()
+        child = grid.itemAtPosition(0, 0).widget()
+        print "CHILD:", child
+
+        for col in range(len(w.counts)):
+            for row in range(w.counts[col]):
+                child_layout = child.layout()
+                print "CHILD_LAYOUT:", child_layout
+                if not child_layout:
+                    break
+
+                layout_items = child_layout.takeAt(0)
+                while layout_items:
+                    if isinstance(layout_items, QtGui.QSpacerItem):
+                        child_layout.removeItem(layout_items)
+                    else:
+                        widget = layout_items.widget()
+                        widget.deleteLater()
+                    layout_items = child_layout.takeAt(0)
+                child = grid.itemAtPosition(row, col)
 
         w.deleteLater()
-        l.deleteLater()
+        grid.deleteLater()
         scroll.deleteLater()
 
     def changeFillStyle(self, button):
@@ -338,9 +355,8 @@ class LegendEditorWidget(BaseOkWindowWidget):
         old_fill_style = self.object.fill_style
         scroll = self.custom_vertical_layout.itemAt(1).widget()
         w = scroll.widget()
-        l = w.layout()
-        for row_index in range(l.count()):
-            row = l.itemAt(row_index)
+        for widget in w.getWidgets():
+            row = widget.layout()
             if not row:
                 break
             if button.text() == "Solid":
@@ -357,7 +373,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
                 row.itemAt(2).widget().hide()
                 row.itemAt(4).widget().show()
         print timeit.default_timer() - start_time
-        print old_fill_style
+        print "OLD STYLE:", old_fill_style
         self.object.fill_style = button.text()
         self.preview.update()
 
@@ -421,6 +437,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
             scroll_area.deleteLater()
 
     def updateLabels(self, dict):
+        print "updateLabels"
         try:
             d = {float(key): value for key, value in dict.items()}
             self.object.labels = d
@@ -433,7 +450,6 @@ class LegendEditorWidget(BaseOkWindowWidget):
         r, g, b, a = self.object.rgba_from_index(color_index)
         style_string = "background-color: rgba(%d, %d, %d, %d);" % (r, g, b, a)
         button.setStyleSheet(style_string)
-
 
 if __name__ == "__main__":
     import cdms2, vcs

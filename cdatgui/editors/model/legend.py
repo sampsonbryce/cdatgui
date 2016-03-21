@@ -129,6 +129,7 @@ class VCSLegend(object):
         # Now adjust for ext_1 nad ext_2
         if self.ext_left:
             levs[0] = -1e20
+            #levs.insert(0, -1e20)
             # insert not working for some reason. causes colors to be off
             # levs.insert(0, 1e20)
         if self.ext_right:
@@ -143,8 +144,8 @@ class VCSLegend(object):
         """Returns a string repr for each level. Use for Custom Fill's labels."""
         # Get the levels in a new list to mutate
         levs = self.levels
-        print "LENLEVSNAMES:", len(levs)
-        print levs
+        # print "LENLEVSNAMES:", len(levs)
+        # print levs
 
         # Pair up the levels into bounds
         level_bounds = [[levs[i], levs[i+1]] for i in range(len(levs) - 1)]
@@ -161,8 +162,8 @@ class VCSLegend(object):
                     parts.append(str(b))
             level_strings.append("-".join(parts))
 
-        print "LENNAMES:", len(level_strings)
-        print level_strings
+        # print "LENNAMES:", len(level_strings)
+        # print level_strings
         return level_strings
 
     @property
