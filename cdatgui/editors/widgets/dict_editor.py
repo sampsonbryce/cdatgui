@@ -1,6 +1,7 @@
 from PySide.QtCore import *
 from PySide.QtGui import *
 from functools import partial
+from cdatgui.bases.reflow_widget import ReflowWidget
 
 
 class KeyValueRow(QWidget):
@@ -80,20 +81,30 @@ class KeyValueRow(QWidget):
     def setValue(self, text):
         self.edit_value.setText(text)
 
+    def delete(self):
+        wrap = self.layout()
+        wrap.takeAt(0).widget().deleteLater()
+        self.edit_key.deleteLater()
+        self.edit_value.deleteLater()
+        wrap.deleteLater()
+        self.deleteLater()
+
+
+
 
 class InputChecker(QValidator):
     inputInvalid = Signal()
     correctInput = Signal()
 
-    def __init__(self, index, editor):
+    def __init__(self, cur_widget, widgets):
         super(InputChecker, self).__init__()
-        self.editor = editor
-        self.index = index
+        self.widgets = widgets
+        self.cur_widget = cur_widget
 
     def validate(self, input, pos):
         keys = []
-        for index, row in enumerate(self.editor.key_value_rows):
-            if index != self.index:
+        for row in enumerate(self.widgets):
+            if row != self.cur_widget:
                 keys.append(row.key())
 
         if input in keys:
@@ -111,16 +122,17 @@ class DictEditorWidget(QWidget):
         super(DictEditorWidget, self).__init__()
         self.valid_keys = None
         self.key_value_rows = []
-        self.rows = QVBoxLayout()
+        self.rows = ReflowWidget(350)
         self.clearing = False
 
         wrap = QVBoxLayout()
+
         add_button = QPushButton()
         add_button.setText("New Line")
         add_button.clicked.connect(self.insertRow)
 
         self.setLayout(wrap)
-        wrap.addLayout(self.rows)
+        wrap.addWidget(self.rows)
         wrap.addWidget(add_button)
 
     # Update Combo Boxes
@@ -163,7 +175,7 @@ class DictEditorWidget(QWidget):
         new_row.clickedRemove.connect(self.removeRow)
 
         if not self.valid_keys:
-            validator = InputChecker(self.rows.count(), self)
+            validator = InputChecker(new_row, self.rows.getWidgets())
             new_row.setKeyValidator(validator)
         if self.valid_keys:
             new_row.updatedKey.connect(self.updateCBoxes)
@@ -172,6 +184,7 @@ class DictEditorWidget(QWidget):
         self.key_value_rows.append(new_row)
 
     def removeRow(self, row_widget):
+        '''
         layout = row_widget.layout()
         child = layout.takeAt(0)
 
@@ -179,12 +192,11 @@ class DictEditorWidget(QWidget):
             widget = child.widget()
             child = layout.takeAt(0)
             widget.deleteLater()
-
+        '''
         # Remove from list
         self.key_value_rows.remove(row_widget)
-
-        layout.deleteLater()
-        row_widget.deleteLater()
+        self.rows.deleteWidget(row_widget)
+        row_widget.delete()
 
         if not self.clearing:
             self.emitSignal()
@@ -197,7 +209,11 @@ class DictEditorWidget(QWidget):
 
     # set inital dictionary values
     def setDict(self, dictionary):
-        self.clearRows()
+        # self.clearRows()
+        self.rows.clearWidget()
+        for row in self.key_value_rows:
+            row.delete()
+            self.rows.deleteWidget(row)
 
         for key in sorted(dictionary.keys()):
             self.insertRow(key, dictionary[key])
@@ -227,8 +243,10 @@ class DictEditorWidget(QWidget):
 
         self.clearing = False
 
+
 def responseDict(dict):
     print dict
+
 
 if __name__ == "__main__":
     app = QApplication([])

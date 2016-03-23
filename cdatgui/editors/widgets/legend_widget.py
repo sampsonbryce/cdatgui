@@ -1,3 +1,6 @@
+import traceback
+from types import FunctionType
+
 from cdatgui.editors.widgets.dict_editor import DictEditorWidget
 from PySide import QtCore, QtGui
 from cdatgui.editors.model import legend
@@ -8,6 +11,131 @@ from cdatgui.utils import pattern_thumbnail
 from cdatgui.bases.reflow_widget import ReflowWidget
 from functools import partial
 import timeit
+
+
+class CustomFillWidget(QtGui.QWidget):
+
+    colorChanged = QtCore.Signal(int, int)
+    opacityChanged = QtCore.Signal(int, int)
+    buttonColorChanged = QtCore.Signal(QtGui.QPushButton, int)
+    patternChanged = QtCore.Signal(int, int)
+    attributeChanged = QtCore.Signal()
+    colormapChanged = QtCore.Signal(str)
+    createColormapRequest = QtCore.Signal(FunctionType)
+
+    def __init__(self, index, label, parent=None):
+        super(CustomFillWidget, self).__init__()
+
+        # Variables
+        self.index = index
+        self.label = label
+        self.color = None
+        self.pattern = 1
+
+        # Label
+        level_layout = QtGui.QHBoxLayout()
+        level_layout.addWidget(QtGui.QLabel(label))
+
+        # Color button
+        self.color_button = QtGui.QPushButton()
+
+        self.color_button.setFixedSize(100, 40)
+        self.color_button.clicked.connect(lambda: self.createColormapRequest.emit(self.changeColor))
+        level_layout.addWidget(self.color_button)
+
+        # Set pattern for combo boxes
+        self.pattern_combo = QtGui.QComboBox()
+        self.pattern_combo.setItemDelegate(PatternComboDelegate())
+        self.pattern_combo.addItem(QtGui.QIcon(QtGui.QPixmap(100, 100).fill(QtGui.QColor(200, 200, 200, 255))),
+                                   "No Pattern")
+        for i in range(1, 21):
+            self.pattern_combo.addItem(pattern_thumbnail(i), "Pattern %d" % i)
+        self.pattern_combo.setCurrentIndex(1)
+        self.pattern_combo.setIconSize(QtCore.QSize(40, 40))
+
+        # create alpha slider
+        alpha_label = QtGui.QLabel("Alpha:")
+        self.alpha_slide = QtGui.QSlider()
+        self.alpha_slide.setRange(0, 100)
+        self.alpha_slide.setValue(100)
+        self.alpha_slide.setOrientation(QtCore.Qt.Horizontal)
+
+        alpha_row = QtGui.QHBoxLayout()
+        alpha_row.addWidget(alpha_label)
+        alpha_row.addWidget(self.alpha_slide)
+
+        pattern_layout = QtGui.QVBoxLayout()
+        pattern_layout.addWidget(self.pattern_combo)
+        pattern_layout.addLayout(alpha_row)
+
+        pattern_widget = QtGui.QWidget()
+        pattern_widget.setLayout(pattern_layout)
+
+        # set up signals
+        self.alpha_slide.valueChanged.connect(self.changeOpacity)
+        self.pattern_combo.currentIndexChanged.connect(self.changePattern)
+
+        level_layout.addWidget(pattern_widget)
+
+        level_layout.insertStretch(1, 2)
+        level_layout.insertStretch(3, 2)
+
+        self.setLayout(level_layout)
+
+    def setColor(self, color):
+        """initialization of button color. Should not call update preview"""
+        self.color = color
+        self.buttonColorChanged.emit(self.color_button, color)
+
+    def changeOpacity(self, value):
+        start_time = timeit.default_timer()
+        if value == 0:
+            self.pattern_combo.setCurrentIndex(0)
+        else:
+            if self.pattern_combo.currentIndex() == 0:
+                self.pattern_combo.setCurrentIndex(self.pattern)
+        self.opacityChanged.emit(self.index, value)
+        self.attributeChanged.emit()
+        print timeit.default_timer() - start_time
+
+    def changeColor(self, color_index):
+        self.buttonColorChanged.emit(self.color_button, color_index)
+        self.colorChanged.emit(self.index, color_index)
+        self.attributeChanged.emit()
+
+    def changePattern(self, selected_index):
+        if selected_index == 0:
+            self.alpha_slide.setValue(0)
+        else:
+            self.pattern = selected_index
+            self.patternChanged.emit(self.index, selected_index)
+            self.attributeChanged.emit()
+
+
+class PatternComboDelegate(QtGui.QAbstractItemDelegate):
+    def __init__(self, parent=None):
+        super(PatternComboDelegate, self).__init__()
+
+    def paint(self, painter, option, index):
+
+        if index.row() == 0:
+            flags = 0
+            flags |= QtCore.Qt.AlignCenter
+            painter.drawText(0, 0, 120, 40, flags, "No Pattern")
+        else:
+            pattern = pattern_thumbnail(index.row())
+            pix = pattern.pixmap(200, 40)
+            painter.drawPixmap(0, 40 * index.row(), 200, 40, pix)
+            painter.drawRect(0, 40 * index.row(), 200, 40)
+
+        if option.state & QtGui.QStyle.State_MouseOver:
+            color = QtGui.QColor(63, 193, 219, 128)
+            brush = QtGui.QBrush(color)
+            painter.fillRect(option.rect, brush)
+
+    def sizeHint(self, option, index):
+        s = QtCore.QSize(200, 40)
+        return s
 
 
 class StartEndSpinBox(QtGui.QSpinBox):
@@ -32,7 +160,7 @@ class StartEndSpinBox(QtGui.QSpinBox):
                 return QtGui.QValidator.Acceptable
             return QtGui.QValidator.Intermediate
 
-        raise Exception("Did not crete StartEndSpin with a valid function")
+        raise Exception("Did not create StartEndSpin with a valid function")
         return QtGui.QValidator.Invalid
 
 
@@ -42,6 +170,10 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
         # Variables
         self.level_count = None
+        self.cur_button = None
+        self.cur_index = None
+        self.colormap_editor = None
+        self.colormap_updating = False
 
         # Create Labels
         colormap_label = QtGui.QLabel("Colormap:")
@@ -56,12 +188,12 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.start_timer = QtCore.QTimer()
         self.start_timer.setSingleShot(True)
         self.start_timer.setInterval(1000)
-        self.start_timer.timeout.connect(partial(self.updateStartColor, True, False))
+        self.start_timer.timeout.connect(self.updateStartColor)
 
         self.end_timer = QtCore.QTimer()
         self.end_timer.setSingleShot(True)
         self.end_timer.setInterval(1000)
-        self.end_timer.timeout.connect(partial(self.updateEndColor, True, False))
+        self.end_timer.timeout.connect(self.updateEndColor)
 
         # Create colormap dropdown
         self.colormap_dropdown = QtGui.QComboBox()
@@ -76,11 +208,11 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
         # Create start colormap editor button
         self.start_color_button = QtGui.QPushButton()
-        self.start_color_button.clicked.connect(partial(self.createColormap, self.start_color_button, 0))
+        self.start_color_button.clicked.connect(partial(self.createColormap, self.updateStartColor))
 
-        # Create start colormap editor button
+        # Create end colormap editor button
         self.end_color_button = QtGui.QPushButton()
-        self.end_color_button.clicked.connect(partial(self.createColormap, self.end_color_button, 0))
+        self.end_color_button.clicked.connect(partial(self.createColormap, self.updateEndColor))
 
         # Create end color spinbox
         self.end_color_spin = StartEndSpinBox("end", self)
@@ -188,8 +320,12 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
     def updateColormap(self, cur_item):
         print "updatecolormap"
+        self.colormap_updating = True
+        print "colormap start, COLORMAP UPDATING?", self.colormap_updating
         print self.object.colormap.name, cur_item
         if self.object.colormap.name == cur_item:
+            print "quitting colormap"
+            self.colormap_updating = False
             return
         self.object.colormap = cur_item
         items = [self.colormap_dropdown.itemText(i) for i in range(self.colormap_dropdown.count())]
@@ -198,38 +334,48 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
         self.level_count = len(self.object.levels)
 
-        self.updateStartColor(False, True)
-        self.updateEndColor(False, True)
+        self.updateStartColor()
+        self.updateEndColor()
         self.updateCustomFillBox()
+        self.colormap_updating = False
+        print "colormap end, COLORMAP UPDATING?", self.colormap_updating
 
-    def updateStartColor(self, update_custom, colormap):
+    def updateStartColor(self, value=-1):
         print "updateStartColor"
-        if not colormap:
+        if self.colormap_editor:
+            self.colormap_editor.close()
+
+        if value == -1:
             value = self.start_color_spin.value()
         else:
-            value = self.object.level_color(0)
+            self.start_color_spin.setValue(value)
         if value > self.object.color_2:
             raise ValueError("Start color cannot be higher index than end color")
         self.object.color_1 = value
         self.updateButtonColor(self.start_color_button, value)
         self.preview.update()
 
-        if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow and update_custom:
+        if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow and not self.colormap_updating:
             self.updateCustomFillBox()
 
-    def updateEndColor(self, update_custom, colormap):
+    def updateEndColor(self, value=-1):
         print "updateEndColor"
-        if not colormap:
+        traceback.print_stack()
+
+        if self.colormap_editor:
+            self.colormap_editor.close()
+
+        if value == -1:
             value = self.end_color_spin.value()
         else:
-            value = self.object.level_color(len(self.object.levels)-1)
+            self.end_color_spin.setValue(value)
         if value < self.object.color_1:
             raise ValueError("End color cannot be lower index than start color")
         self.object.color_2 = value
         self.updateButtonColor(self.end_color_button, value)
         self.preview.update()
-
-        if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow and update_custom:
+        print "end, COLORMAP UPDATING?", self.colormap_updating
+        if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow and not self.colormap_updating:
             self.updateCustomFillBox()
 
     def updateExtendLeft(self, state):
@@ -282,38 +428,21 @@ class LegendEditorWidget(BaseOkWindowWidget):
         grid_widget = ReflowWidget(300)
         scroll_area.setWidgetResizable(True)
         level_names = self.object.level_names
+
+        # populate rows
         for index, label in enumerate(level_names):
-            # Label
-            level_layout = QtGui.QHBoxLayout()
-            level_layout.addWidget(QtGui.QLabel(label))
-
-            # Color button
-            color_button = QtGui.QPushButton()
-            l_color = self.object.level_color(index)
-            self.updateButtonColor(color_button, l_color)
-
-            color_button.setFixedSize(100, 40)
-
-            color_button.clicked.connect(partial(self.createColormap, color_button, index))
-            level_layout.addWidget(color_button)
-
-            # Pattern
-            pattern = pattern_thumbnail(self.object.level_pattern(index))
-            pattern_button = QtGui.QPushButton()
-            pattern_button.setIcon(pattern)
-            pattern_button.setIconSize(QtCore.QSize(100, 50))
-            pattern_button.setFixedSize(100, 50)
-            pattern_button.clicked.connect(partial(self.createPatternWidget, pattern_button, index))
-            level_layout.addWidget(pattern_button)
-
-            level_layout.insertStretch(1, 2)
-            level_layout.insertStretch(3, 2)
-
-            level_widget = QtGui.QWidget()
-            level_widget.setLayout(level_layout)
-
-            grid_widget.addWidget(level_widget)
-
+            color = self.object.level_color(index)
+            item = CustomFillWidget(index, label, color)
+            item.colorChanged.connect(self.object.set_level_color)
+            item.opacityChanged.connect(self.object.set_level_opacity)
+            item.buttonColorChanged.connect(self.updateButtonColor)
+            item.patternChanged.connect(self.object.set_level_pattern)
+            item.colormapChanged.connect(self.updateButtonColor)
+            item.createColormapRequest.connect(self.createColormap)
+            item.setColor(color)
+            item.changeOpacity(100)
+            item.attributeChanged.connect(self.preview.update)
+            grid_widget.addWidget(item)
         scroll_area.setWidget(grid_widget)
 
         return scroll_area
@@ -325,12 +454,10 @@ class LegendEditorWidget(BaseOkWindowWidget):
         w = scroll.takeWidget()
         grid = w.layout()
         child = grid.itemAtPosition(0, 0).widget()
-        print "CHILD:", child
 
         for col in range(len(w.counts)):
             for row in range(w.counts[col]):
                 child_layout = child.layout()
-                print "CHILD_LAYOUT:", child_layout
                 if not child_layout:
                     break
 
@@ -350,8 +477,6 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
     def changeFillStyle(self, button):
         print "changeFillStyle"
-        start_time = timeit.default_timer()
-        print start_time
         old_fill_style = self.object.fill_style
         scroll = self.custom_vertical_layout.itemAt(1).widget()
         w = scroll.widget()
@@ -372,52 +497,21 @@ class LegendEditorWidget(BaseOkWindowWidget):
             elif button.text() == "Pattern":
                 row.itemAt(2).widget().hide()
                 row.itemAt(4).widget().show()
-        print timeit.default_timer() - start_time
-        print "OLD STYLE:", old_fill_style
         self.object.fill_style = button.text()
         self.preview.update()
 
-    def createColormap(self, button, index):
-        def changeColor(color_index):
-            print "changing color"
-            self.updateButtonColor(button, color_index)
-            if button != self.start_color_button and button != self.end_color_button:
-                self.object.set_level_color(index, color_index)
-            elif button == self.start_color_button:
-                self.object.color_1 = color_index
-                self.start_color_spin.setValue(color_index)
-            else:
-                self.object.color_2 = color_index
-                self.end_color_spin.setValue(color_index)
-
-            self.preview.update()
-
+    def createColormap(self, callback):
         self.colormap_editor = QColormapEditor(mode="color")
         items = [self.colormap_editor.colormap.itemText(i) for i in range(self.colormap_editor.colormap.count())]
         self.colormap_editor.colormap.setCurrentIndex(items.index(self.colormap_dropdown.currentText()))
         self.colormap_editor.choseColormap.connect(self.updateColormap)
-        self.colormap_editor.choseColorIndex.connect(changeColor)
+        self.colormap_editor.choseColorIndex.connect(partial(self.callbackAndClose, callback))
         self.colormap_editor.show()
 
-    def createPatternWidget(self, button, index):
-        def changePattern(selected_index):
-            button.setIcon(pattern_thumbnail(selected_index))
-            self.object.set_level_pattern(index, selected_index)
-            self.pattern_selector.close()
-            self.preview.update()
-
-        self.pattern_selector = QtGui.QWidget()
-        vertical_layout = QtGui.QVBoxLayout()
-        for i in range(1, 21):
-            pattern = pattern_thumbnail(i)
-            pattern_button = QtGui.QPushButton()
-            pattern_button.setIcon(pattern)
-            pattern_button.setIconSize(QtCore.QSize(100, 50))
-            pattern_button.setFixedSize(100, 50)
-            pattern_button.clicked.connect(partial(changePattern, i))
-            vertical_layout.addWidget(pattern_button)
-        self.pattern_selector.setLayout(vertical_layout)
-        self.pattern_selector.show()
+    def callbackAndClose(self, callback, color_index):
+        self.colormap_editor.close()
+        print "callback to", str(callback)
+        callback(color_index)
 
     def manageDictEditor(self, button):
         self.object.label_mode = button.text()
@@ -427,6 +521,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
             label_editor.setDict(labels)
             label_editor.dictEdited.connect(self.updateLabels)
             scroll_area = QtGui.QScrollArea()
+            scroll_area.setWidgetResizable(True)
             scroll_area.setWidget(label_editor)
             self.vertical_layout.insertWidget(self.vertical_layout.count() - 1, scroll_area)
         elif isinstance(self.vertical_layout.itemAt(self.vertical_layout.count() - 2).widget(), QtGui.QScrollArea):
@@ -447,9 +542,11 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.preview.update()
 
     def updateButtonColor(self, button, color_index):
+        print "updating button color"
         r, g, b, a = self.object.rgba_from_index(color_index)
         style_string = "background-color: rgba(%d, %d, %d, %d);" % (r, g, b, a)
         button.setStyleSheet(style_string)
+
 
 if __name__ == "__main__":
     import cdms2, vcs

@@ -3,6 +3,10 @@ from PySide import QtCore, QtGui
 
 class ReflowWidget(QtGui.QWidget):
     def __init__(self, col_width, parent=None):
+        """
+        col_width: width of the columns, therefore specifies how to distribute widgets.
+                    col_width must be greater than the minimum width of widget or downsizing will fail
+        """
         super(ReflowWidget, self).__init__()
 
         self.col_width = col_width
@@ -64,6 +68,7 @@ class ReflowWidget(QtGui.QWidget):
             self.cur_col_count = possible_columns
 
     def clearWidget(self):
+        """clears widgets from the grid layout. Does not delete widgets"""
         print "clearing"
         for item in self.counts:
             if item:
@@ -77,6 +82,16 @@ class ReflowWidget(QtGui.QWidget):
 
     def getWidgets(self):
         return self.widgets
+
+    def deleteWidget(self, widget):
+        """Deletes widget and removes reference in list"""
+        for i in self.widgets:
+            if i == widget:
+                self.widgets.remove(i)
+                i.deleteLater()
+                self.buildGrid()
+                return
+
 
 
 if __name__ == "__main__":

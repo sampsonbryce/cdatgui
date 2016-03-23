@@ -34,7 +34,7 @@ class LegendPreviewWidget(QVCSWidget):
         template.legend.textorientation = text_orientation.name
         template.drawColorBar(self.legend.vcs_colors, self.legend.levels, self.legend.labels, ext_1=self.legend.ext_left,
                               ext_2=self.legend.ext_right, x=self.canvas, cmap=self.legend.colormap,
-                              style=[self.legend.fill_style], index=self.legend._gm.fillareaindices)
+                              style=[self.legend.fill_style], index=self.legend._gm.fillareaindices, opacity=self.legend._gm.fillareaopacity)
 
         self.canvas.backend.renWin.Render()
 

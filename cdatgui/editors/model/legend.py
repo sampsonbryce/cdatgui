@@ -216,6 +216,21 @@ class VCSLegend(object):
             self._gm.fillareaindices += (len(self.levels) - len(self._gm.fillareaindices)) * self._gm.fillareaindices[-1:]
         self._gm.fillareaindices[i] = v
 
+    def level_opacity(self, i):
+        if i < len(self._gm.fillareaopacity):
+            return self._gm.fillareaopacity[i]
+        elif self._gm.fillareaopacity:
+            return self._gm.fillareaopacity[-1]
+        else:
+            return 100
+
+    def set_level_opacity(self, i, alpha):
+        if not self._gm.fillareaopacity:
+            self._gm.fillareaopacity = [100]
+        if i >= len(self._gm.fillareaopacity):
+            self._gm.fillareaopacity += self._gm.fillareaopacity[-1:] * (i - len(self._gm.fillareaopacity) + 1)
+        print "changin opacity in legend:", i, alpha
+        self._gm.fillareaopacity[i] = alpha
 
 if __name__ == "__main__":
     import cdms2
