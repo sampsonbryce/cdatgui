@@ -18,15 +18,13 @@ class ReflowWidget(QtGui.QWidget):
         self.setLayout(self.grid)
 
     def addWidgets(self, widgets):
+        """preferred method of adding widgets, only has to call build grid once"""
         self.widgets.extend(widgets)
-        for row, widget in enumerate(widgets):
-            self.grid.addWidget(widget, row, self.cur_col_count - 1)
-            self.counts[self.cur_col_count - 1] += 1
+        self.buildGrid(True)
 
     def addWidget(self, widget):
         self.widgets.append(widget)
-        self.grid.addWidget(widget, self.counts[self.cur_col_count - 1], self.cur_col_count - 1)
-        self.counts[self.cur_col_count - 1] += 1
+        self.buildGrid(True)
 
     def resizeEvent(self, ev):
         print "resizing, width=", self.width()
@@ -36,60 +34,80 @@ class ReflowWidget(QtGui.QWidget):
     def setColumnWidth(self, width):
         self.col_width = width
 
-    def buildGrid(self):
+    def buildGrid(self, force=False):
         print "building grid"
         possible_columns = self.width() / self.col_width
         if not possible_columns:
             possible_columns = 1
 
-        if possible_columns and possible_columns != self.cur_col_count:
-            self.clearWidget()
-            try:
-                sec_length = len(self.widgets) / possible_columns
-            except ZeroDivisionError:
-                sec_length = len(self.widgets)
-            leftover = len(self.widgets) - (sec_length * possible_columns)
-            iterator = iter(self.widgets)
+        # bypasses check and rebuilds regardless
+        if not force:
+            if possible_columns == self.cur_col_count:
+                return
 
-            for sec in range(possible_columns):
-                for row in range(sec_length):
-                    self.grid.addWidget(iterator.next(), row, sec)
+        # clearing
+        self.clearWidget()
 
-                    # if new column track counts
-                    if len(self.counts) - 1 < sec:
-                        self.counts.append(0)
-                    self.counts[sec] += 1
+        # build
+        try:
+            sec_length = len(self.widgets) / possible_columns
+        except ZeroDivisionError:
+            sec_length = len(self.widgets)
+        leftover = len(self.widgets) - (sec_length * possible_columns)
+        iterator = iter(self.widgets)
 
-                if leftover:
-                    n_widget = iterator.next()
-                    self.grid.addWidget(n_widget, sec_length, sec)
-                    leftover -= 1
+        while possible_columns < len(self.counts):
+            self.counts.pop(-1)
+
+        for sec in range(possible_columns):
+            for row in range(sec_length):
+                self.grid.addWidget(iterator.next(), row, sec)
+
+                # if new column, track counts
+                if len(self.counts) - 1 < sec:
+                    self.counts.append(0)
+                self.counts[sec] += 1
+
+            if leftover:
+                n_widget = iterator.next()
+                self.grid.addWidget(n_widget, sec_length, sec)
+                leftover -= 1
 
             self.cur_col_count = possible_columns
 
     def clearWidget(self):
         """clears widgets from the grid layout. Does not delete widgets"""
         print "clearing"
-        for item in self.counts:
-            if item:
-                for col in range(len(self.counts)):
-                    for row in range(self.counts[col]):
-                        cur_item = self.grid.itemAtPosition(row, col).widget()
-                        self.grid.removeWidget(cur_item)
-                        self.counts[col] -= 1
-                        assert self.counts[col] >= 0
+        for col, row_count in enumerate(self.counts):
+            print "COL:", col
+            if row_count:
+                for row in range(row_count):
+                    cur_item = self.grid.itemAtPosition(row, col).widget()
+                    self.grid.removeWidget(cur_item)
+                    self.counts[col] -= 1
+                    assert self.counts[col] >= 0
             break
 
     def getWidgets(self):
         return self.widgets
 
-    def deleteWidget(self, widget):
+    def removeWidget(self, widget):
         """Deletes widget and removes reference in list"""
         for i in self.widgets:
             if i == widget:
+
+                # update counts
+                print "COUNTS", self.counts
+                for col, row_count in enumerate(self.counts):
+                    if row_count:
+                        for row in range(row_count):
+                            print "ROW, COLUMN:", row, col
+                            cur_item = self.grid.itemAtPosition(row, col).widget()
+                            if cur_item == widget:
+                                self.counts[col] -= 1
+
                 self.widgets.remove(i)
-                i.deleteLater()
-                self.buildGrid()
+                self.buildGrid(True)
                 return
 
 

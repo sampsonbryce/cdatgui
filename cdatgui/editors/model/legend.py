@@ -229,7 +229,6 @@ class VCSLegend(object):
             self._gm.fillareaopacity = [100]
         if i >= len(self._gm.fillareaopacity):
             self._gm.fillareaopacity += self._gm.fillareaopacity[-1:] * (i - len(self._gm.fillareaopacity) + 1)
-        print "changin opacity in legend:", i, alpha
         self._gm.fillareaopacity[i] = alpha
 
 if __name__ == "__main__":

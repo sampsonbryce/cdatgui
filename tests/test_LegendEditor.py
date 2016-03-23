@@ -24,13 +24,15 @@ def test_updateStartAndEndColor(editors):
     editors.start_color_spin.setValue(55)
 
     # have to call because of timer
-    editors.updateStartColor(True, False)
+    editors.updateStartColor()
+    print editors.object
+    print editors.object.color_1
     assert editors.object.color_1 == 55
 
     editors.end_color_spin.setValue(176)
 
     # have to call because of timer
-    editors.updateEndColor(True, False)
+    editors.updateEndColor()
     assert editors.object.color_2 == 176
 
 
@@ -83,27 +85,31 @@ def test_changeFillStyle(editors):
 
 
 def test_createColormap(editors):
-    editors.createColormap(editors.start_color_button, 0)
+    editors.createColormap(editors.updateStartColor)
     editors.colormap_editor.choseColorIndex.emit(60)
     assert editors.object.color_1 == 60
     assert editors.start_color_spin.value() == 60
 
-    editors.createColormap(editors.end_color_button, 0)
+    editors.createColormap(editors.updateEndColor)
     editors.colormap_editor.choseColorIndex.emit(150)
     assert editors.object.color_2 == 150
     assert editors.end_color_spin.value() == 150
 
-    # print editors.custom_vertical_layout.itemAt(1).widget().takeWidget().layout().itemAt(0).itemAt(2).widget()
-    # editors.createColormap(editors.custom_vertical_layout.itemAt(1).widget().layout().itemAt(0).layout().itemAt(1), 1)
-    editors.createColormap(QtGui.QPushButton(), 1)
+    editors.updateArrowType()
+
+    widget = editors.custom_vertical_layout.itemAt(1).widget().widget().getWidgets()[1]
+    print widget
+    editors.createColormap(widget.changeColor)
     editors.colormap_editor.choseColorIndex.emit(160)
 
     assert editors.object._gm.fillareacolors[1] == 160
 
 
-def test_createPatternWidget(editors):
-    editors.createPatternWidget(QtGui.QPushButton(), 1)
-    editors.pattern_selector.layout().itemAt(4).widget().clicked.emit()
+def test_changePattern(editors):
+    editors.updateArrowType()
+    widget = editors.custom_vertical_layout.itemAt(1).widget().widget().getWidgets()[1]
+
+    widget.changePattern(5)
 
     assert editors.object._gm.fillareaindices[1] == 5
 
@@ -112,12 +118,13 @@ def test_dictEditor(editors):
     editors.manageDictEditor(QtGui.QPushButton("Manual"))
     assert editors.vertical_layout.count() == 9
 
-    dictWidget = editors.vertical_layout.itemAt(editors.vertical_layout.count()-2).widget().takeWidget()
+    dictWidget = editors.vertical_layout.itemAt(editors.vertical_layout.count() - 2).widget().takeWidget()
     dictWidget.emitSignal()
-    editors.vertical_layout.itemAt(editors.vertical_layout.count()-2).widget().setWidget(dictWidget)
+    editors.vertical_layout.itemAt(editors.vertical_layout.count() - 2).widget().setWidget(dictWidget)
 
     editors.manageDictEditor(QtGui.QPushButton())
     assert editors.vertical_layout.count() == 8
+
 
 def test_updateCustomOnColormapChange(editors):
     editors.updateArrowType()

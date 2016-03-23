@@ -82,14 +82,13 @@ class KeyValueRow(QWidget):
         self.edit_value.setText(text)
 
     def delete(self):
+        """Deletes widget and all sub widgets"""
         wrap = self.layout()
         wrap.takeAt(0).widget().deleteLater()
         self.edit_key.deleteLater()
         self.edit_value.deleteLater()
         wrap.deleteLater()
         self.deleteLater()
-
-
 
 
 class InputChecker(QValidator):
@@ -103,7 +102,7 @@ class InputChecker(QValidator):
 
     def validate(self, input, pos):
         keys = []
-        for row in enumerate(self.widgets):
+        for row in self.widgets:
             if row != self.cur_widget:
                 keys.append(row.key())
 
@@ -122,7 +121,7 @@ class DictEditorWidget(QWidget):
         super(DictEditorWidget, self).__init__()
         self.valid_keys = None
         self.key_value_rows = []
-        self.rows = ReflowWidget(350)
+        self.grid = ReflowWidget(350)
         self.clearing = False
 
         wrap = QVBoxLayout()
@@ -132,7 +131,7 @@ class DictEditorWidget(QWidget):
         add_button.clicked.connect(self.insertRow)
 
         self.setLayout(wrap)
-        wrap.addWidget(self.rows)
+        wrap.addWidget(self.grid)
         wrap.addWidget(add_button)
 
     # Update Combo Boxes
@@ -149,6 +148,7 @@ class DictEditorWidget(QWidget):
 
     # check if valid for emission
     def checkKeyValues(self):
+        print "len rows", len(self.key_value_rows)
         keys = []
         values = []
         for row in self.key_value_rows:
@@ -157,7 +157,7 @@ class DictEditorWidget(QWidget):
             if l_text and l_text not in keys:
                 keys.append(l_text)
                 values.append(r_text)
-        return (keys, values)
+        return keys, values
 
     def emitSignal(self):
         keys, values = self.checkKeyValues()
@@ -166,7 +166,7 @@ class DictEditorWidget(QWidget):
 
     # populate if dictionary is given
     def insertRow(self, key="", value=""):
-        if self.valid_keys and self.rows.count() >= len(self.valid_keys) - 1:
+        if self.valid_keys and len(self.grid.getWidgets()) >= len(self.valid_keys) - 1:
             return
 
         new_row = KeyValueRow(key, value, self.valid_keys, self)
@@ -175,27 +175,24 @@ class DictEditorWidget(QWidget):
         new_row.clickedRemove.connect(self.removeRow)
 
         if not self.valid_keys:
-            validator = InputChecker(new_row, self.rows.getWidgets())
+            validator = InputChecker(new_row, self.grid.getWidgets())
             new_row.setKeyValidator(validator)
         if self.valid_keys:
             new_row.updatedKey.connect(self.updateCBoxes)
 
-        self.rows.addWidget(new_row)
+        self.grid.addWidget(new_row)
         self.key_value_rows.append(new_row)
 
     def removeRow(self, row_widget):
-        '''
-        layout = row_widget.layout()
-        child = layout.takeAt(0)
+        print "removing row"
 
-        while child:
-            widget = child.widget()
-            child = layout.takeAt(0)
-            widget.deleteLater()
-        '''
         # Remove from list
         self.key_value_rows.remove(row_widget)
-        self.rows.deleteWidget(row_widget)
+
+        # remove from reflow
+        self.grid.removeWidget(row_widget)
+
+        # delete widget
         row_widget.delete()
 
         if not self.clearing:
@@ -209,11 +206,7 @@ class DictEditorWidget(QWidget):
 
     # set inital dictionary values
     def setDict(self, dictionary):
-        # self.clearRows()
-        self.rows.clearWidget()
-        for row in self.key_value_rows:
-            row.delete()
-            self.rows.deleteWidget(row)
+        self.clear()
 
         for key in sorted(dictionary.keys()):
             self.insertRow(key, dictionary[key])
@@ -231,15 +224,13 @@ class DictEditorWidget(QWidget):
             values.append(row.value())
         return dict(zip(keys, values))
 
-    def clearRows(self):
+    def clear(self):
+        self.grid.clearWidget()
         self.clearing = True
-        if self.rows.count() > 0:
-            row = self.rows.takeAt(0)
 
-            while row:
-                row_widget = row.widget()
-                self.removeRow(row_widget)
-                row = self.rows.takeAt(0)
+        while self.key_value_rows:
+            row = self.key_value_rows[0]
+            self.removeRow(row)
 
         self.clearing = False
 

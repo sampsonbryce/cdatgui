@@ -88,7 +88,6 @@ class CustomFillWidget(QtGui.QWidget):
         self.buttonColorChanged.emit(self.color_button, color)
 
     def changeOpacity(self, value):
-        start_time = timeit.default_timer()
         if value == 0:
             self.pattern_combo.setCurrentIndex(0)
         else:
@@ -96,7 +95,6 @@ class CustomFillWidget(QtGui.QWidget):
                 self.pattern_combo.setCurrentIndex(self.pattern)
         self.opacityChanged.emit(self.index, value)
         self.attributeChanged.emit()
-        print timeit.default_timer() - start_time
 
     def changeColor(self, color_index):
         self.buttonColorChanged.emit(self.color_button, color_index)
@@ -173,7 +171,6 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.cur_button = None
         self.cur_index = None
         self.colormap_editor = None
-        self.colormap_updating = False
 
         # Create Labels
         colormap_label = QtGui.QLabel("Colormap:")
@@ -318,10 +315,8 @@ class LegendEditorWidget(BaseOkWindowWidget):
         print "after setLegendObject"
         self.preview.update()
 
-    def updateColormap(self, cur_item):
+    def updateColormap(self, cur_item, recreate=True):
         print "updatecolormap"
-        self.colormap_updating = True
-        print "colormap start, COLORMAP UPDATING?", self.colormap_updating
         print self.object.colormap.name, cur_item
         if self.object.colormap.name == cur_item:
             print "quitting colormap"
@@ -334,13 +329,12 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
         self.level_count = len(self.object.levels)
 
-        self.updateStartColor()
-        self.updateEndColor()
-        self.updateCustomFillBox()
-        self.colormap_updating = False
-        print "colormap end, COLORMAP UPDATING?", self.colormap_updating
+        self.updateStartColor(recreate=False)
+        self.updateEndColor(recreate=False)
+        if recreate:
+            self.updateCustomFillBox()
 
-    def updateStartColor(self, value=-1):
+    def updateStartColor(self, value=-1, recreate=True):
         print "updateStartColor"
         if self.colormap_editor:
             self.colormap_editor.close()
@@ -355,12 +349,11 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.updateButtonColor(self.start_color_button, value)
         self.preview.update()
 
-        if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow and not self.colormap_updating:
+        if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow and recreate:
             self.updateCustomFillBox()
 
-    def updateEndColor(self, value=-1):
+    def updateEndColor(self, value=-1, recreate=True):
         print "updateEndColor"
-        traceback.print_stack()
 
         if self.colormap_editor:
             self.colormap_editor.close()
@@ -374,8 +367,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.object.color_2 = value
         self.updateButtonColor(self.end_color_button, value)
         self.preview.update()
-        print "end, COLORMAP UPDATING?", self.colormap_updating
-        if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow and not self.colormap_updating:
+        if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow and recreate:
             self.updateCustomFillBox()
 
     def updateExtendLeft(self, state):
@@ -423,11 +415,13 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
     def createCustomFillBox(self):
         print "createCustomFillBox"
+        start_time = timeit.default_timer()
         # create layout for custom fill
         scroll_area = QtGui.QScrollArea()
         grid_widget = ReflowWidget(300)
         scroll_area.setWidgetResizable(True)
         level_names = self.object.level_names
+        grid_widgets = []
 
         # populate rows
         for index, label in enumerate(level_names):
@@ -442,7 +436,12 @@ class LegendEditorWidget(BaseOkWindowWidget):
             item.setColor(color)
             item.changeOpacity(100)
             item.attributeChanged.connect(self.preview.update)
-            grid_widget.addWidget(item)
+            grid_widgets.append(item)
+        print timeit.default_timer()-start_time
+        print "end creation of custom box"
+
+        # adding widgets(plural) only calls build grid once instead of once for each widget
+        grid_widget.addWidgets(grid_widgets)
         scroll_area.setWidget(grid_widget)
 
         return scroll_area
@@ -504,7 +503,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.colormap_editor = QColormapEditor(mode="color")
         items = [self.colormap_editor.colormap.itemText(i) for i in range(self.colormap_editor.colormap.count())]
         self.colormap_editor.colormap.setCurrentIndex(items.index(self.colormap_dropdown.currentText()))
-        self.colormap_editor.choseColormap.connect(self.updateColormap)
+        self.colormap_editor.choseColormap.connect(partial(self.updateColormap, recreate=False))
         self.colormap_editor.choseColorIndex.connect(partial(self.callbackAndClose, callback))
         self.colormap_editor.show()
 
@@ -527,7 +526,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         elif isinstance(self.vertical_layout.itemAt(self.vertical_layout.count() - 2).widget(), QtGui.QScrollArea):
             scroll_area = self.vertical_layout.takeAt(self.vertical_layout.count() - 2).widget()
             dict_editor = scroll_area.takeWidget()
-            dict_editor.clearRows()
+            dict_editor.clear()
             dict_editor.deleteLater()
             scroll_area.deleteLater()
 
@@ -542,7 +541,6 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.preview.update()
 
     def updateButtonColor(self, button, color_index):
-        print "updating button color"
         r, g, b, a = self.object.rgba_from_index(color_index)
         style_string = "background-color: rgba(%d, %d, %d, %d);" % (r, g, b, a)
         button.setStyleSheet(style_string)
