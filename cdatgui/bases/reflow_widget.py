@@ -77,22 +77,23 @@ class ReflowWidget(QtGui.QWidget):
 
     def clearWidget(self):
         """clears widgets from the grid layout. Does not delete widgets"""
-        print "clearing"
+        print "clearing, counts =", self.counts
+        print "len counts", len(self.counts)
         for col, row_count in enumerate(self.counts):
-            print "COL:", col
+            print "COL, row_count:", col, row_count
             if row_count:
                 for row in range(row_count):
                     cur_item = self.grid.itemAtPosition(row, col).widget()
                     self.grid.removeWidget(cur_item)
                     self.counts[col] -= 1
                     assert self.counts[col] >= 0
-            break
+        print "COUNTS AFTER CLEAR:", self.counts
 
     def getWidgets(self):
         return self.widgets
 
     def removeWidget(self, widget):
-        """Deletes widget and removes reference in list"""
+        """removes widgets from gridlayout and updates list and counts"""
         for i in self.widgets:
             if i == widget:
 
@@ -109,7 +110,6 @@ class ReflowWidget(QtGui.QWidget):
                 self.widgets.remove(i)
                 self.buildGrid(True)
                 return
-
 
 
 if __name__ == "__main__":

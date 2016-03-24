@@ -1,6 +1,7 @@
 import pytest, cdms2, vcs
 from PySide import QtCore, QtGui
 from cdatgui.editors.widgets.legend_widget import LegendEditorWidget
+from cdatgui.editors.widgets.legend_widget import StartEndSpin
 from cdatgui.editors.model import legend
 
 
@@ -13,6 +14,15 @@ def editors():
     editor.setObject(l)
 
     return editor
+
+
+@pytest.fixture
+def validators():
+    timer = QtCore.QTimer()
+    timer.setSingleShot(True)
+    timer.setInterval(1000)
+    validator = StartEndSpin(timer)
+    return validator
 
 
 def test_updateColormap(qtbot, editors):
@@ -83,6 +93,9 @@ def test_changeFillStyle(editors):
     editors.changeFillStyle(pattern_button)
     assert editors.object.fill_style == "pattern"
 
+    hatch_button = editors.fill_style_widget.layout().itemAt(2).widget()
+    editors.changeFillStyle(hatch_button)
+    assert editors.object.fill_style == "hatch"
 
 def test_createColormap(editors):
     editors.createColormap(editors.updateStartColor)
@@ -132,3 +145,31 @@ def test_updateCustomOnColormapChange(editors):
     editors.updateColormap("rainbow")
 
     assert editors.vertical_layout.count() == 9
+
+
+def test_opacityPatternRelationship(editors):
+    editors.updateArrowType()
+    widget = editors.custom_vertical_layout.itemAt(1).widget().widget().getWidgets()[3]
+
+    widget.changeOpacity(0)
+    assert widget.pattern_combo.currentIndex() == 0
+
+    widget.changeOpacity(50)
+    assert widget.pattern_combo.currentIndex() == 1
+
+    widget.changePattern(0)
+    assert widget.alpha_slide.value() == 0
+
+
+def test_validator(validators):
+    assert validators.validate("a", 0) == QtGui.QValidator.Invalid
+    assert not validators.timer.isActive()
+
+    validators.min = 20
+    assert validators.validate(15, 0) == QtGui.QValidator.Intermediate
+    assert not validators.timer.isActive()
+
+    assert validators.validate(50, 0) == QtGui.QValidator.Acceptable
+    assert validators.timer.isActive()
+
+    assert validators.validate("", 0) == QtGui.QValidator.Intermediate

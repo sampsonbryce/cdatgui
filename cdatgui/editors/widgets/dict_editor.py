@@ -81,16 +81,6 @@ class KeyValueRow(QWidget):
     def setValue(self, text):
         self.edit_value.setText(text)
 
-    def delete(self):
-        """Deletes widget and all sub widgets"""
-        wrap = self.layout()
-        wrap.takeAt(0).widget().deleteLater()
-        self.edit_key.deleteLater()
-        self.edit_value.deleteLater()
-        wrap.deleteLater()
-        self.deleteLater()
-
-
 class InputChecker(QValidator):
     inputInvalid = Signal()
     correctInput = Signal()
@@ -193,7 +183,7 @@ class DictEditorWidget(QWidget):
         self.grid.removeWidget(row_widget)
 
         # delete widget
-        row_widget.delete()
+        row_widget.deleteLater()
 
         if not self.clearing:
             self.emitSignal()

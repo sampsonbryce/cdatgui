@@ -14,7 +14,6 @@ import timeit
 
 
 class CustomFillWidget(QtGui.QWidget):
-
     colorChanged = QtCore.Signal(int, int)
     opacityChanged = QtCore.Signal(int, int)
     buttonColorChanged = QtCore.Signal(QtGui.QPushButton, int)
@@ -136,30 +135,40 @@ class PatternComboDelegate(QtGui.QAbstractItemDelegate):
         return s
 
 
-class StartEndSpinBox(QtGui.QSpinBox):
-    def __init__(self, func, parent=None):
-        super(StartEndSpinBox, self).__init__()
-        self.parent = parent
-        self.function = func
+class StartEndSpin(QtGui.QSpinBox):
 
-    def validate(self, value, index):
-        if self.parent.object == None:
-            return QtGui.QValidator.Acceptable
+    validInput = QtCore.Signal()
+    invalidInput = QtCore.Signal()
+
+    def __init__(self, parent=None):
+        super(StartEndSpin, self).__init__()
+        self.min = 0
+        self.max = 255
+
+    def isValid(self, valid):
+        print "Stylesheet", self.styleSheet()
+        if valid:
+            self.setStyleSheet("color :rgb(0,0,0)")
+        else:
+            self.setStyleSheet("color :rgb(255,0,0); border-color: red; border-width: 1px")
+
+    def validate(self, input, pos):
+        print "validating"
+        if input == "":
+            return QtGui.QValidator.Intermediate
         try:
-            value = int(value)
-        except ValueError:
-            return QtGui.QValidator.Intermediate
-        if self.function == "start":
-            if self.parent.object.color_2 > value:
-                return QtGui.QValidator.Acceptable
-            return QtGui.QValidator.Intermediate
-        elif self.function == "end":
-            if self.parent.object.color_1 < value:
-                return QtGui.QValidator.Acceptable
-            return QtGui.QValidator.Intermediate
+            input = int(input)
+        except:
+            return QtGui.QValidator.Invalid
 
-        raise Exception("Did not create StartEndSpin with a valid function")
-        return QtGui.QValidator.Invalid
+        if self.min <= input <= self.max:
+            self.validInput.emit()
+            self.isValid(True)
+            return QtGui.QValidator.Acceptable
+
+        self.invalidInput.emit()
+        self.isValid(False)
+        return QtGui.QValidator.Intermediate
 
 
 class LegendEditorWidget(BaseOkWindowWidget):
@@ -199,9 +208,10 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.colormap_dropdown.currentIndexChanged[str].connect(self.updateColormap)
 
         # Create start color spinbox
-        self.start_color_spin = StartEndSpinBox("start", self)
+        self.start_color_spin = StartEndSpin(self.start_timer)
         self.start_color_spin.setRange(1, 255)
-        self.start_color_spin.valueChanged.connect(lambda: self.start_timer.start())
+        self.start_color_spin.validInput.connect(self.start_timer.start)
+        self.start_color_spin.invalidInput.connect(self.start_timer.stop)
 
         # Create start colormap editor button
         self.start_color_button = QtGui.QPushButton()
@@ -212,9 +222,10 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.end_color_button.clicked.connect(partial(self.createColormap, self.updateEndColor))
 
         # Create end color spinbox
-        self.end_color_spin = StartEndSpinBox("end", self)
+        self.end_color_spin = StartEndSpin(self.end_timer)
         self.end_color_spin.setRange(1, 255)
-        self.end_color_spin.valueChanged.connect(lambda: self.end_timer.start())
+        self.end_color_spin.validInput.connect(self.end_timer.start)
+        self.end_color_spin.invalidInput.connect(self.end_timer.stop)
 
         # Create extend check boxes
         extend_left_check = QtGui.QCheckBox()
@@ -336,6 +347,11 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
     def updateStartColor(self, value=-1, recreate=True):
         print "updateStartColor"
+        if value == -1:
+            value = self.start_color_spin.value()
+        else:
+            self.start_color_spin.setValue(value)
+
         if self.colormap_editor:
             self.colormap_editor.close()
 
@@ -343,8 +359,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
             value = self.start_color_spin.value()
         else:
             self.start_color_spin.setValue(value)
-        if value > self.object.color_2:
-            raise ValueError("Start color cannot be higher index than end color")
+        self.end_color_spin.min = value
         self.object.color_1 = value
         self.updateButtonColor(self.start_color_button, value)
         self.preview.update()
@@ -355,15 +370,15 @@ class LegendEditorWidget(BaseOkWindowWidget):
     def updateEndColor(self, value=-1, recreate=True):
         print "updateEndColor"
 
-        if self.colormap_editor:
-            self.colormap_editor.close()
-
         if value == -1:
             value = self.end_color_spin.value()
         else:
             self.end_color_spin.setValue(value)
-        if value < self.object.color_1:
-            raise ValueError("End color cannot be lower index than start color")
+
+        if self.colormap_editor:
+            self.colormap_editor.close()
+
+        self.start_color_spin.max = value
         self.object.color_2 = value
         self.updateButtonColor(self.end_color_button, value)
         self.preview.update()
@@ -418,7 +433,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         start_time = timeit.default_timer()
         # create layout for custom fill
         scroll_area = QtGui.QScrollArea()
-        grid_widget = ReflowWidget(300)
+        grid_widget = ReflowWidget(400)
         scroll_area.setWidgetResizable(True)
         level_names = self.object.level_names
         grid_widgets = []
@@ -437,7 +452,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
             item.changeOpacity(100)
             item.attributeChanged.connect(self.preview.update)
             grid_widgets.append(item)
-        print timeit.default_timer()-start_time
+        print timeit.default_timer() - start_time
         print "end creation of custom box"
 
         # adding widgets(plural) only calls build grid once instead of once for each widget
@@ -450,27 +465,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         print "deleteCustomFillBox"
         self.vertical_layout.takeAt(6)
         scroll = self.custom_vertical_layout.takeAt(1).widget()
-        w = scroll.takeWidget()
-        grid = w.layout()
-        child = grid.itemAtPosition(0, 0).widget()
-
-        for col in range(len(w.counts)):
-            for row in range(w.counts[col]):
-                child_layout = child.layout()
-                if not child_layout:
-                    break
-
-                layout_items = child_layout.takeAt(0)
-                while layout_items:
-                    if isinstance(layout_items, QtGui.QSpacerItem):
-                        child_layout.removeItem(layout_items)
-                    else:
-                        widget = layout_items.widget()
-                        widget.deleteLater()
-                    layout_items = child_layout.takeAt(0)
-                child = grid.itemAtPosition(row, col)
-
-        w.deleteLater()
+        grid = scroll.takeWidget()
         grid.deleteLater()
         scroll.deleteLater()
 
@@ -506,11 +501,19 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.colormap_editor.choseColormap.connect(partial(self.updateColormap, recreate=False))
         self.colormap_editor.choseColorIndex.connect(partial(self.callbackAndClose, callback))
         self.colormap_editor.show()
+        print "createColormap, start_timer, end timer", self.start_timer.isActive(), self.end_timer.isActive()
+        if self.start_timer.isActive():
+            print "stopping start"
+            self.start_timer.stop()
+        if self.end_timer.isActive():
+            print "stopping end"
+            self.end_timer.stop()
 
     def callbackAndClose(self, callback, color_index):
         self.colormap_editor.close()
         print "callback to", str(callback)
-        callback(color_index)
+
+        callback()
 
     def manageDictEditor(self, button):
         self.object.label_mode = button.text()
