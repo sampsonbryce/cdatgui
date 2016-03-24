@@ -215,17 +215,17 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
         # Create start colormap editor button
         self.start_color_button = QtGui.QPushButton()
-        self.start_color_button.clicked.connect(partial(self.createColormap, self.updateStartColor))
-
-        # Create end colormap editor button
-        self.end_color_button = QtGui.QPushButton()
-        self.end_color_button.clicked.connect(partial(self.createColormap, self.updateEndColor))
+        self.start_color_button.clicked.connect(partial(self.createColormap, self.start_color_spin))
 
         # Create end color spinbox
         self.end_color_spin = StartEndSpin(self.end_timer)
         self.end_color_spin.setRange(1, 255)
         self.end_color_spin.validInput.connect(self.end_timer.start)
         self.end_color_spin.invalidInput.connect(self.end_timer.stop)
+
+        # Create end colormap editor button
+        self.end_color_button = QtGui.QPushButton()
+        self.end_color_button.clicked.connect(partial(self.createColormap, self.end_color_spin))
 
         # Create extend check boxes
         extend_left_check = QtGui.QCheckBox()
@@ -494,12 +494,12 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.object.fill_style = button.text()
         self.preview.update()
 
-    def createColormap(self, callback):
+    def createColormap(self, spin):
         self.colormap_editor = QColormapEditor(mode="color")
         items = [self.colormap_editor.colormap.itemText(i) for i in range(self.colormap_editor.colormap.count())]
         self.colormap_editor.colormap.setCurrentIndex(items.index(self.colormap_dropdown.currentText()))
         self.colormap_editor.choseColormap.connect(partial(self.updateColormap, recreate=False))
-        self.colormap_editor.choseColorIndex.connect(partial(self.callbackAndClose, callback))
+        self.colormap_editor.choseColorIndex.connect(partial(self.setSpinValueAndClose, spin))
         self.colormap_editor.show()
         print "createColormap, start_timer, end timer", self.start_timer.isActive(), self.end_timer.isActive()
         if self.start_timer.isActive():
@@ -509,11 +509,11 @@ class LegendEditorWidget(BaseOkWindowWidget):
             print "stopping end"
             self.end_timer.stop()
 
-    def callbackAndClose(self, callback, color_index):
+    def setSpinValueAndClose(self, spin=None, color_index=0):
         self.colormap_editor.close()
-        print "callback to", str(callback)
+        if spin:
+            spin.setValue(color_index)
 
-        callback()
 
     def manageDictEditor(self, button):
         self.object.label_mode = button.text()
