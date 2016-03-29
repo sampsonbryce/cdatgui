@@ -3,7 +3,7 @@ from cdatgui.bases import StaticDockWidget
 from .plot import PlotInspector
 from .var import VariableInspector
 from .gm import GraphicsMethodInspector
-from .templ import TemplateInspector
+from cdatgui.editors.template import TemplateEditor
 from .console import ConsoleInspector
 
 
@@ -28,7 +28,8 @@ class InspectorWidget(StaticDockWidget):
         self.plotters_updated.connect(gm.setPlots)
         w.addTab(gm, "GM")
 
-        tmpl = TemplateInspector()
+        tmpl = TemplateEditor()
+        self.plotters_updated.connect(tmpl.setPlots)
         w.addTab(tmpl, "Layout")
 
         con = ConsoleInspector()
@@ -48,3 +49,4 @@ class InspectorWidget(StaticDockWidget):
             plots.extend(cell.getPlotters())
         self.plots = plots
         self.plotters_updated.emit(self.plots)
+

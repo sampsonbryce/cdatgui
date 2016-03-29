@@ -80,6 +80,8 @@ class TemplateLabelWidget(QtGui.QWidget):
         self.updateTemplate.emit()
 
 class TemplateLabelGroup(QtGui.QWidget):
+    labelUpdated = QtCore.Signal()
+
     def __init__(self, member_group, parent=None):
         super(TemplateLabelGroup, self).__init__(parent=parent)
 
@@ -88,6 +90,7 @@ class TemplateLabelGroup(QtGui.QWidget):
         self.member_widgets = {mem: TemplateLabelWidget(mem) for mem in members[member_group]}
         for _, widget in self.member_widgets.iteritems():
             layout.addWidget(widget)
+            widget.updateTemplate.connect(self.labelUpdated.emit)
 
         self.setLayout(layout)
 
@@ -95,12 +98,14 @@ class TemplateLabelGroup(QtGui.QWidget):
         return self.member_widgets[member]
 
 class TemplateLabelEditor(QtGui.QTabWidget):
+    labelUpdated = QtCore.Signal()
+
     def __init__(self, parent=None):
         super(TemplateLabelEditor, self).__init__(parent=parent)
         self._template = None
-        self._root_template = None
         self.member_groups = {group: TemplateLabelGroup(group) for group in members}
         for group, widget in self.member_groups.iteritems():
+            widget.labelUpdated.connect(self.labelUpdated.emit)
             self.addTab(widget, unicode(group[0].upper() + group[1:]))
 
     @property
@@ -109,12 +114,7 @@ class TemplateLabelEditor(QtGui.QTabWidget):
 
     @template.setter
     def template(self, value):
-        if vcs.istemplate(value):
-            self._root_template = value.name
-        else:
-            self._root_template = value
-
-        self._template = vcs.createtemplate(source=self._root_template)
+        self._template = value
         self.sync()
 
     def sync(self):

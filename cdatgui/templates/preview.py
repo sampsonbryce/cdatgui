@@ -17,7 +17,6 @@ class TemplatePreviewWidget(QVCSWidget):
 			return
 		if self.var is None:
 			return
-		print "Update"
 		self.canvas.clear(render=False)
 		self.template.plot(self.canvas, self.var, self.gm)
 		self.canvas.backend.renWin.Render()
