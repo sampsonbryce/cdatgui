@@ -18,10 +18,7 @@ def editors():
 
 @pytest.fixture
 def validators():
-    timer = QtCore.QTimer()
-    timer.setSingleShot(True)
-    timer.setInterval(1000)
-    validator = StartEndSpin(timer)
+    validator = StartEndSpin()
     return validator
 
 
@@ -97,6 +94,7 @@ def test_changeFillStyle(editors):
     editors.changeFillStyle(hatch_button)
     assert editors.object.fill_style == "hatch"
 
+
 def test_createColormap(editors):
     editors.createColormap(editors.updateStartColor)
     editors.colormap_editor.choseColorIndex.emit(60)
@@ -161,15 +159,25 @@ def test_opacityPatternRelationship(editors):
     assert widget.alpha_slide.value() == 0
 
 
-def test_validator(validators):
-    assert validators.validate("a", 0) == QtGui.QValidator.Invalid
-    assert not validators.timer.isActive()
-
+def test_validator(qtbot, validators):
     validators.min = 20
-    assert validators.validate(15, 0) == QtGui.QValidator.Intermediate
-    assert not validators.timer.isActive()
 
-    assert validators.validate(50, 0) == QtGui.QValidator.Acceptable
-    assert validators.timer.isActive()
+    with qtbot.waitSignal(validators.invalidInput, raising=True, timeout=3000) as signal:
+        assert validators.validate(15, 0) == QtGui.QValidator.Intermediate
+        assert validators.styleSheet() == "color :rgb(255,0,0)"
+
+    with qtbot.waitSignal(validators.validInput, raising=True, timeout=3000) as signal:
+        assert validators.validate(50, 0) == QtGui.QValidator.Acceptable
+        assert validators.styleSheet() == "color :rgb(0,0,0)"
 
     assert validators.validate("", 0) == QtGui.QValidator.Intermediate
+
+
+def test_buttonBorderChange(editors):
+    editors.handleStartColorInvalidInput()
+    assert not editors.start_timer.isActive()
+    assert "border: 1px solid red" in editors.start_color_button.styleSheet()
+
+    editors.handleEndColorInvalidInput()
+    assert not editors.end_timer.isActive()
+    assert "border: 1px solid red" in editors.end_color_button.styleSheet()

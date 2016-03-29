@@ -115,7 +115,7 @@ class VCSLegend(object):
     @property
     def levels(self):
         """Used internally, don't worry about it."""
-        print self._gm.levels
+        # print self._gm.levels
         levs = list(self._gm.levels)
         # Check if they're autolevels
         if numpy.allclose(levs, 1e20):
@@ -141,7 +141,7 @@ class VCSLegend(object):
         if self.ext_right:
             levs.append(1e20)
 
-        print "LEVS after:", levs, len(levs)
+        # print "LEVS after:", levs, len(levs)
 
         return levs
     

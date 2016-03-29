@@ -136,7 +136,6 @@ class PatternComboDelegate(QtGui.QAbstractItemDelegate):
 
 
 class StartEndSpin(QtGui.QSpinBox):
-
     validInput = QtCore.Signal()
     invalidInput = QtCore.Signal()
 
@@ -150,7 +149,7 @@ class StartEndSpin(QtGui.QSpinBox):
         if valid:
             self.setStyleSheet("color :rgb(0,0,0)")
         else:
-            self.setStyleSheet("color :rgb(255,0,0); border-color: red; border-width: 1px")
+            self.setStyleSheet("color :rgb(255,0,0)")
 
     def validate(self, input, pos):
         print "validating"
@@ -211,7 +210,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.start_color_spin = StartEndSpin(self.start_timer)
         self.start_color_spin.setRange(1, 255)
         self.start_color_spin.validInput.connect(self.start_timer.start)
-        self.start_color_spin.invalidInput.connect(self.start_timer.stop)
+        self.start_color_spin.invalidInput.connect(self.handleStartColorInvalidInput)
 
         # Create start colormap editor button
         self.start_color_button = QtGui.QPushButton()
@@ -221,7 +220,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.end_color_spin = StartEndSpin(self.end_timer)
         self.end_color_spin.setRange(1, 255)
         self.end_color_spin.validInput.connect(self.end_timer.start)
-        self.end_color_spin.invalidInput.connect(self.end_timer.stop)
+        self.end_color_spin.invalidInput.connect(self.handleEndColorInvalidInput)
 
         # Create end colormap editor button
         self.end_color_button = QtGui.QPushButton()
@@ -494,26 +493,24 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.object.fill_style = button.text()
         self.preview.update()
 
-    def createColormap(self, spin):
+    def createColormap(self, obj):
         self.colormap_editor = QColormapEditor(mode="color")
         items = [self.colormap_editor.colormap.itemText(i) for i in range(self.colormap_editor.colormap.count())]
         self.colormap_editor.colormap.setCurrentIndex(items.index(self.colormap_dropdown.currentText()))
         self.colormap_editor.choseColormap.connect(partial(self.updateColormap, recreate=False))
-        self.colormap_editor.choseColorIndex.connect(partial(self.setSpinValueAndClose, spin))
+        self.colormap_editor.choseColorIndex.connect(partial(self.performActionAndClose, obj))
         self.colormap_editor.show()
-        print "createColormap, start_timer, end timer", self.start_timer.isActive(), self.end_timer.isActive()
         if self.start_timer.isActive():
-            print "stopping start"
             self.start_timer.stop()
         if self.end_timer.isActive():
-            print "stopping end"
             self.end_timer.stop()
 
-    def setSpinValueAndClose(self, spin=None, color_index=0):
+    def performActionAndClose(self, obj, color_index=0):
         self.colormap_editor.close()
-        if spin:
-            spin.setValue(color_index)
-
+        if isinstance(obj, QtGui.QSpinBox):
+            obj.setValue(color_index)
+        else:
+            obj(color_index)
 
     def manageDictEditor(self, button):
         self.object.label_mode = button.text()
@@ -547,6 +544,16 @@ class LegendEditorWidget(BaseOkWindowWidget):
         r, g, b, a = self.object.rgba_from_index(color_index)
         style_string = "background-color: rgba(%d, %d, %d, %d);" % (r, g, b, a)
         button.setStyleSheet(style_string)
+
+    def handleStartColorInvalidInput(self):
+        self.start_timer.stop()
+        self.start_color_button.setStyleSheet(
+            self.start_color_button.styleSheet() + "border: 1px solid red;")
+
+    def handleEndColorInvalidInput(self):
+        self.end_timer.stop()
+        self.end_color_button.setStyleSheet(
+            self.end_color_button.styleSheet() + "border: 1px solid red;")
 
 
 if __name__ == "__main__":

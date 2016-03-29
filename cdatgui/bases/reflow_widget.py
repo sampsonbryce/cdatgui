@@ -1,5 +1,7 @@
 from PySide import QtCore, QtGui
 
+import math
+
 
 class ReflowWidget(QtGui.QWidget):
     def __init__(self, col_width, parent=None):
@@ -48,32 +50,29 @@ class ReflowWidget(QtGui.QWidget):
         # clearing
         self.clearWidget()
 
-        # build
-        try:
-            sec_length = len(self.widgets) / possible_columns
-        except ZeroDivisionError:
-            sec_length = len(self.widgets)
-        leftover = len(self.widgets) - (sec_length * possible_columns)
+        # calculate
+        full_columns = possible_columns - 1
+        num_items = len(self.widgets)
+        row_height = 0
+
         iterator = iter(self.widgets)
+        columns = []
 
-        while possible_columns < len(self.counts):
-            self.counts.pop(-1)
+        while num_items > row_height:
+            for col in range(full_columns):
+                if not num_items:
+                    break
+                if len(columns) - 1 < col:
+                    columns.append(0)
+                columns[col] += 1
+                num_items -= 1
+            row_height += 1
 
-        for sec in range(possible_columns):
-            for row in range(sec_length):
-                self.grid.addWidget(iterator.next(), row, sec)
+        columns.append(num_items)
 
-                # if new column, track counts
-                if len(self.counts) - 1 < sec:
-                    self.counts.append(0)
-                self.counts[sec] += 1
-
-            if leftover:
-                n_widget = iterator.next()
-                self.grid.addWidget(n_widget, sec_length, sec)
-                leftover -= 1
-
-            self.cur_col_count = possible_columns
+        for col, row_count in enumerate(columns):
+            for row in range(row_count):
+                self.grid.addWidget(iterator.next(), row, col)
 
     def clearWidget(self):
         """clears widgets from the grid layout. Does not delete widgets"""
@@ -87,6 +86,9 @@ class ReflowWidget(QtGui.QWidget):
                     self.grid.removeWidget(cur_item)
                     self.counts[col] -= 1
                     assert self.counts[col] >= 0
+        while len(self.counts) != 1:
+            self.counts.pop(-1)
+
         print "COUNTS AFTER CLEAR:", self.counts
 
     def getWidgets(self):
