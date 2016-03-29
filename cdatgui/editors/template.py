@@ -14,14 +14,20 @@ class TemplateEditor(QtGui.QWidget):
 
         middle_layout = QtGui.QHBoxLayout()
         self._template_labels = TemplateLabelEditor()
-        self._template_labels.labelUpdated.connect(self._preview.update)
+        self._template_labels.labelUpdated.connect(self.update)
         middle_layout.addWidget(self._template_labels)
 
         layout.addLayout(middle_layout)
 
         self.setLayout(layout)
 
+    def update(self):
+        self._preview.update()
+        # Need some way to trigger this, but that's a problem for later.
+        #self.plot.plot()
+
     def setPlots(self, plots):
+        self.plot = plots[0]
         self.setTemplate(plots[0].template)
         self._preview.gm = plots[0].graphics_method
         self._preview.var = plots[0].variables[0]
