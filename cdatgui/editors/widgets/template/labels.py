@@ -41,6 +41,7 @@ class TemplateLabelWidget(QtGui.QWidget):
         els = [tt for tt in vcs.elements["texttable"].keys() if tt in vcs.elements["textorientation"]]
         for t in els:
             self.style_picker.addItem(t)
+        self.style_picker.currentIndexChanged[str].connect(self.setStyle)
 
         self.edit_style = QtGui.QPushButton("Edit Style")
 
@@ -57,6 +58,11 @@ class TemplateLabelWidget(QtGui.QWidget):
         layout.addWidget(self.hide)
         layout.addWidget(self.move)
         self.setLayout(layout)
+
+    def setStyle(self, style):
+        self.member.texttable = style
+        self.member.textorientation = style
+        self.updateTemplate.emit()
 
     def setLabel(self, label):
         self.member = label
