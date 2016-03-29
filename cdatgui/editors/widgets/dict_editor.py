@@ -81,6 +81,7 @@ class KeyValueRow(QWidget):
     def setValue(self, text):
         self.edit_value.setText(text)
 
+
 class InputChecker(QValidator):
     inputInvalid = Signal()
     correctInput = Signal()
@@ -138,7 +139,6 @@ class DictEditorWidget(QWidget):
 
     # check if valid for emission
     def checkKeyValues(self):
-        print "len rows", len(self.key_value_rows)
         keys = []
         values = []
         for row in self.key_value_rows:
@@ -174,8 +174,6 @@ class DictEditorWidget(QWidget):
         self.key_value_rows.append(new_row)
 
     def removeRow(self, row_widget):
-        print "removing row"
-
         # Remove from list
         self.key_value_rows.remove(row_widget)
 

@@ -28,7 +28,7 @@ class VCSLegend(object):
     @colormap.setter
     def colormap(self, cmap):
         self._gm.colormap = cmap
-    
+
     def rgba_from_index(self, index):
         """Use to retrieve the RGBA color to assign color buttons after using colormap editor."""
         return [2.55 * c for c in self.colormap.index[index]]
@@ -107,7 +107,6 @@ class VCSLegend(object):
     def ext_left(self, v):
         self._gm.ext_1 = v
 
-
     @property
     def ext_right(self):
         return self._gm.ext_2
@@ -115,12 +114,10 @@ class VCSLegend(object):
     @ext_right.setter
     def ext_right(self, v):
         self._gm.ext_2 = v
-    
 
     @property
     def levels(self):
         """Used internally, don't worry about it."""
-        # print self._gm.levels
         levs = list(self._gm.levels)
         # Check if they're autolevels
         if numpy.allclose(levs, 1e20):
@@ -135,8 +132,6 @@ class VCSLegend(object):
             else:
                 levs = vcs.mkscale(*vcs.minmax(self._var))
 
-        # print "LEVS before:", levs, len(levs)
-
         # Now adjust for ext_1 nad ext_2
         if self.ext_left:
             levs.insert(0, -1e20)
@@ -144,17 +139,15 @@ class VCSLegend(object):
             levs.append(1e20)
 
         return levs
-    
+
     @property
     def level_names(self):
         """Returns a string repr for each level. Use for Custom Fill's labels."""
         # Get the levels in a new list to mutate
         levs = self.levels
-        # print "LENLEVSNAMES:", len(levs)
-        # print levs
 
         # Pair up the levels into bounds
-        level_bounds = [[levs[i], levs[i+1]] for i in range(len(levs) - 1)]
+        level_bounds = [[levs[i], levs[i + 1]] for i in range(len(levs) - 1)]
         level_strings = []
 
         for bounds in level_bounds:
@@ -166,12 +159,10 @@ class VCSLegend(object):
                     parts.append("Negative Infinity")
                 else:
                     b = str(b)
-                    b = b[:b.index('.')+4]
+                    b = b[:b.index('.') + 4]
                     parts.append(str(b))
             level_strings.append("-".join(parts))
 
-        # print "LENNAMES:", len(level_strings)
-        # print level_strings
         return level_strings
 
     @property
@@ -181,7 +172,7 @@ class VCSLegend(object):
         if self.labels == {}:
             return "None"
         return "Manual"
-    
+
     @label_mode.setter
     def label_mode(self, v):
         if v == "Auto":
@@ -199,7 +190,6 @@ class VCSLegend(object):
                 return self._gm.autolabels(self._var)
         return self._gm.legend
 
-
     @labels.setter
     def labels(self, v):
         self._gm.legend = v
@@ -216,12 +206,14 @@ class VCSLegend(object):
 
     def level_pattern(self, i):
         if len(self._gm.fillareaindices) < len(self.levels):
-            self._gm.fillareaindices += (len(self.levels) - len(self._gm.fillareaindices)) * self._gm.fillareaindices[-1:]
+            self._gm.fillareaindices += (len(self.levels) - len(self._gm.fillareaindices)) * self._gm.fillareaindices[
+                                                                                             -1:]
         return self._gm.fillareaindices[i]
 
     def set_level_pattern(self, i, v):
         if len(self._gm.fillareaindices) < len(self.levels):
-            self._gm.fillareaindices += (len(self.levels) - len(self._gm.fillareaindices)) * self._gm.fillareaindices[-1:]
+            self._gm.fillareaindices += (len(self.levels) - len(self._gm.fillareaindices)) * self._gm.fillareaindices[
+                                                                                             -1:]
         self._gm.fillareaindices[i] = v
 
     def level_opacity(self, i):
@@ -239,8 +231,10 @@ class VCSLegend(object):
             self._gm.fillareaopacity += self._gm.fillareaopacity[-1:] * (i - len(self._gm.fillareaopacity) + 1)
         self._gm.fillareaopacity[i] = alpha
 
+
 if __name__ == "__main__":
     import cdms2
+
     b = vcs.createboxfill()
     canvas = vcs.init()
     v = cdms2.open(vcs.sample_data + "/clt.nc")["clt"]
@@ -251,7 +245,7 @@ if __name__ == "__main__":
     legend.colormap = "rainbow"
     legend.label_mode = "Manual"
     legend.fill_style = "Pattern"
-    
+
     for i, lev in enumerate(legend.level_names):
         print "Level %d:" % i
         print "\t%s" % lev
@@ -262,5 +256,3 @@ if __name__ == "__main__":
 
     canvas.plot(v, b)
     b.list()
-
-
