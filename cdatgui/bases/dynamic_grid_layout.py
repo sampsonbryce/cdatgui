@@ -1,44 +1,45 @@
 from PySide import QtCore, QtGui
-
 import math
 
 
-class ReflowWidget(QtGui.QWidget):
+class DynamicGridLayout(QtGui.QGridLayout):
     def __init__(self, col_width, parent=None):
         """
         col_width: width of the columns, therefore specifies how to distribute widgets.
                     col_width must be greater than the minimum width of widget or downsizing will fail
         """
-        super(ReflowWidget, self).__init__()
+        super(DynamicGridLayout, self).__init__()
 
         self.col_width = col_width
         self.cur_col_count = 1
         self.widgets = []
-        self.grid = QtGui.QGridLayout()
         self.counts = [0]
 
-        self.setLayout(self.grid)
+    def setGeometry(self, rect):
+        self.buildGrid(rect)
+        super(DynamicGridLayout, self).setGeometry(rect)
 
-    def addWidgets(self, widgets):
+    def addNewWidgets(self, widgets):
         """preferred method of adding widgets, only has to call build grid once"""
         self.widgets.extend(widgets)
-        self.buildGrid(True)
+        self.buildGrid(self.geometry(), force=True)
 
-    def addWidget(self, widget):
+    def addNewWidget(self, widget):
         self.widgets.append(widget)
-        self.buildGrid(True)
+        self.buildGrid(self.geometry(), force=True)
 
     def resizeEvent(self, ev):
-        print "resizing, width=", self.width()
-        super(ReflowWidget, self).resizeEvent(ev)
+        super(DynamicGridLayout, self).resizeEvent(ev)
         self.buildGrid()
 
     def setColumnWidth(self, width):
         self.col_width = width
+        self.buildGrid(self.geometry(), force=True)
 
-    def buildGrid(self, force=False):
-        print "building grid"
-        possible_columns = self.width() / self.col_width
+    def buildGrid(self, rect, force=False):
+
+        possible_columns = rect.width() / self.col_width
+
         if not possible_columns:
             possible_columns = 1
 
@@ -72,14 +73,13 @@ class ReflowWidget(QtGui.QWidget):
 
         for col, row_count in enumerate(columns):
             for row in range(row_count):
-                self.grid.addWidget(iterator.next(), row, col)
+                self.addWidget(iterator.next(), row, col)
+
+        self.cur_col_count = possible_columns
 
     def clearWidget(self):
         """clears widgets from the grid layout. Does not delete widgets"""
-        print "clearing, counts =", self.counts
-        print "len counts", len(self.counts)
         for col, row_count in enumerate(self.counts):
-            print "COL, row_count:", col, row_count
             if row_count:
                 for row in range(row_count):
                     cur_item = self.grid.itemAtPosition(row, col).widget()
@@ -88,8 +88,6 @@ class ReflowWidget(QtGui.QWidget):
                     assert self.counts[col] >= 0
         while len(self.counts) != 1:
             self.counts.pop(-1)
-
-        print "COUNTS AFTER CLEAR:", self.counts
 
     def getWidgets(self):
         return self.widgets
@@ -100,24 +98,22 @@ class ReflowWidget(QtGui.QWidget):
             if i == widget:
 
                 # update counts
-                print "COUNTS", self.counts
                 for col, row_count in enumerate(self.counts):
                     if row_count:
                         for row in range(row_count):
-                            print "ROW, COLUMN:", row, col
                             cur_item = self.grid.itemAtPosition(row, col).widget()
                             if cur_item == widget:
                                 self.counts[col] -= 1
 
                 self.widgets.remove(i)
-                self.buildGrid(True)
+                self.buildGrid(self.geometry(), force=True)
                 return
 
 
 if __name__ == "__main__":
     app = QtGui.QApplication([])
 
-    flow = ReflowWidget(300)
+    flow = DynamicGridLayout(300)
     widgets = []
     for i in range(100):
         w = QtGui.QWidget()
@@ -126,7 +122,9 @@ if __name__ == "__main__":
         h.addWidget(QtGui.QPushButton("Button %d" % i))
         w.setLayout(h)
         widgets.append(w)
-    flow.addWidgets(widgets)
-    flow.show()
-    flow.raise_()
+    flow.addNewWidgets(widgets)
+    win = QtGui.QWidget()
+    win.setLayout(flow)
+    win.show()
+    win.raise_()
     app.exec_()

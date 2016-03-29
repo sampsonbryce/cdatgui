@@ -1,7 +1,7 @@
 from PySide.QtCore import *
 from PySide.QtGui import *
 from functools import partial
-from cdatgui.bases.reflow_widget import ReflowWidget
+from cdatgui.bases.dynamic_grid_layout import DynamicGridLayout
 
 
 class KeyValueRow(QWidget):
@@ -111,7 +111,7 @@ class DictEditorWidget(QWidget):
         super(DictEditorWidget, self).__init__()
         self.valid_keys = None
         self.key_value_rows = []
-        self.grid = ReflowWidget(350)
+        self.grid = DynamicGridLayout(350)
         self.clearing = False
 
         wrap = QVBoxLayout()
@@ -121,7 +121,7 @@ class DictEditorWidget(QWidget):
         add_button.clicked.connect(self.insertRow)
 
         self.setLayout(wrap)
-        wrap.addWidget(self.grid)
+        wrap.addLayout(self.grid)
         wrap.addWidget(add_button)
 
     # Update Combo Boxes
@@ -170,7 +170,7 @@ class DictEditorWidget(QWidget):
         if self.valid_keys:
             new_row.updatedKey.connect(self.updateCBoxes)
 
-        self.grid.addWidget(new_row)
+        self.grid.addNewWidget(new_row)
         self.key_value_rows.append(new_row)
 
     def removeRow(self, row_widget):

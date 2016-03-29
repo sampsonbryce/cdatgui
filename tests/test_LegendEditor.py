@@ -108,7 +108,7 @@ def test_createColormap(editors):
 
     editors.updateArrowType()
 
-    widget = editors.custom_vertical_layout.itemAt(1).widget().widget().getWidgets()[1]
+    widget = editors.custom_vertical_layout.itemAt(1).widget().widget().layout().getWidgets()[1]
     print widget
     editors.createColormap(widget.changeColor)
     editors.colormap_editor.choseColorIndex.emit(160)
@@ -118,7 +118,7 @@ def test_createColormap(editors):
 
 def test_changePattern(editors):
     editors.updateArrowType()
-    widget = editors.custom_vertical_layout.itemAt(1).widget().widget().getWidgets()[1]
+    widget = editors.custom_vertical_layout.itemAt(1).widget().widget().layout().getWidgets()[1]
 
     widget.changePattern(5)
 
@@ -147,7 +147,7 @@ def test_updateCustomOnColormapChange(editors):
 
 def test_opacityPatternRelationship(editors):
     editors.updateArrowType()
-    widget = editors.custom_vertical_layout.itemAt(1).widget().widget().getWidgets()[3]
+    widget = editors.custom_vertical_layout.itemAt(1).widget().widget().layout().getWidgets()[3]
 
     widget.changeOpacity(0)
     assert widget.pattern_combo.currentIndex() == 0

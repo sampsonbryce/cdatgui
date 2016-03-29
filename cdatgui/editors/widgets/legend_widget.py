@@ -1,4 +1,3 @@
-import traceback
 from types import FunctionType
 
 from cdatgui.editors.widgets.dict_editor import DictEditorWidget
@@ -8,9 +7,14 @@ from cdatgui.editors.preview.legend_preview import LegendPreviewWidget
 from cdatgui.bases.window_widget import BaseOkWindowWidget
 from cdatgui.editors.colormap import QColormapEditor
 from cdatgui.utils import pattern_thumbnail
-from cdatgui.bases.reflow_widget import ReflowWidget
+from cdatgui.bases.dynamic_grid_layout import DynamicGridLayout
 from functools import partial
-import timeit
+
+
+class CustomScrollArea(QtGui.QScrollArea):
+    def resizeEvent(self, ev):
+        super(CustomScrollArea, self).resizeEvent(ev)
+        self.widget().setGeometry(0, 0, self.width(), self.height())
 
 
 class CustomFillWidget(QtGui.QWidget):
@@ -114,7 +118,7 @@ class PatternComboDelegate(QtGui.QAbstractItemDelegate):
         super(PatternComboDelegate, self).__init__()
 
     def paint(self, painter, option, index):
-
+        """Customizes the view of the combobox for selecting a level pattern"""
         if index.row() == 0:
             flags = 0
             flags |= QtCore.Qt.AlignCenter
@@ -145,14 +149,12 @@ class StartEndSpin(QtGui.QSpinBox):
         self.max = 255
 
     def isValid(self, valid):
-        print "Stylesheet", self.styleSheet()
         if valid:
             self.setStyleSheet("color :rgb(0,0,0)")
         else:
             self.setStyleSheet("color :rgb(255,0,0)")
 
     def validate(self, input, pos):
-        print "validating"
         if input == "":
             return QtGui.QValidator.Intermediate
         try:
@@ -160,7 +162,7 @@ class StartEndSpin(QtGui.QSpinBox):
         except:
             return QtGui.QValidator.Invalid
 
-        if self.min <= input <= self.max:
+        if self.min < input < self.max:
             self.validInput.emit()
             self.isValid(True)
             return QtGui.QValidator.Acceptable
@@ -310,7 +312,6 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.vertical_layout.insertLayout(6, labels_layout)
 
     def setObject(self, legend):
-        print "setObject"
         self.object = legend
 
         self.start_color_spin.setValue(self.object.color_1)
@@ -322,16 +323,12 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.end_color_button.setFixedSize(100, 25)
 
         self.preview.setLegendObject(legend)
-        print "after setLegendObject"
         self.preview.update()
 
     def updateColormap(self, cur_item, recreate=True):
-        print "updatecolormap"
-        print self.object.colormap.name, cur_item
         if self.object.colormap.name == cur_item:
-            print "quitting colormap"
-            self.colormap_updating = False
             return
+
         self.object.colormap = cur_item
         items = [self.colormap_dropdown.itemText(i) for i in range(self.colormap_dropdown.count())]
         self.colormap_dropdown.setCurrentIndex(items.index(cur_item))
@@ -345,7 +342,6 @@ class LegendEditorWidget(BaseOkWindowWidget):
             self.updateCustomFillBox()
 
     def updateStartColor(self, value=-1, recreate=True):
-        print "updateStartColor"
         if value == -1:
             value = self.start_color_spin.value()
         else:
@@ -354,10 +350,6 @@ class LegendEditorWidget(BaseOkWindowWidget):
         if self.colormap_editor:
             self.colormap_editor.close()
 
-        if value == -1:
-            value = self.start_color_spin.value()
-        else:
-            self.start_color_spin.setValue(value)
         self.end_color_spin.min = value
         self.object.color_1 = value
         self.updateButtonColor(self.start_color_button, value)
@@ -367,8 +359,6 @@ class LegendEditorWidget(BaseOkWindowWidget):
             self.updateCustomFillBox()
 
     def updateEndColor(self, value=-1, recreate=True):
-        print "updateEndColor"
-
         if value == -1:
             value = self.end_color_spin.value()
         else:
@@ -381,23 +371,21 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.object.color_2 = value
         self.updateButtonColor(self.end_color_button, value)
         self.preview.update()
+
         if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow and recreate:
             self.updateCustomFillBox()
 
     def updateExtendLeft(self, state):
-        print "updateExtendLeft"
         self.object.ext_left = state == QtCore.Qt.Checked
         self.preview.update()
         self.updateCustomFillBox()
 
     def updateExtendRight(self, state):
-        print "updateExtendRight"
         self.object.ext_right = state == QtCore.Qt.Checked
         self.preview.update()
         self.updateCustomFillBox()
 
     def updateArrowType(self):
-        print "updateArrowType"
         if self.custom_fill_icon.arrowType() == QtCore.Qt.RightArrow:
             self.custom_fill_icon.setArrowType(QtCore.Qt.DownArrow)
             self.fill_style_widget.setVisible(True)
@@ -413,14 +401,12 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.preview.update()
 
     def initateFillStyle(self, old_button):
-        print "initiateFillStyle"
-        # Make current fill style solid
+        """Used when creating custom fill to initalize fill style to Solid"""
         for button in self.fill_button_group.buttons():
             if button.text() == old_button.text():
                 button.click()
 
     def updateCustomFillBox(self):
-        print "updateCustomFillBox"
         if self.custom_fill_icon.arrowType() == QtCore.Qt.DownArrow:
             self.deleteCustomFillBox()
             self.custom_vertical_layout.addWidget(self.createCustomFillBox())
@@ -428,11 +414,11 @@ class LegendEditorWidget(BaseOkWindowWidget):
             self.initateFillStyle(self.fill_button_group.checkedButton())
 
     def createCustomFillBox(self):
-        print "createCustomFillBox"
-        start_time = timeit.default_timer()
         # create layout for custom fill
-        scroll_area = QtGui.QScrollArea()
-        grid_widget = ReflowWidget(400)
+        scroll_area = CustomScrollArea()
+        grid_layout = DynamicGridLayout(400)
+        dynamic_widget = QtGui.QWidget()
+        dynamic_widget.setLayout(grid_layout)
         scroll_area.setWidgetResizable(True)
         level_names = self.object.level_names
         grid_widgets = []
@@ -451,29 +437,24 @@ class LegendEditorWidget(BaseOkWindowWidget):
             item.changeOpacity(100)
             item.attributeChanged.connect(self.preview.update)
             grid_widgets.append(item)
-        print timeit.default_timer() - start_time
-        print "end creation of custom box"
 
         # adding widgets(plural) only calls build grid once instead of once for each widget
-        grid_widget.addWidgets(grid_widgets)
-        scroll_area.setWidget(grid_widget)
+        grid_layout.setColumnWidth(int(grid_widgets[-1].minimumSizeHint().width()))
+        grid_layout.addNewWidgets(grid_widgets)
+        scroll_area.setWidget(dynamic_widget)
 
         return scroll_area
 
     def deleteCustomFillBox(self):
-        print "deleteCustomFillBox"
         self.vertical_layout.takeAt(6)
         scroll = self.custom_vertical_layout.takeAt(1).widget()
-        grid = scroll.takeWidget()
-        grid.deleteLater()
         scroll.deleteLater()
 
     def changeFillStyle(self, button):
-        print "changeFillStyle"
         old_fill_style = self.object.fill_style
         scroll = self.custom_vertical_layout.itemAt(1).widget()
         w = scroll.widget()
-        for widget in w.getWidgets():
+        for widget in w.layout().getWidgets():
             row = widget.layout()
             if not row:
                 break
@@ -525,13 +506,9 @@ class LegendEditorWidget(BaseOkWindowWidget):
             self.vertical_layout.insertWidget(self.vertical_layout.count() - 1, scroll_area)
         elif isinstance(self.vertical_layout.itemAt(self.vertical_layout.count() - 2).widget(), QtGui.QScrollArea):
             scroll_area = self.vertical_layout.takeAt(self.vertical_layout.count() - 2).widget()
-            dict_editor = scroll_area.takeWidget()
-            dict_editor.clear()
-            dict_editor.deleteLater()
             scroll_area.deleteLater()
 
     def updateLabels(self, dict):
-        print "updateLabels"
         try:
             d = {float(key): value for key, value in dict.items()}
             self.object.labels = d

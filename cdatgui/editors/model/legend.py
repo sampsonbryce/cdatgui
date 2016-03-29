@@ -41,8 +41,13 @@ class VCSLegend(object):
             colors = self._gm.fillareacolors
             return colors
         else:
+            real_levs = levs
+            if self.ext_left:
+                levs = levs[1:]
+            if self.ext_right:
+                levs = levs[:-1]
             colors = vcs.getcolors(levs, colors=range(self.color_1, self.color_2))
-
+            levs = real_levs
             if len(colors) < len(levs):
                 # Pad out colors to the right number of buckets
                 diff = len(levs) - len(colors)
@@ -126,7 +131,7 @@ class VCSLegend(object):
                 if len(levs) == 1:
                     levs.append(levs[0] + .00001)
                 delta = (levs[-1] - levs[0]) / nlevs
-                levs = numpy.arange(levs[0], levs[-1] + delta, delta)
+                levs = list(numpy.arange(levs[0], levs[-1] + delta, delta))
             else:
                 levs = vcs.mkscale(*vcs.minmax(self._var))
 
@@ -134,14 +139,9 @@ class VCSLegend(object):
 
         # Now adjust for ext_1 nad ext_2
         if self.ext_left:
-            #levs[0] = -1e20
             levs.insert(0, -1e20)
-            # insert not working for some reason. causes colors to be off
-            # levs.insert(0, 1e20)
         if self.ext_right:
             levs.append(1e20)
-
-        # print "LEVS after:", levs, len(levs)
 
         return levs
     
@@ -165,6 +165,8 @@ class VCSLegend(object):
                 elif numpy.isclose(b, -1e20):
                     parts.append("Negative Infinity")
                 else:
+                    b = str(b)
+                    b = b[:b.index('.')+4]
                     parts.append(str(b))
             level_strings.append("-".join(parts))
 
