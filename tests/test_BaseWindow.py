@@ -1,5 +1,5 @@
 import pytest
-from cdatgui.editors.secondary.base import BaseWindowWidget
+from cdatgui.bases.window_widget import BaseWindowWidget
 from cdatgui.editors.secondary.preview.line import LinePreviewWidget
 
 

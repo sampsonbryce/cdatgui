@@ -1,13 +1,13 @@
 from PySide.QtCore import *
 from PySide.QtGui import *
 from collections import OrderedDict
-from cdatgui.editors.widgets.level_slider import DictEditor
+from cdatgui.editors.widgets.dict_editor import DictEditorWidget
 import pytest
 
 
 @pytest.fixture
 def editors():
-    d_e = DictEditor()
+    d_e = DictEditorWidget()
     d_e.setMinimumSize(400, 100)
     d = OrderedDict()
 
@@ -21,7 +21,7 @@ def editors():
     initial = (d_e, d)
 
     # recreate dictEditor
-    d_e = DictEditor()
+    d_e = DictEditorWidget()
     d_e.setMinimumSize(400, 100)
     d = OrderedDict()
 
@@ -45,7 +45,7 @@ def dictEmitted(d):
     print "D:", d
     for key, value in d.items():
         print str(key) + ": " + str(value)
-        assert key != "" and value != ""
+        assert key != ""
 
 
 def test_insert(qtbot, editors):
@@ -106,9 +106,9 @@ def test_color_change(qtbot, editors):
         qtbot.keyPress(d_e.key_value_rows[1].edit_key, Qt.Key_Enter)
 
         if index == 0:
-            correct_keys = ['taco', 'pizza']
+            correct_keys = ['quesadilla', 'pizza']
         else:
-            correct_keys = ['potato', 'pizza']
+            correct_keys = ['carrot', 'pizza']
 
         cur_keys = []
         for row in d_e.key_value_rows:
