@@ -2,13 +2,11 @@ from PySide import QtCore, QtGui
 import vcs
 import widgets.color_table as color_table
 
-
 COLORMAP_MODE = "colormap"
 COLOR_MODE = "color"
 
 
 class QColormapEditor(QtGui.QColorDialog):
-
     choseColormap = QtCore.Signal(str)
     choseColorIndex = QtCore.Signal(int)
 
@@ -21,7 +19,7 @@ class QColormapEditor(QtGui.QColorDialog):
 
         l = self.layout()
 
-        ## Colormap selection Area
+        # Colormap selection Area
         f = QtGui.QFrame()
         h = QtGui.QHBoxLayout()
 
@@ -40,7 +38,6 @@ class QColormapEditor(QtGui.QColorDialog):
         l.addWidget(f)
 
         self.mode = mode
-        print "MODE:", self.mode
 
         # Apply/Cancel/Save/Reset/Blend buttons
         buttons = QtGui.QDialogButtonBox()
@@ -56,7 +53,6 @@ class QColormapEditor(QtGui.QColorDialog):
             self.setWindowTitle("Choose Color")
             self.accept.setEnabled(False)
             self.accept.setToolTip("Use Color")
-
 
         export = QtGui.QPushButton("Export")
         export.setToolTip("Save Colormap To File")
@@ -99,19 +95,15 @@ class QColormapEditor(QtGui.QColorDialog):
     def acceptClicked(self):
         # Make sure the colormap changes take effect
         self.applyChanges()
-        print "emitting map:", self.colormap.currentText()
         self.choseColormap.emit(str(self.colormap.currentText()))
         if self.mode == COLOR_MODE:
-            print "emitting color:", self.cell
             self.choseColorIndex.emit(self.cell)
 
     def selectedCell(self, ind):
         self.cell = ind
-        print ind
         if ind is not None:
             # self
             color = self.colors.get_cell(ind)
-            print "COLOR:", color
             r, g, b, a = [2.55 * c for c in color]
             col = QtGui.QColor(r, g, b, a)
             self.setCurrentColor(col)
@@ -185,10 +177,16 @@ if __name__ == "__main__":
     editor = QColormapEditor(mode="color")
     editor.show()
     editor.raise_()
+
+
     def set_cmap(cmap_name):
         print "Colormap:", cmap_name
+
+
     def set_color_ind(colorind):
         print "Color ind:", colorind
+
+
     editor.choseColormap.connect(set_cmap)
     editor.choseColorIndex.connect(set_color_ind)
     app.exec_()

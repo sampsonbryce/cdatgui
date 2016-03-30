@@ -11,9 +11,11 @@ from cdatgui.bases.dynamic_grid_layout import DynamicGridLayout
 from functools import partial
 
 
-class CustomScrollArea(QtGui.QScrollArea):
+class ForceResizeScrollArea(QtGui.QScrollArea):
+    """Forces a resize of the child widget. Needed for proper resizing of the DynamicGridLayout"""
+
     def resizeEvent(self, ev):
-        super(CustomScrollArea, self).resizeEvent(ev)
+        super(ForceResizeScrollArea, self).resizeEvent(ev)
         self.widget().setGeometry(0, 0, self.width(), self.height())
 
 
@@ -415,7 +417,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
     def createCustomFillBox(self):
         # create layout for custom fill
-        scroll_area = CustomScrollArea()
+        scroll_area = ForceResizeScrollArea()
         grid_layout = DynamicGridLayout(400)
         dynamic_widget = QtGui.QWidget()
         dynamic_widget.setLayout(grid_layout)
