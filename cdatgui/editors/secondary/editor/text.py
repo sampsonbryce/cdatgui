@@ -1,10 +1,10 @@
 import vcs
 from cdatgui.editors.secondary.preview.text import TextStylePreviewWidget
 from PySide import QtCore, QtGui
-from cdatgui.bases.window_widget import BaseWindowWidget
+from cdatgui.bases.window_widget import BaseSaveWindowWidget
 
 
-class TextStyleEditorWidget(BaseWindowWidget):
+class TextStyleEditorWidget(BaseSaveWindowWidget):
     def __init__(self):
         super(TextStyleEditorWidget, self).__init__()
         self.setPreview(TextStylePreviewWidget())

@@ -1,9 +1,9 @@
 from PySide import QtGui, QtCore
-from cdatgui.bases.window_widget import BaseWindowWidget
+from cdatgui.bases.window_widget import BaseSaveWindowWidget
 from cdatgui.editors.secondary.preview.line import LinePreviewWidget
 
 
-class LineEditorWidget(BaseWindowWidget):
+class LineEditorWidget(BaseSaveWindowWidget):
 
     def __init__(self):
         super(LineEditorWidget, self).__init__()
