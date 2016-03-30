@@ -8,7 +8,7 @@ class TemplatePreviewWidget(QVCSWidget):
 		self.template = None
 		self.var = None
 		self.gm = None
-		self.visiblityChanged.connect(self.update)
+		self.visibilityChanged.connect(self.update)
 
 	def update(self):
 		if self.canvas is None:
