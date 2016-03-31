@@ -32,6 +32,7 @@ class BoxEditor(QtGui.QWidget):
         buttons.addWidget(self.move_button)
         self.hide_button = QtGui.QPushButton(toggle_icon, u"")
         self.hide_button.setCheckable(True)
+        self.hide_button.clicked.connect(self.hideMember)
         buttons.addWidget(self.hide_button)
         layout.addRow(buttons)
 
@@ -50,6 +51,7 @@ class BoxEditor(QtGui.QWidget):
         outline_actions = QtGui.QHBoxLayout()
         self.outline_hide = QtGui.QPushButton(toggle_icon, u"")
         self.outline_hide.setCheckable(True)
+        self.outline_hide.clicked.connect(self.hideOutline)
         self.outline_style = QtGui.QComboBox()
         for l in vcs.listelements("line"):
             if l[:2] == "__":
@@ -62,6 +64,20 @@ class BoxEditor(QtGui.QWidget):
 
         layout.addRow("Outline", outline_actions)
         self.setLayout(layout)
+
+    def hideMember(self):
+        if self.hide_button.isChecked():
+            self.member.priority = 1
+        else:
+            self.member.priority = 0
+        self.boxEdited.emit(self.member)
+
+    def hideOutline(self):
+        if self.outline_hide.isChecked():
+            self.outline.priority = 1
+        else:
+            self.outline.priority = 0
+        self.boxEdited.emit(self.member)
 
     def setTemplate(self, template):
         self.hide_button.setChecked(self.member.priority > 0)
