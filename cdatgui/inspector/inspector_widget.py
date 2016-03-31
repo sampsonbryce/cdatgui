@@ -32,6 +32,7 @@ class InspectorWidget(StaticDockWidget):
         w.addTab(tmpl, "Layout")
 
         con = ConsoleInspector()
+        self.plotters_updated.connect(con.setPlots)
         w.addTab(con, "Python")
 
         self.setWidget(w)
