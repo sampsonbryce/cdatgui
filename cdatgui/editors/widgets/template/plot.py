@@ -18,6 +18,7 @@ def initmod():
 class BoxEditor(QtGui.QWidget):
     boxEdited = QtCore.Signal(object)
     moveBox = QtCore.Signal(object)
+    editStyle = QtCore.Signal(str)
 
     def __init__(self, parent=None):
         super(BoxEditor, self).__init__(parent=parent)
@@ -57,13 +58,24 @@ class BoxEditor(QtGui.QWidget):
             if l[:2] == "__":
                 continue
             self.outline_style.addItem(l)
+        self.outline_style.currentIndexChanged[str].connect(self.setOutlineStyle)
         outline_edit = QtGui.QPushButton("Edit")
+        outline_edit.clicked.connect(self.triggerEditStyle)
         outline_actions.addWidget(self.outline_hide)
         outline_actions.addWidget(self.outline_style)
         outline_actions.addWidget(outline_edit)
 
         layout.addRow("Outline", outline_actions)
         self.setLayout(layout)
+
+    def setOutlineStyle(self, style):
+        style = str(style)
+        self.outline.line = style
+        self.boxEdited.emit(self.member)
+
+    def triggerEditStyle(self):
+        style = str(self.outline_style.currentText())
+        self.editStyle.emit(style)
 
     def hideMember(self):
         if self.hide_button.isChecked():
@@ -80,12 +92,14 @@ class BoxEditor(QtGui.QWidget):
         self.boxEdited.emit(self.member)
 
     def setTemplate(self, template):
+        block = self.blockSignals(True)
         self.hide_button.setChecked(self.member.priority > 0)
         self.width_slider.setValue(abs(self.member.x2 - self.member.x1))
         self.height_slider.setValue(abs(self.member.y2 - self.member.y1))
         self.outline_style.setCurrentIndex(self.outline_style.findText(self.outline.line))
         self.outline_hide.setChecked(self.outline.priority > 0)
         self.template = template
+        self.blockSignals(block)
 
     def setBoxWidth(self, val, buffer=0):
         self.member.x2 = self.member.x1 + (1 - self.member.x1 - buffer) * val / 100.
