@@ -1,5 +1,6 @@
 from PySide import QtGui, QtCore
 from cdatgui.utils import icon
+from cdatgui.vcsmodel import get_lines
 import vcs
 active, inactive, toggle_icon = None, None, None
 
@@ -54,10 +55,7 @@ class BoxEditor(QtGui.QWidget):
         self.outline_hide.setCheckable(True)
         self.outline_hide.clicked.connect(self.hideOutline)
         self.outline_style = QtGui.QComboBox()
-        for l in vcs.listelements("line"):
-            if l[:2] == "__":
-                continue
-            self.outline_style.addItem(l)
+        self.outline_style.setModel(get_lines())
         self.outline_style.currentIndexChanged[str].connect(self.setOutlineStyle)
         outline_edit = QtGui.QPushButton("Edit")
         outline_edit.clicked.connect(self.triggerEditStyle)

@@ -1,6 +1,7 @@
 from PySide import QtGui, QtCore
 import vcs
 from cdatgui.utils import icon
+from cdatgui.vcsmodel import get_textstyles
 from cdatgui.editors.secondary.editor.text import TextStyleEditorWidget
 
 members = {
@@ -38,8 +39,7 @@ class TemplateLabelWidget(QtGui.QWidget):
 
         self.label = QtGui.QLabel(label)
         self.style_picker = QtGui.QComboBox()
-
-        self.populate_styles()
+        self.style_picker.setModel(get_textstyles())
         self.style_picker.currentIndexChanged[str].connect(self.setStyle)
 
         self.edit_style = QtGui.QPushButton("Edit Style")
@@ -60,17 +60,6 @@ class TemplateLabelWidget(QtGui.QWidget):
         layout.addWidget(self.move)
         self.setLayout(layout)
 
-    def populate_styles(self):
-        block = self.style_picker.blockSignals(True)
-        # Clear out existing styles
-        for i in range(self.style_picker.count()):
-            self.style_picker.removeItem(0)
-        # Rebuild styles
-        els = [tt for tt in vcs.elements["texttable"].keys() if tt in vcs.elements["textorientation"]]
-        for t in els:
-            self.style_picker.addItem(t)
-        self.style_picker.blockSignals(block)
-
     def trigger_move(self):
         self.moveLabel.emit(self.member)
 
@@ -85,7 +74,6 @@ class TemplateLabelWidget(QtGui.QWidget):
     def setLabel(self, label):
         block = self.blockSignals(True)
         self.member = label
-        self.populate_styles()
         self.label.setText(label.member)
         ind = self.style_picker.findText(label.texttable)
         if ind != -1:
@@ -175,7 +163,7 @@ class TemplateLabelEditor(QtGui.QTabWidget):
             tt = vcs.gettexttable(tt_name)
         except ValueError:
             tt = vcs.createtexttable(name=tt_name, source=tt_src)
-
+        get_textstyles().updated(tt_name)
         self.current_member.texttable = tt
         self.current_member.textorientation = to
         self.current_member = None
