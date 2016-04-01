@@ -152,5 +152,6 @@ class LegendEditor(BoxEditor):
     def setTemplate(self, template):
         self.member = template.legend
         self.outline = template.legend
+        super(LegendEditor, self).setTemplate(template)
 
 
