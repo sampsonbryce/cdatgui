@@ -3,9 +3,9 @@ import vcs
 
 
 class LineElementsModel(VCSElementsModel):
-    def __init__(self, parent=None):
-        super(LineElementsModel, self).__init__(parent=parent)
-        self.el_type = "line"
+    el_type = "line"
+    def __init__(self):
+        super(LineElementsModel, self).__init__()
         self.isa = vcs.isline
         self.get_el = vcs.getline
 
@@ -14,21 +14,27 @@ class LineElementsModel(VCSElementsModel):
 
 
 class TextElementsModel(VCSElementsModel):
-    def __init__(self, parent=None):
-        # We can skip up above the VCSElementsModel, since we're subverting the standard usage here.
-        super(VCSElementsModel, self).__init__(parent=parent)
-        self._elements = []
+    def __init__(self):
+        self.elements = []
+        self.init_elements()
+        super(VCSElementsModel, self).__init__()
 
-    def get_new_elements(self):
+    def init_elements(self):
         to = vcs.listelements("textorientation")
         tt = vcs.listelements("texttable")
-        text_styles = [el for el in tt if el in to]
-        return text_styles
+        self.elements = sorted((el for el in tt if el in to))
 
     def get_el(self, name):
+        tt = vcs.gettexttable(name)
+        to = vcs.gettextorientation(name)
+
+        for tc in vcs.listelements("textcombined"):
+            tc = vcs.gettextcombined(tc)
+            if tc.To_name == name and tc.Tt_name == name:
+                return tc
         tc = vcs.createtextcombined()
-        tc.To = vcs.gettextorientation(name)
-        tc.Tt = vcs.gettexttable(name)
+        tc.Tt = tt
+        tc.To = to
         return tc
 
     def isa(self, obj):
@@ -39,20 +45,20 @@ class TextElementsModel(VCSElementsModel):
 
 
 class FillareaElementsModel(VCSElementsModel):
-    def __init__(self, parent=None):
-        super(FillareaElementsModel, self).__init__(parent=parent)
-        self.el_type = "fillarea"
-        self.isa = vcs.isfillarea()
-        self.get_el = vcs.getfillarea()
+    el_type = "fillarea"
+    def __init__(self):
+        super(FillareaElementsModel, self).__init__()
+        self.isa = vcs.isfillarea
+        self.get_el = vcs.getfillarea
 
     def tooltip(self, name, obj):
         return u"Fill Primitive '%s'" % obj.name
 
 
 class MarkerElementsModel(VCSElementsModel):
-    def __init__(self, parent=None):
-        super(MarkerElementsModel, self).__init__(parent=parent)
-        self.el_type = "marker"
+    el_type = "marker"
+    def __init__(self):
+        super(MarkerElementsModel, self).__init__()
         self.isa = vcs.ismarker
         self.get_el = vcs.getmarker
 
