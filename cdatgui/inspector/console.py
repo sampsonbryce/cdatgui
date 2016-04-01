@@ -1,55 +1,92 @@
 from PySide import QtGui, QtCore
 from functools import partial
-
+from cdatgui.variables import get_variables
 from cdatgui.utils import label
 from IPython.qt.console.rich_ipython_widget import RichIPythonWidget
 from IPython.qt.inprocess import QtInProcessKernelManager
 import vcs, cdms2
 
 
+def is_cdms_var(v):
+    print "checking var:", v, type(v)
+    return isinstance(v, cdms2.tvariable.TransientVariable)
+
+
+def is_displayplot(v):
+    return isinstance(v, vcs.displayplot.Dp)
+
+
 class ConsoleInspector(QtGui.QWidget):
     def __init__(self, parent=None):
         super(ConsoleInspector, self).__init__()
+        self.variable_list = get_variables()
+        #self.variable_list.listUpdated.connect(SUM_FUNC_CALL)
+        # self.variable_list.add_variable()
         self.layout = QtGui.QVBoxLayout()
         self.setLayout(self.layout)
         self.names = QtGui.QHBoxLayout()
         self.variables = QtGui.QHBoxLayout()
         self.graphics_methods = QtGui.QHBoxLayout()
         self.templates = QtGui.QHBoxLayout()
-        self.canvas = QtGui.QHBoxLayout()
         self.grid = QtGui.QGridLayout()
-        # self.column_count = [0 for _ in range(4)]
+        self.canvas_button = QtGui.QPushButton("canvas")
+        self.canvas_button.clicked.connect(partial(self.sendString, self.canvas_button.text()))
+        self.canvas_button.setEnabled(False)
+        self.kernel_manager_instances = {} # canvas is key
+        self.kernel_manager = None
+        self.kernel_client = None
+        self.kernel = None
+        self.user_dict = None
+        self.baseline_dict = None
 
-        kernel_manager = QtInProcessKernelManager()
+        '''
+        self.kernel_manager = QtInProcessKernelManager()
 
-        kernel_manager.start_kernel()
-        self.kernel = kernel_manager.kernel
+        self.kernel_manager.start_kernel()
+        self.kernel = self.kernel_manager.kernel
+
         self.kernel.shell.push({'foo': 43})
 
-        kernel_client = kernel_manager.client()
-        kernel_client.start_channels()
-
-        def stop():
-            kernel_client.stop_channels()
-            kernel_manager.shutdown_kernel()
-            app.exit()
+        self.kernel_client = self.kernel_manager.client()
+        self.kernel_client.start_channels()
+        '''
 
         self.control = RichIPythonWidget()
-        self.control.kernel_manager = kernel_manager
-        self.control.kernel_client = kernel_client
-        self.control.exit_requested.connect(stop)
+        '''
+        self.control.kernel_manager = self.kernel_manager
+        self.control.kernel_client = self.kernel_client
+        '''
+        self.control.exit_requested.connect(self.stop)
+        self.control.executed.connect(self.codeExecuted)
 
         self.layout.addLayout(self.names)
         self.layout.addWidget(self.control)
         self.layout.addLayout(self.grid)
+        self.layout.addWidget(self.canvas_button)
 
         # add label column
         for index, text in enumerate(["Variables", "Graphics Methods", "Templates"]):
             self.grid.addWidget(label(text), index+1, 0)
 
-        for index in range(1,5):
-            self.grid.addWidget(label(str(index)), 0, index)
+        for index in range(1, 5):
+            self.grid.addWidget(label(str(index)), 0, index, QtCore.Qt.AlignHCenter)
 
+    def codeExecuted(self, *varargs):
+        cur_keys = set(self.user_dict)
+        print self.user_dict
+        for key in cur_keys - self.baseline_dict:
+            if key[0] == "_":
+                continue
+            if is_cdms_var(self.user_dict[key]):
+                cdms_var = self.user_dict[key]
+                # print "CDMS_var", cdms_var
+
+                if not self.variable_list.variable_exists(cdms_var):
+                    cdms_var.id = key
+                    self.variable_list.add_variable(cdms_var)
+
+            elif is_displayplot(self.user_dict[key]):
+                print key, "is display plot"
 
     def sendString(self, string):
         print "setting focus to control"
@@ -58,44 +95,70 @@ class ConsoleInspector(QtGui.QWidget):
         self.control._control.setFocus()
         self.control._control.moveCursor(QtGui.QTextCursor.End)
 
+    def createKernelManager(self, canvas):
+        print "CREATING KERNEL"
+        new_manager = QtInProcessKernelManager()
+        new_manager.start_kernel()
+        self.kernel_manager_instances[canvas] = new_manager
+
+    def setKernel(self, canvas):
+        print "SETTING KERNEL"
+        self.kernel_manager = self.kernel_manager_instances[canvas]
+        self.kernel = self.kernel_manager.kernel
+        self.kernel_client = self.kernel_manager.client()
+        self.kernel_client.start_channels()
+        self.control.kernel_manager = self.kernel_manager
+        self.control.kernel_client = self.kernel_client
+
+        self.user_dict = self.kernel.shell.user_ns
+        self.baseline_dict = set(self.user_dict)
+
+
     def setPlots(self, plots):
         print "setPlots"
         self.clear()
 
         if not plots:
             print "returning"
+            self.canvas_button.setEnabled(False)
             return
+        self.canvas_button.setEnabled(True)
 
         for index, manager_obj in enumerate(plots):
             self.names.addWidget(label(manager_obj.name()))
 
+            # if no new kernel create one
+            if manager_obj.canvas not in self.kernel_manager_instances:
+                self.createKernelManager(manager_obj.canvas)
+            if self.kernel_manager != self.kernel_manager_instances[manager_obj.canvas]:
+                self.setKernel(manager_obj.canvas)
+
             # Add to grid
-            v_name = manager_obj.variables[0].id
-            v_button = QtGui.QPushButton(v_name)
-            v_button.clicked.connect(partial(self.sendString, v_name))
-            self.grid.addWidget(v_button, 1, index+1)
-            self.kernel.shell.push({v_name: manager_obj.variables[0]})
+            if manager_obj.variables:
+                v_name = manager_obj.variables[0].id
+                v_button = QtGui.QPushButton(v_name)
+                text = "{0}_{1}".format(v_name, index)
+                v_button.clicked.connect(partial(self.sendString, text))
+                self.grid.addWidget(v_button, 1, index+1)
+                self.kernel.shell.push({text: manager_obj.variables[0]})
 
-            # gm = "{0}_{1}".format(vcs.graphicsmethodtype(manager_obj.graphics_method), index)
-            gm = vcs.graphicsmethodtype(manager_obj.graphics_method)
-            gm_button = QtGui.QPushButton(gm)
-            gm_button.clicked.connect(partial(self.sendString, gm))
-            self.grid.addWidget(gm_button, 2, index+1)
-            self.kernel.shell.push({gm: manager_obj.graphics_method})
+            if manager_obj.graphics_method:
+                gm = vcs.graphicsmethodtype(manager_obj.graphics_method)
+                gm_button = QtGui.QPushButton(gm)
+                text = "{0}_{1}".format(gm, index)
+                gm_button.clicked.connect(partial(self.sendString, text))
+                self.grid.addWidget(gm_button, 2, index+1)
+                self.kernel.shell.push({text: manager_obj.graphics_method})
 
-            # tmp = "{0}_{1}".format(manager_obj.template.name, index)
-            tmp = manager_obj.template.name
-            tmp_button = QtGui.QPushButton(tmp)
-            tmp_button.clicked.connect(partial(self.sendString, tmp))
-            self.grid.addWidget(tmp_button, 3, index+1)
-            self.kernel.shell.push({tmp: manager_obj.template})
+            if manager_obj.template:
+                tmp = manager_obj.template.name
+                tmp_button = QtGui.QPushButton(tmp)
+                text = "{0}_{1}".format(tmp, index)
+                tmp_button.clicked.connect(partial(self.sendString, text))
+                self.grid.addWidget(tmp_button, 3, index+1)
+                self.kernel.shell.push({text: manager_obj.template})
 
-            if not isinstance(self.layout.itemAt(self.layout.count()-1), QtGui.QPushButton):
-                # canvas_button = QtGui.QPushButton("canvas_{0}".format(index))
-                canvas_button = QtGui.QPushButton("canvas")
-                canvas_button.clicked.connect(partial(self.sendString, canvas_button.text()))
-                self.layout.addWidget(canvas_button)
-                self.kernel.shell.push({canvas_button.text(): manager_obj.canvas})
+            self.kernel.shell.push({self.canvas_button.text(): manager_obj.canvas})
 
     def clear(self):
         name = self.layout.itemAt(0).layout().takeAt(0)
@@ -114,25 +177,10 @@ class ConsoleInspector(QtGui.QWidget):
                     print "removing:", button
                     button.widget().deleteLater()
 
-        print self.layout.itemAt(2)
-        '''
-        for i in range(1, grid.count()):
-            child = grid.itemAt(i).layout()
-            print child
-            button = child.takeAt(0)
-            while button:
-                print button.widget(), button.widget().text()
-                button.widget().deleteLater()
-                button = child.takeAt(0)
-        '''
-        # delete canvas button
-        canvas_button = self.layout.itemAt(self.layout.count()-1).widget()
-        if isinstance(canvas_button, QtGui.QPushButton):
-            print "removing canvas button:", canvas_button
-            self.layout.takeAt(self.layout.count()-1)
-            canvas_button.deleteLater()
-
-        print self.layout.itemAt(2)
+    def stop(self):
+        self.kernel_client.stop_channels()
+        self.kernel_manager.shutdown_kernel()
+        app.exit()
 
 
 def newFocus():

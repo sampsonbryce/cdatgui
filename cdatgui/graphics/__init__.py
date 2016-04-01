@@ -1,1 +1,0 @@
-from graphics_method_widget import GraphicsMethodWidget # noqa

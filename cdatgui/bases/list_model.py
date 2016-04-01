@@ -2,9 +2,20 @@ from PySide import QtCore
 
 
 class ListModel(QtCore.QAbstractListModel):
+    listUpdated = QtCore.Signal()
+
     def __init__(self, parent=None):
         super(ListModel, self).__init__(parent=parent)
+        # Simplify the API a bit
+        self.rowsInserted.connect(self.updated_anything)
+        self.rowsRemoved.connect(self.updated_anything)
+        self.rowsMoved.connect(self.updated_anything)
+        self.dataChanged.connect(self.updated_anything)
+        self.modelReset.connect(self.updated_anything)
         self.values = []
+
+    def updated_anything(self, *args):
+        self.listUpdated.emit()
 
     def append(self, value):
         self.insertRows(self.rowCount(), 1, [value])

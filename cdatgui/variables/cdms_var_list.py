@@ -1,5 +1,5 @@
 from PySide import QtGui, QtCore
-from models import CDMSVariableListModel
+from cdatgui.variables import get_variables
 
 
 class CDMSVariableList(QtGui.QListView):
@@ -8,7 +8,7 @@ class CDMSVariableList(QtGui.QListView):
 
     def __init__(self, parent=None):
         super(CDMSVariableList, self).__init__(parent=parent)
-        self.setModel(CDMSVariableListModel())
+        self.setModel(get_variables())
         self.setDragEnabled(True)
         self.activated.connect(self.sel)
 
