@@ -2,9 +2,59 @@ from PySide import QtGui, QtCore
 from functools import partial
 from cdatgui.variables import get_variables
 from cdatgui.utils import label
-from IPython.qt.console.rich_ipython_widget import RichIPythonWidget
-from IPython.qt.inprocess import QtInProcessKernelManager
+from qtconsole.rich_jupyter_widget import RichJupyterWidget
+from qtconsole.inprocess import QtInProcessKernelManager
 import vcs, cdms2
+
+class QtJupyterWidget(RichJupyterWidget):
+
+    def reset(self, clear=False):
+        """ Resets the widget to its initial state if ``clear`` parameter
+        is True, otherwise
+        prints a visual indication of the fact that the kernel restarted, but
+        does not clear the traces from previous usage of the kernel before it
+        was restarted.  With ``clear=True``, it is similar to ``%clear``, but
+        also re-writes the banner and aborts execution if necessary.
+        """
+        if self._executing:
+            self._executing = False
+            self._request_info['execute'] = {}
+        self._reading = False
+        self._highlighter.highlighting_on = False
+
+        if clear:
+            self._control.clear()
+            if self._display_banner:
+                self._append_plain_text(self.banner)
+                if self.kernel_banner:
+                    self._append_plain_text(self.kernel_banner)
+
+        # update output marker for stdout/stderr, so that startup
+        # messages appear after banner:
+        self._append_before_prompt_pos = self._get_cursor().position()
+        self._show_interpreter_prompt()
+
+
+class ipythonInstanceInformation(object):
+    def __init__(self, ns, text):
+        self._ns = ns
+        self._text = text
+
+    @property
+    def ns(self):
+        return self._ns
+
+    @ns.setter
+    def ns(self, new_dict):
+        self._ns = new_dict
+
+    @property
+    def text(self):
+        return self._text
+
+    @text.setter
+    def text(self, new_text):
+        self._text = new_text
 
 
 def is_cdms_var(v):
@@ -32,32 +82,33 @@ class ConsoleInspector(QtGui.QWidget):
         self.canvas_button = QtGui.QPushButton("canvas")
         self.canvas_button.clicked.connect(partial(self.sendString, self.canvas_button.text()))
         self.canvas_button.setEnabled(False)
-        self.kernel_manager_instances = {} # canvas is key
+        self.instances = {} # canvas is key
         self.kernel_manager = None
         self.kernel_client = None
         self.kernel = None
-        self.user_dict = None
-        self.baseline_dict = None
+        self.control = None
+        self.unique_key_dict = None
+        self.current_instance = None
+        self.original_text = None
 
-        '''
+        # Create ipython widget
         self.kernel_manager = QtInProcessKernelManager()
 
         self.kernel_manager.start_kernel()
         self.kernel = self.kernel_manager.kernel
 
-        self.kernel.shell.push({'foo': 43})
-
         self.kernel_client = self.kernel_manager.client()
         self.kernel_client.start_channels()
-        '''
 
-        self.control = RichIPythonWidget()
-        '''
+        self.control = QtJupyterWidget()
         self.control.kernel_manager = self.kernel_manager
         self.control.kernel_client = self.kernel_client
-        '''
         self.control.exit_requested.connect(self.stop)
         self.control.executed.connect(self.codeExecuted)
+
+        # get original info for instance
+        self.original_ns = self.kernel.shell.user_ns
+        # self.original_text = self.control._control.toPlainText()
 
         self.layout.addLayout(self.names)
         self.layout.addWidget(self.control)
@@ -72,20 +123,19 @@ class ConsoleInspector(QtGui.QWidget):
             self.grid.addWidget(label(str(index)), 0, index, QtCore.Qt.AlignHCenter)
 
     def codeExecuted(self, *varargs):
-        cur_keys = set(self.user_dict)
-        print self.user_dict
-        for key in cur_keys - self.baseline_dict:
+        cur_keys = set(self.current_instance.ns)
+        # print self.user_dict
+        for key in cur_keys - self.unique_key_dict:
             if key[0] == "_":
                 continue
-            if is_cdms_var(self.user_dict[key]):
-                cdms_var = self.user_dict[key]
-                # print "CDMS_var", cdms_var
+            if is_cdms_var(self.current_instance.ns[key]):
+                cdms_var = self.current_instance.ns[key]
 
                 if not self.variable_list.variable_exists(cdms_var):
                     cdms_var.id = key
                     self.variable_list.add_variable(cdms_var)
 
-            elif is_displayplot(self.user_dict[key]):
+            elif is_displayplot(self.current_instance.ns[key]):
                 print key, "is display plot"
 
     def sendString(self, string):
@@ -95,24 +145,37 @@ class ConsoleInspector(QtGui.QWidget):
         self.control._control.setFocus()
         self.control._control.moveCursor(QtGui.QTextCursor.End)
 
-    def createKernelManager(self, canvas):
-        print "CREATING KERNEL"
-        new_manager = QtInProcessKernelManager()
-        new_manager.start_kernel()
-        self.kernel_manager_instances[canvas] = new_manager
+    def createInstance(self, canvas):
+        print "CREATING INSTANCE", canvas
+        if not self.original_text:
+            self.original_text = self.control._control.toPlainText()
+            print "O TEXT:", self.original_text
 
-    def setKernel(self, canvas):
-        print "SETTING KERNEL"
-        self.kernel_manager = self.kernel_manager_instances[canvas]
-        self.kernel = self.kernel_manager.kernel
-        self.kernel_client = self.kernel_manager.client()
-        self.kernel_client.start_channels()
-        self.control.kernel_manager = self.kernel_manager
-        self.control.kernel_client = self.kernel_client
+        # original_ns = self.original_ns
+        # original_ns['canvas'] = canvas
+        self.instances[canvas] = ipythonInstanceInformation(dict(self.original_ns), self.original_text)
 
-        self.user_dict = self.kernel.shell.user_ns
-        self.baseline_dict = set(self.user_dict)
+    def setInstance(self, canvas):
+        print "SETTING INSTANCE"
+        # save attributes
+        if self.current_instance:
+            print "SAVING", self.current_instance
+            self.current_instance.ns = self.kernel.shell.user_ns
+            self.current_instance.text = self.control._control.toPlainText()
 
+        # update widget
+        self.current_instance = self.instances[canvas]
+        self.kernel.shell.user_ns = self.current_instance.ns
+        self.unique_key_dict = set(self.current_instance.ns)
+        # self.control._control.moveCursor(QtGui.QTextCursor.Start)
+        # print "SETTING TEXT:", self.current_instance.text
+        self.control._control.setText(str(self.current_instance.text))
+        self.control.reset(True)
+        # self.control._insert_other_input(self.control._control.textCursor(), self.current_instance.text)
+
+        print "Widget instances:"
+        for key, value in self.instances.items():
+            print "NS:", value.ns
 
     def setPlots(self, plots):
         print "setPlots"
@@ -128,10 +191,10 @@ class ConsoleInspector(QtGui.QWidget):
             self.names.addWidget(label(manager_obj.name()))
 
             # if no new kernel create one
-            if manager_obj.canvas not in self.kernel_manager_instances:
-                self.createKernelManager(manager_obj.canvas)
-            if self.kernel_manager != self.kernel_manager_instances[manager_obj.canvas]:
-                self.setKernel(manager_obj.canvas)
+            if manager_obj.canvas not in self.instances.keys():
+                self.createInstance(manager_obj.canvas)
+            if self.current_instance != self.instances[manager_obj.canvas]:
+                self.setInstance(manager_obj.canvas)
 
             # Add to grid
             if manager_obj.variables:
@@ -162,17 +225,17 @@ class ConsoleInspector(QtGui.QWidget):
 
     def clear(self):
         name = self.layout.itemAt(0).layout().takeAt(0)
-        print "NAME OBJECT:", name
+        # print "NAME OBJECT:", name
         while name:
             name.widget().deleteLater()
             name = self.layout.itemAt(0).layout().takeAt(0)
 
         grid = self.layout.itemAt(2)
-        print "GRID:", grid
+        # print "GRID:", grid
         for col in range(1, 5):
             for row in range(1, 4):
                 button = grid.itemAtPosition(row, col)
-                print "BUTTON:", button
+                # print "BUTTON:", button
                 if button:
                     print "removing:", button
                     button.widget().deleteLater()
