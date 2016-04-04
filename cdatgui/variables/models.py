@@ -5,8 +5,16 @@ from cdatgui.bases.list_model import ListModel
 class CDMSVariableListModel(ListModel):
 
     add_variable = ListModel.append
-    get_variable = ListModel.get
     remove_variable = ListModel.remove
+
+    def get_variable(self, var_name_or_index):
+        if isinstance(var_name_or_index, int):
+            return self.get(var_name_or_index)
+        else:
+            for v in self.values:
+                if v.id == var_name_or_index:
+                    return v
+            raise ValueError("No variable found with ID %s" % var_name_or_index)
 
     def update_variable(self, variable):
         for ind, var in enumerate(self.values):

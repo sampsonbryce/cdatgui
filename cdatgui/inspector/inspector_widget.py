@@ -14,6 +14,7 @@ class InspectorWidget(StaticDockWidget):
         super(InspectorWidget, self).__init__("Inspector", parent=parent)
         self.allowed_sides = [QtCore.Qt.DockWidgetArea.RightDockWidgetArea]
         spreadsheet.selectionChanged.connect(self.selection_change)
+        self.cells = []
 
         w = QtGui.QTabWidget()
         pi = PlotInspector()
@@ -33,6 +34,7 @@ class InspectorWidget(StaticDockWidget):
 
         con = ConsoleInspector()
         self.plotters_updated.connect(con.setPlots)
+        con.createdPlot.connect(self.added_plot)
         w.addTab(con, "Python")
 
         self.setWidget(w)
@@ -41,10 +43,18 @@ class InspectorWidget(StaticDockWidget):
         for plot in self.plots:
             plot.plot()
 
+    def added_plot(self, displayplot):
+        for cell in self.cells:
+            if displayplot.name in cell.canvas.display_names:
+                cell.loadPlot(displayplot)
+                break
+
     def selection_change(self, selected):
         plots = []
+        self.cells = []
         for cell in selected:
             cell = cell.containedWidget
+            self.cells.append(cell)
             # cell is now a QCDATWidget
             plots.extend(cell.getPlotters())
         self.plots = plots

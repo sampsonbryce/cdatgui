@@ -31,8 +31,9 @@ class VariableInspector(QtGui.QWidget):
         variables = []
         for plot in plots:
             v = plot.variables
-            for var in v:
-                if var is not None:
-                    variables.append(var)
+            if v:
+                for var in v:
+                    if var is not None:
+                        variables.append(var)
         self.plots = plots
         self.variableListUpdated.emit(variables)

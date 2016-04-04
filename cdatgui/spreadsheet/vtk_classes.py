@@ -108,6 +108,9 @@ class QCDATWidget(QtGui.QFrame):
         self.iren.show()
         self.dragTarget.hide()
 
+    def loadPlot(self, dp):
+        self.plots[-1].load(dp)
+
     def addedPlot(self):
         """Adds a new PlotInfo to the collection whenever one is made"""
         new_widget = PlotInfo(lambda: self.canvas)

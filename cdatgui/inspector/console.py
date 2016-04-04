@@ -4,6 +4,7 @@ from cdatgui.variables import get_variables
 from cdatgui.utils import label
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
 from qtconsole.inprocess import QtInProcessKernelManager
+from cdatgui.cdat.metadata import FileMetadataWrapper, VariableMetadataWrapper
 import vcs, cdms2
 
 class QtJupyterWidget(RichJupyterWidget):
@@ -39,6 +40,8 @@ class ipythonInstanceInformation(object):
     def __init__(self, ns, text):
         self._ns = ns
         self._text = text
+        # self._banner
+
 
     @property
     def ns(self):
@@ -58,8 +61,7 @@ class ipythonInstanceInformation(object):
 
 
 def is_cdms_var(v):
-    print "checking var:", v, type(v)
-    return isinstance(v, cdms2.tvariable.TransientVariable)
+    return isinstance(v, VariableMetadataWrapper)
 
 
 def is_displayplot(v):
@@ -67,6 +69,8 @@ def is_displayplot(v):
 
 
 class ConsoleInspector(QtGui.QWidget):
+    createdPlot = QtCore.Signal(object)
+
     def __init__(self, parent=None):
         super(ConsoleInspector, self).__init__()
         self.variable_list = get_variables()
@@ -99,16 +103,14 @@ class ConsoleInspector(QtGui.QWidget):
 
         self.kernel_client = self.kernel_manager.client()
         self.kernel_client.start_channels()
+        self.kernel_client.execute("import vcs, cdms2", silent=True)
 
         self.control = QtJupyterWidget()
         self.control.kernel_manager = self.kernel_manager
         self.control.kernel_client = self.kernel_client
         self.control.exit_requested.connect(self.stop)
         self.control.executed.connect(self.codeExecuted)
-
-        # get original info for instance
         self.original_ns = self.kernel.shell.user_ns
-        # self.original_text = self.control._control.toPlainText()
 
         self.layout.addLayout(self.names)
         self.layout.addWidget(self.control)
@@ -124,23 +126,27 @@ class ConsoleInspector(QtGui.QWidget):
 
     def codeExecuted(self, *varargs):
         cur_keys = set(self.current_instance.ns)
-        # print self.user_dict
+        last_line = self.current_instance.ns["Out"][max(self.current_instance.ns["Out"])]
         for key in cur_keys - self.unique_key_dict:
             if key[0] == "_":
+                print key
                 continue
-            if is_cdms_var(self.current_instance.ns[key]):
-                cdms_var = self.current_instance.ns[key]
-
+            value = self.current_instance.ns[key]
+            if isinstance(value, cdms2.dataset.CdmsFile):
+                self.current_instance.ns[key] = FileMetadataWrapper(value)
+            if is_cdms_var(value):
+                cdms_var = value
                 if not self.variable_list.variable_exists(cdms_var):
                     cdms_var.id = key
                     self.variable_list.add_variable(cdms_var)
+            elif is_displayplot(value):
+                # Should only emit if new!
+                self.createdPlot.emit(value)
 
-            elif is_displayplot(self.current_instance.ns[key]):
-                print key, "is display plot"
+        if is_displayplot(last_line):
+            self.createdPlot.emit(last_line)
 
     def sendString(self, string):
-        print "setting focus to control"
-        print self.control._control
         self.control._control.setText(self.control._control.toPlainText() + string)
         self.control._control.setFocus()
         self.control._control.moveCursor(QtGui.QTextCursor.End)
@@ -149,7 +155,7 @@ class ConsoleInspector(QtGui.QWidget):
         print "CREATING INSTANCE", canvas
         if not self.original_text:
             self.original_text = self.control._control.toPlainText()
-            print "O TEXT:", self.original_text
+
 
         # original_ns = self.original_ns
         # original_ns['canvas'] = canvas
@@ -167,15 +173,10 @@ class ConsoleInspector(QtGui.QWidget):
         self.current_instance = self.instances[canvas]
         self.kernel.shell.user_ns = self.current_instance.ns
         self.unique_key_dict = set(self.current_instance.ns)
-        # self.control._control.moveCursor(QtGui.QTextCursor.Start)
-        # print "SETTING TEXT:", self.current_instance.text
         self.control._control.setText(str(self.current_instance.text))
         self.control.reset(True)
         # self.control._insert_other_input(self.control._control.textCursor(), self.current_instance.text)
 
-        print "Widget instances:"
-        for key, value in self.instances.items():
-            print "NS:", value.ns
 
     def setPlots(self, plots):
         print "setPlots"
@@ -200,15 +201,15 @@ class ConsoleInspector(QtGui.QWidget):
             if manager_obj.variables:
                 v_name = manager_obj.variables[0].id
                 v_button = QtGui.QPushButton(v_name)
-                text = "{0}_{1}".format(v_name, index)
+                text = "{0}_{1}".format(v_name, index+1)
                 v_button.clicked.connect(partial(self.sendString, text))
                 self.grid.addWidget(v_button, 1, index+1)
-                self.kernel.shell.push({text: manager_obj.variables[0]})
+                self.kernel.shell.push({text: self.variable_list.get_variable(v_name)})
 
             if manager_obj.graphics_method:
                 gm = vcs.graphicsmethodtype(manager_obj.graphics_method)
                 gm_button = QtGui.QPushButton(gm)
-                text = "{0}_{1}".format(gm, index)
+                text = "{0}_{1}".format(gm, index+1)
                 gm_button.clicked.connect(partial(self.sendString, text))
                 self.grid.addWidget(gm_button, 2, index+1)
                 self.kernel.shell.push({text: manager_obj.graphics_method})
@@ -216,7 +217,7 @@ class ConsoleInspector(QtGui.QWidget):
             if manager_obj.template:
                 tmp = manager_obj.template.name
                 tmp_button = QtGui.QPushButton(tmp)
-                text = "{0}_{1}".format(tmp, index)
+                text = "{0}_{1}".format(tmp, index+1)
                 tmp_button.clicked.connect(partial(self.sendString, text))
                 self.grid.addWidget(tmp_button, 3, index+1)
                 self.kernel.shell.push({text: manager_obj.template})
@@ -225,17 +226,14 @@ class ConsoleInspector(QtGui.QWidget):
 
     def clear(self):
         name = self.layout.itemAt(0).layout().takeAt(0)
-        # print "NAME OBJECT:", name
         while name:
             name.widget().deleteLater()
             name = self.layout.itemAt(0).layout().takeAt(0)
 
         grid = self.layout.itemAt(2)
-        # print "GRID:", grid
         for col in range(1, 5):
             for row in range(1, 4):
                 button = grid.itemAtPosition(row, col)
-                # print "BUTTON:", button
                 if button:
                     print "removing:", button
                     button.widget().deleteLater()
