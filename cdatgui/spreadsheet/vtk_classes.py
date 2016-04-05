@@ -5,6 +5,8 @@ import vcs
 from vtk.qt4.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from cdatgui.cdat.plotter import PlotInfo
 from functools import partial
+from cdatgui.variables import get_variables
+
 
 cdms_mime = "application/x-cdms-variable-list"
 vcs_gm_mime = "application/x-vcs-gm"
@@ -12,7 +14,7 @@ vcs_template_mime = "application/x-vcs-template"
 
 
 class QCDATWidget(QtGui.QFrame):
-
+    # TODO: Add a signal for addedPlots
     visiblityChanged = QtCore.Signal(bool)
     setVariables = QtCore.Signal(list)
     setGraphicsMethod = QtCore.Signal(object)
@@ -51,7 +53,7 @@ class QCDATWidget(QtGui.QFrame):
 
         self.dragLayout = QtGui.QHBoxLayout()
         self.dragTarget.setLayout(self.dragLayout)
-
+        get_variables().dataChanged.connect(self.variablesChanged)
         self.plots = []
         # Creates and hooks up the initial PlotInfo widget
         self.addedPlot()
@@ -71,13 +73,37 @@ class QCDATWidget(QtGui.QFrame):
             info = self.plots[-1]
             info.load(display)
 
-
     def dragMoveEvent(self, event):
         plot = self.plot_at_point(event.pos())
         if plot:
             event.accept(plot.rect())
         else:
             event.ignore()
+
+    def variablesChanged(self, start, end):
+        vars = get_variables()
+        any_updated = False
+        for i in range(start.row(), end.row() + 1):
+            var = vars.get(i)
+            for plot in self.plots:
+                plot_vars = plot.manager.variables
+                if plot_vars is None:
+                    continue
+                changed = False
+                new_vars = []
+                for v in plot_vars:
+                    if v is None:
+                        continue
+                    if v.id == var.id:
+                        changed = True
+                        new_vars.append(var.var)
+                    else:
+                        new_vars.append(v)
+                if changed:
+                    any_updated = True
+                    plot.variables(new_vars)
+        if any_updated:
+            self.update()
 
     def dropEvent(self, event):
         dropped = event.source().model().get_dropped(event.mimeData())

@@ -26,7 +26,8 @@ class ListModel(QtCore.QAbstractListModel):
     def replace(self, index, value):
         self.values[index] = value
         ind = self.index(index, 0)
-        self.dataChanged.emit(ind)
+        print ind, ind.row(), ind.column(), ind.data()
+        self.dataChanged.emit(ind, ind)
 
     def remove(self, ind):
         self.removeRows(ind, 1)

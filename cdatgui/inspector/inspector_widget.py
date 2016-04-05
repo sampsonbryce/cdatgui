@@ -21,10 +21,11 @@ class InspectorWidget(StaticDockWidget):
         self.plotters_updated.connect(pi.setPlots)
         w.addTab(pi, "Plots")
 
-        v = VariableInspector()
-        self.plotters_updated.connect(v.setPlots)
-        w.addTab(v, "Data")
-
+        """
+                v = VariableInspector()
+                self.plotters_updated.connect(v.setPlots)
+                w.addTab(v, "Data")
+        """
         gm = GraphicsMethodInspector()
         self.plotters_updated.connect(gm.setPlots)
         w.addTab(gm, "GM")

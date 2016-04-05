@@ -40,8 +40,7 @@ class ipythonInstanceInformation(object):
     def __init__(self, ns, text):
         self._ns = ns
         self._text = text
-        # self._banner
-
+        self.display_plots = []
 
     @property
     def ns(self):
@@ -90,7 +89,7 @@ class ConsoleInspector(QtGui.QWidget):
         self.kernel_manager = None
         self.kernel_client = None
         self.kernel = None
-        self.control = None
+        self.jupyter_widget = None
         self.unique_key_dict = None
         self.current_instance = None
         self.original_text = None
@@ -105,15 +104,15 @@ class ConsoleInspector(QtGui.QWidget):
         self.kernel_client.start_channels()
         self.kernel_client.execute("import vcs, cdms2", silent=True)
 
-        self.control = QtJupyterWidget()
-        self.control.kernel_manager = self.kernel_manager
-        self.control.kernel_client = self.kernel_client
-        self.control.exit_requested.connect(self.stop)
-        self.control.executed.connect(self.codeExecuted)
+        self.jupyter_widget = QtJupyterWidget()
+        self.jupyter_widget.kernel_manager = self.kernel_manager
+        self.jupyter_widget.kernel_client = self.kernel_client
+        self.jupyter_widget.exit_requested.connect(self.stop)
+        self.jupyter_widget.executed.connect(self.codeExecuted)
         self.original_ns = self.kernel.shell.user_ns
 
         self.layout.addLayout(self.names)
-        self.layout.addWidget(self.control)
+        self.layout.addWidget(self.jupyter_widget)
         self.layout.addLayout(self.grid)
         self.layout.addWidget(self.canvas_button)
 
@@ -126,39 +125,51 @@ class ConsoleInspector(QtGui.QWidget):
 
     def codeExecuted(self, *varargs):
         cur_keys = set(self.current_instance.ns)
-        last_line = self.current_instance.ns["Out"][max(self.current_instance.ns["Out"])]
+        last_line = None
+
+        # get last output
+        out_dict = self.current_instance.ns["Out"]
+        if out_dict:
+            last_line = out_dict[max(out_dict)]
+
         for key in cur_keys - self.unique_key_dict:
             if key[0] == "_":
-                print key
                 continue
             value = self.current_instance.ns[key]
             if isinstance(value, cdms2.dataset.CdmsFile):
                 self.current_instance.ns[key] = FileMetadataWrapper(value)
             if is_cdms_var(value):
+                print "here"
                 cdms_var = value
+                cdms_var.id = key
                 if not self.variable_list.variable_exists(cdms_var):
-                    cdms_var.id = key
+                    print "adding variable"
                     self.variable_list.add_variable(cdms_var)
-            elif is_displayplot(value):
+                else:
+                    print "updating variable"
+                    self.variable_list.update_variable(cdms_var)
+
+            elif is_displayplot(value) and value not in self.current_instance.display_plots:
                 # Should only emit if new!
+                print "creatingPlot from var"
+                self.current_instance.display_plots.append(value)
                 self.createdPlot.emit(value)
 
-        if is_displayplot(last_line):
+        if is_displayplot(last_line) and last_line not in self.current_instance.display_plots:
+            print "creatingPlot from output"
+            self.current_instance.display_plots.append(last_line)
             self.createdPlot.emit(last_line)
 
     def sendString(self, string):
-        self.control._control.setText(self.control._control.toPlainText() + string)
-        self.control._control.setFocus()
-        self.control._control.moveCursor(QtGui.QTextCursor.End)
+        self.jupyter_widget._control.setText(self.jupyter_widget._control.toPlainText() + string)
+        self.jupyter_widget._control.setFocus()
+        self.jupyter_widget._control.moveCursor(QtGui.QTextCursor.End)
 
     def createInstance(self, canvas):
         print "CREATING INSTANCE", canvas
         if not self.original_text:
-            self.original_text = self.control._control.toPlainText()
+            self.original_text = self.jupyter_widget._control.toPlainText()
 
-
-        # original_ns = self.original_ns
-        # original_ns['canvas'] = canvas
         self.instances[canvas] = ipythonInstanceInformation(dict(self.original_ns), self.original_text)
 
     def setInstance(self, canvas):
@@ -167,16 +178,15 @@ class ConsoleInspector(QtGui.QWidget):
         if self.current_instance:
             print "SAVING", self.current_instance
             self.current_instance.ns = self.kernel.shell.user_ns
-            self.current_instance.text = self.control._control.toPlainText()
+            self.current_instance.text = self.jupyter_widget._control.toPlainText()
 
         # update widget
         self.current_instance = self.instances[canvas]
         self.kernel.shell.user_ns = self.current_instance.ns
         self.unique_key_dict = set(self.current_instance.ns)
-        self.control._control.setText(str(self.current_instance.text))
-        self.control.reset(True)
-        # self.control._insert_other_input(self.control._control.textCursor(), self.current_instance.text)
-
+        self.jupyter_widget._control.setText(str(self.current_instance.text))
+        self.jupyter_widget.reset(True)
+        # self.jupyter_widget._insert_other_input(self.jupyter_widget._control.textCursor(), self.current_instance.text)
 
     def setPlots(self, plots):
         print "setPlots"
@@ -201,26 +211,26 @@ class ConsoleInspector(QtGui.QWidget):
             if manager_obj.variables:
                 v_name = manager_obj.variables[0].id
                 v_button = QtGui.QPushButton(v_name)
-                text = "{0}_{1}".format(v_name, index+1)
-                v_button.clicked.connect(partial(self.sendString, text))
+                # text = "{0}_{1}".format(v_name, index+1)
+                v_button.clicked.connect(partial(self.sendString, v_name))
                 self.grid.addWidget(v_button, 1, index+1)
-                self.kernel.shell.push({text: self.variable_list.get_variable(v_name)})
+                self.kernel.shell.push({v_name: self.variable_list.get_variable(v_name)})
 
             if manager_obj.graphics_method:
                 gm = vcs.graphicsmethodtype(manager_obj.graphics_method)
                 gm_button = QtGui.QPushButton(gm)
-                text = "{0}_{1}".format(gm, index+1)
-                gm_button.clicked.connect(partial(self.sendString, text))
+                # text = "{0}_{1}".format(gm, index+1)
+                gm_button.clicked.connect(partial(self.sendString, gm))
                 self.grid.addWidget(gm_button, 2, index+1)
-                self.kernel.shell.push({text: manager_obj.graphics_method})
+                self.kernel.shell.push({gm: manager_obj.graphics_method})
 
             if manager_obj.template:
                 tmp = manager_obj.template.name
                 tmp_button = QtGui.QPushButton(tmp)
                 text = "{0}_{1}".format(tmp, index+1)
-                tmp_button.clicked.connect(partial(self.sendString, text))
+                tmp_button.clicked.connect(partial(self.sendString, tmp))
                 self.grid.addWidget(tmp_button, 3, index+1)
-                self.kernel.shell.push({text: manager_obj.template})
+                self.kernel.shell.push({tmp: manager_obj.template})
 
             self.kernel.shell.push({self.canvas_button.text(): manager_obj.canvas})
 
@@ -235,7 +245,6 @@ class ConsoleInspector(QtGui.QWidget):
             for row in range(1, 4):
                 button = grid.itemAtPosition(row, col)
                 if button:
-                    print "removing:", button
                     button.widget().deleteLater()
 
     def stop(self):

@@ -484,6 +484,7 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
             for c in xrange(col_count):
                 w = self.getCellWidget(r, c)
                 if w is None or w.widget() is None:
+                    # TODO: HOOK UP A SIGNAL TO TRIGGER SELECTIONCHANGE
                     widget = QCDATWidget()
                     cellWidget = QCellContainer(widget)
                     self.setCellByWidget(r, c, cellWidget)

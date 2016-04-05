@@ -2,6 +2,7 @@ import vcs
 from PySide import QtGui, QtCore
 from cdatgui.utils import header_label, label, icon
 
+
 cdms_mime = "application/x-cdms-variable-list"
 vcs_gm_mime = "application/x-vcs-gm"
 vcs_template_mime = "application/x-vcs-template"

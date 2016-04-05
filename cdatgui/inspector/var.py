@@ -1,5 +1,7 @@
 from PySide import QtGui, QtCore
 from cdatgui.variables.cdms_var_list import CDMSVariableList
+from cdatgui.variables.models import CDMSVariableListModel
+from cdatgui.variables import get_variables
 
 
 class VariableInspector(QtGui.QWidget):
@@ -13,6 +15,9 @@ class VariableInspector(QtGui.QWidget):
         self.setLayout(layout)
         self.plots = []
         self.var_list = CDMSVariableList()
+        model = CDMSVariableListModel()
+        self.var_list.setModel(model)
+
         layout.addWidget(self.var_list)
         self.variableListUpdated.connect(self.updateVarList)
         self.var_list.selected.connect(self.setCurrentVar)
@@ -24,8 +29,9 @@ class VariableInspector(QtGui.QWidget):
 
     def updateVarList(self, vars):
         self.var_list.clear()
+        all_vars = get_variables()
         for v in vars:
-            self.var_list.add_variable(v)
+            self.var_list.add_variable(all_vars.get_variable(v.id))
 
     def setPlots(self, plots):
         variables = []
