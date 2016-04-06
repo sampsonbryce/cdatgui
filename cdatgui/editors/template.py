@@ -1,7 +1,8 @@
 from cdatgui.templates.preview import TemplatePreviewWidget
 from PySide import QtGui, QtCore
-from cdatgui.editors.widgets.template.labels import TemplateLabelEditor
-from cdatgui.editors.widgets.template.plot import DataEditor, LegendEditor
+from widgets.template.labels import TemplateLabelEditor
+from widgets.template.plot import DataEditor, LegendEditor
+from widgets.template.axes import AxisEditor
 
 
 class TemplateEditor(QtGui.QWidget):
@@ -57,6 +58,20 @@ class TemplateEditor(QtGui.QWidget):
 
         layout.addLayout(middle_layout)
 
+        axis_tabs = QtGui.QTabWidget()
+        x1 = AxisEditor("x", 1)
+        x2 = AxisEditor("x", 2)
+        y1 = AxisEditor("y", 1)
+        y2 = AxisEditor("y", 2)
+        axis_tabs.addTab(x1, x1.name)
+        axis_tabs.addTab(y1, y1.name)
+        axis_tabs.addTab(x2, x2.name)
+        axis_tabs.addTab(y2, y2.name)
+
+        self._axes = {"x1": x1, "x2": x2, "y1": y1, "y2": y2}
+
+        layout.addWidget(axis_tabs)
+
         self.setLayout(layout)
 
     def start_move(self, x, y, cb):
@@ -95,5 +110,7 @@ class TemplateEditor(QtGui.QWidget):
         self._template_labels.template = template
         self._template_data.setTemplate(template)
         self._template_legend.setTemplate(template)
+        for axis in self._axes:
+            self._axes[axis].setTemplate(template)
         self._preview.template = template
         self._preview.update()
