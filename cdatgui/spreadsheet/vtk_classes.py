@@ -26,8 +26,11 @@ class QCDATWidget(QtGui.QFrame):
                     "Postscript file (*.ps)",
                     "SVG file (*.svg)"]
 
-    def __init__(self, parent=None):
+    def __init__(self, row, col, parent=None):
         super(QCDATWidget, self).__init__(parent=parent)
+
+        self.row = row
+        self.col = col
 
         self.setAcceptDrops(True)
 
@@ -103,6 +106,7 @@ class QCDATWidget(QtGui.QFrame):
                     any_updated = True
                     plot.variables(new_vars)
         if any_updated:
+            print "Running self.update"
             self.update()
 
     def dropEvent(self, event):
@@ -139,7 +143,7 @@ class QCDATWidget(QtGui.QFrame):
 
     def addedPlot(self):
         """Adds a new PlotInfo to the collection whenever one is made"""
-        new_widget = PlotInfo(lambda: self.canvas)
+        new_widget = PlotInfo(lambda: self.canvas, self.row, self.col)
         self.dragLayout.addWidget(new_widget)
         self.plots.append(new_widget)
         new_widget.initialized.connect(self.addedPlot)
