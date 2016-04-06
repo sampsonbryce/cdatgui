@@ -61,6 +61,7 @@ class QVCSWidget(QtGui.QFrame):
         """Make sure that the canvas isn't opened till we're really ready."""
         if showing and self.canvas is None:
             self.canvas = vcs.init(backend=self.mRenWin)
+            self.canvas.drawlogooff()
             self.canvas.open()
             for disp in self.displays:
                 self.canvas.display_names.append(disp.name)

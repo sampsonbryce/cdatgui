@@ -28,7 +28,8 @@ def initmod():
 
 class TemplateLabelWidget(QtGui.QWidget):
     editStyle = QtCore.Signal(object, str)
-    moveLabel = QtCore.Signal(object)
+    # X, Y, callback
+    moveLabel = QtCore.Signal(float, float, object)
     updateTemplate = QtCore.Signal()
 
     def __init__(self, label, parent=None):
@@ -61,7 +62,12 @@ class TemplateLabelWidget(QtGui.QWidget):
         self.setLayout(layout)
 
     def trigger_move(self):
-        self.moveLabel.emit(self.member)
+        self.moveLabel.emit(self.member.x, self.member.y, self.moveCallback)
+
+    def moveCallback(self, x, y):
+        self.member.x = x
+        self.member.y = y
+        self.updateTemplate.emit()
 
     def trigger_edit(self):
         self.editStyle.emit(self.member, str(self.style_picker.currentText()))
@@ -97,7 +103,7 @@ class TemplateLabelWidget(QtGui.QWidget):
 
 class TemplateLabelGroup(QtGui.QWidget):
     labelUpdated = QtCore.Signal()
-    moveLabel = QtCore.Signal(object)
+    moveLabel = QtCore.Signal(float, float, object)
     editStyle = QtCore.Signal(object, str)
 
     def __init__(self, member_group, parent=None):
@@ -119,7 +125,7 @@ class TemplateLabelGroup(QtGui.QWidget):
 
 class TemplateLabelEditor(QtGui.QTabWidget):
     labelUpdated = QtCore.Signal()
-    moveLabel = QtCore.Signal(object)
+    moveLabel = QtCore.Signal(float, float, object)
 
     def __init__(self, parent=None):
         super(TemplateLabelEditor, self).__init__(parent=parent)

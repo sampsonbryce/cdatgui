@@ -17,8 +17,9 @@ def initmod():
 
 
 class BoxEditor(QtGui.QWidget):
-    boxEdited = QtCore.Signal(object)
-    moveBox = QtCore.Signal(object)
+    boxEdited = QtCore.Signal()
+    # X, Y, callback
+    moveBox = QtCore.Signal(float, float, object)
     editStyle = QtCore.Signal(str)
 
     def __init__(self, parent=None):
@@ -31,6 +32,7 @@ class BoxEditor(QtGui.QWidget):
 
         buttons = QtGui.QHBoxLayout()
         self.move_button = QtGui.QPushButton(u"Move")
+        self.move_button.clicked.connect(self.clickedMove)
         buttons.addWidget(self.move_button)
         self.hide_button = QtGui.QPushButton(toggle_icon, u"")
         self.hide_button.setCheckable(True)
@@ -66,10 +68,16 @@ class BoxEditor(QtGui.QWidget):
         layout.addRow("Outline", outline_actions)
         self.setLayout(layout)
 
+    def clickedMove(self):
+        self.moveBox.emit(self.x, self.y, self.move)
+
+    def move(self, x, y):
+        pass
+
     def setOutlineStyle(self, style):
         style = str(style)
         self.outline.line = style
-        self.boxEdited.emit(self.member)
+        self.boxEdited.emit()
 
     def triggerEditStyle(self):
         style = str(self.outline_style.currentText())
@@ -80,14 +88,14 @@ class BoxEditor(QtGui.QWidget):
             self.member.priority = 1
         else:
             self.member.priority = 0
-        self.boxEdited.emit(self.member)
+        self.boxEdited.emit()
 
     def hideOutline(self):
         if self.outline_hide.isChecked():
             self.outline.priority = 1
         else:
             self.outline.priority = 0
-        self.boxEdited.emit(self.member)
+        self.boxEdited.emit()
 
     def setTemplate(self, template):
         block = self.blockSignals(True)
@@ -102,12 +110,20 @@ class BoxEditor(QtGui.QWidget):
     def setBoxWidth(self, val, buffer=0):
         self.member.x2 = self.member.x1 + (1 - self.member.x1 - buffer) * val / 100.
         self.outline.x2 = self.member.x2
-        self.boxEdited.emit(self.member)
+        self.boxEdited.emit()
 
     def setBoxHeight(self, val, buffer=0):
         self.member.y2 = self.member.y1 + (1 - self.member.y1 - buffer) * val / 100.
         self.outline.y2 = self.member.y2
-        self.boxEdited.emit(self.member)
+        self.boxEdited.emit()
+
+    @property
+    def x(self):
+        return (self.member.x2 + self.member.x1) / 2.
+
+    @property
+    def y(self):
+        return (self.member.y2 + self.member.y1) / 2.
 
 
 class DataEditor(BoxEditor):
@@ -115,6 +131,8 @@ class DataEditor(BoxEditor):
         self.member = template.data
         self.outline = template.box1
         super(DataEditor, self).setTemplate(template)
+
+
 
     def setBoxWidth(self, val):
         block = self.blockSignals(True)
@@ -132,7 +150,7 @@ class DataEditor(BoxEditor):
 
         self.template.ymintic2.x1 = self.outline.x2
         self.template.ymintic2.x2 = self.template.ymintic2.x1 + mintic_len
-        self.boxEdited.emit(self.member)
+        self.boxEdited.emit()
 
     def setBoxHeight(self, val):
         block = self.blockSignals(True)
@@ -146,7 +164,24 @@ class DataEditor(BoxEditor):
         self.template.xtic2.y2 = self.template.xtic2.y1 + tic_len
         self.template.xmintic2.y1 = self.outline.y2
         self.template.xmintic2.y2 = self.template.xmintic2.y1 + mintic_len
-        self.boxEdited.emit(self.member)
+        self.boxEdited.emit()
+
+    def move(self, x, y):
+        xdiff = x - self.x
+        ydiff = y - self.y
+
+        self.member.x1 += xdiff
+        self.member.x2 += xdiff
+        self.member.y1 += ydiff
+        self.member.y2 += ydiff
+
+        self.outline.x1 += xdiff
+        self.outline.x2 += xdiff
+        self.outline.y1 += ydiff
+        self.outline.y2 += ydiff
+
+        self.boxEdited.emit()
+
 
 class LegendEditor(BoxEditor):
     def setTemplate(self, template):
@@ -154,4 +189,13 @@ class LegendEditor(BoxEditor):
         self.outline = template.legend
         super(LegendEditor, self).setTemplate(template)
 
+    def move(self, x, y):
+        xdiff = x - self.x
+        ydiff = y - self.y
 
+        self.member.x1 += xdiff
+        self.member.x2 += xdiff
+        self.member.y1 += ydiff
+        self.member.y2 += ydiff
+
+        self.boxEdited.emit()
