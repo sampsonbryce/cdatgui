@@ -43,13 +43,13 @@ class BoxEditor(QtGui.QWidget):
         self.width_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
         self.width_slider.setMinimum(0)
         self.width_slider.setMaximum(100)
-        self.width_slider.valueChanged.connect(self.setBoxWidth)
+        self.width_slider.sliderMoved.connect(self.setBoxWidth)
         layout.addRow("Width", self.width_slider)
 
         self.height_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
         self.height_slider.setMinimum(0)
         self.height_slider.setMaximum(100)
-        self.height_slider.valueChanged.connect(self.setBoxHeight)
+        self.height_slider.sliderMoved.connect(self.setBoxHeight)
         layout.addRow("Height", self.height_slider)
 
         outline_actions = QtGui.QHBoxLayout()
@@ -100,8 +100,8 @@ class BoxEditor(QtGui.QWidget):
     def setTemplate(self, template):
         block = self.blockSignals(True)
         self.hide_button.setChecked(self.member.priority > 0)
-        self.width_slider.setValue(abs(self.member.x2 - self.member.x1))
-        self.height_slider.setValue(abs(self.member.y2 - self.member.y1))
+        self.width_slider.setValue(int(100 * abs(self.member.x2 - self.member.x1)))
+        self.height_slider.setValue(int(100 * abs(self.member.y2 - self.member.y1)))
         self.outline_style.setCurrentIndex(self.outline_style.findText(self.outline.line))
         self.outline_hide.setChecked(self.outline.priority > 0)
         self.template = template
@@ -132,11 +132,10 @@ class DataEditor(BoxEditor):
         self.outline = template.box1
         super(DataEditor, self).setTemplate(template)
 
-
-
     def setBoxWidth(self, val):
+        if not self.template:
+            return
         block = self.blockSignals(True)
-
         tic_len = self.template.ytic2.x2 - self.template.ytic2.x1
         mintic_len = self.template.ymintic2.x2 - self.template.ymintic2.x1
         # Prevent tics from going offscreen
@@ -153,6 +152,8 @@ class DataEditor(BoxEditor):
         self.boxEdited.emit()
 
     def setBoxHeight(self, val):
+        if not self.template:
+            return
         block = self.blockSignals(True)
         tic_len = self.template.xtic2.y2 - self.template.xtic2.y1
         mintic_len = self.template.xmintic2.y2 - self.template.xmintic2.y1
@@ -170,15 +171,60 @@ class DataEditor(BoxEditor):
         xdiff = x - self.x
         ydiff = y - self.y
 
-        self.member.x1 += xdiff
-        self.member.x2 += xdiff
-        self.member.y1 += ydiff
-        self.member.y2 += ydiff
+        ytic_len = self.template.ytic2.x2 - self.template.ytic2.x1
+        ymintic_len = self.template.ymintic2.x2 - self.template.ymintic2.x1
+        xbuffer = max(ytic_len, ymintic_len)
 
-        self.outline.x1 += xdiff
-        self.outline.x2 += xdiff
-        self.outline.y1 += ydiff
-        self.outline.y2 += ydiff
+        xtic_len = self.template.ytic2.x2 - self.template.ytic2.x1
+        xmintic_len = self.template.ymintic2.x2 - self.template.ymintic2.x1
+        # Prevent tics from going offscreen
+        ybuffer = max(xtic_len, xmintic_len)
+
+        xlabel1_offset = self.member.y1 - self.template.xlabel1.y
+        xlabel2_offset = self.member.y2 - self.template.xlabel2.y
+        ylabel1_offset = self.member.x1 - self.template.ylabel1.x
+        ylabel2_offset = self.member.x2 - self.template.ylabel2.x
+
+        self.member.x1 = min(1 - xbuffer, max(xbuffer, self.member.x1 + xdiff))
+        self.member.x2 = min(1 - xbuffer, max(xbuffer, self.member.x2 + xdiff))
+        block = self.width_slider.blockSignals(True)
+        self.width_slider.setValue(int(100 * abs(self.member.x2 - self.member.x1)))
+        self.width_slider.blockSignals(block)
+        self.member.y1 = min(1 - ybuffer, max(ybuffer, self.member.y1 + ydiff))
+        self.member.y2 = min(1 - ybuffer, max(ybuffer, self.member.y2 + ydiff))
+        block = self.height_slider.blockSignals(True)
+        self.height_slider.setValue(int(100 * abs(self.member.y2 - self.member.y1)))
+        self.height_slider.blockSignals(block)
+
+        self.template.xtic2.y1 = self.member.y2
+        self.template.xtic2.y2 = self.member.y2 + xtic_len
+        self.template.xtic1.y1 = self.member.y1
+        self.template.xtic1.y2 = self.member.y1 - xtic_len
+
+        self.template.ytic2.x1 = self.member.x2
+        self.template.ytic2.x2 = self.member.x2 + ytic_len
+        self.template.ytic1.x1 = self.member.x1
+        self.template.ytic1.x2 = self.member.x1 - ytic_len
+
+        self.template.ymintic2.x1 = self.member.x2
+        self.template.ymintic2.x2 = self.member.x2 + ymintic_len
+        self.template.ymintic1.x1 = self.member.x1
+        self.template.ymintic1.x2 = self.member.x1 - ymintic_len
+
+        self.template.xmintic2.y1 = self.member.y2
+        self.template.xmintic2.y2 = self.member.y2 + xmintic_len
+        self.template.xmintic1.y1 = self.member.y1
+        self.template.xmintic1.y2 = self.member.y1 - xmintic_len
+
+        self.template.xlabel1.y = self.member.y1 - xlabel1_offset
+        self.template.xlabel2.y = self.member.y2 - xlabel2_offset
+        self.template.ylabel1.x = self.member.x1 - ylabel1_offset
+        self.template.ylabel2.x = self.member.x2 - ylabel2_offset
+
+        self.outline.x1 = self.member.x1
+        self.outline.x2 = self.member.x2
+        self.outline.y1 = self.member.y1
+        self.outline.y2 = self.member.y2
 
         self.boxEdited.emit()
 
@@ -193,9 +239,11 @@ class LegendEditor(BoxEditor):
         xdiff = x - self.x
         ydiff = y - self.y
 
-        self.member.x1 += xdiff
-        self.member.x2 += xdiff
-        self.member.y1 += ydiff
-        self.member.y2 += ydiff
+        self.member.x1 = min(1, max(0, self.member.x1 + xdiff))
+        self.member.x2 = min(1, max(0, self.member.x2 + xdiff))
+        self.member.y1 = min(1, max(0, self.member.y1 + ydiff))
+        self.member.y2 = min(1, max(0, self.member.y2 + ydiff))
+        self.width_slider.setValue(int(100 * abs(self.member.x2 - self.member.x1)))
+        self.height_slider.setValue(int(100 * abs(self.member.y2 - self.member.y1)))
 
         self.boxEdited.emit()
