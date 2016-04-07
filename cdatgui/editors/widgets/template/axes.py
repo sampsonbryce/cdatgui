@@ -28,10 +28,14 @@ def axis_name(axis, num):
 
 
 class AxisLabelEditor(QtGui.QWidget):
+    labelsUpdated = QtCore.Signal()
+    editTextStyle = QtCore.Signal(str)
+
     def __init__(self, parent=None):
         super(AxisLabelEditor, self).__init__(parent=parent)
         initmod()
         self.member = None
+        self.template = None
 
         self.hide_button = QtGui.QPushButton(toggle_icon, u"")
         self.hide_button.setCheckable(True)
@@ -44,33 +48,92 @@ class AxisLabelEditor(QtGui.QWidget):
         edit_button = QtGui.QPushButton("Edit")
         edit_button.clicked.connect(self.edit_text)
 
-        layout = QtGui.QHBoxLayout()
-        layout.addWidget(self.hide_button)
-        layout.addWidget(self.text_chooser)
-        layout.addWidget(edit_button)
+        hlayout = QtGui.QHBoxLayout()
+        hlayout.addWidget(self.hide_button)
+        hlayout.addWidget(self.text_chooser)
+        hlayout.addWidget(edit_button)
+
+        layout = QtGui.QVBoxLayout()
+        layout.addLayout(hlayout)
+
+        slide_layout = QtGui.QHBoxLayout()
+
+        distance_label = QtGui.QLabel("Distance:")
+        self.distance_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.distance_slider.setMinimum(0)
+        self.distance_slider.setMaximum(100)
+        self.distance_slider.sliderMoved.connect(self.setDistance)
+
+        slide_layout.addWidget(distance_label)
+        slide_layout.addWidget(self.distance_slider)
+
+        layout.addLayout(slide_layout)
+
         self.setLayout(layout)
 
-    def setMember(self, member):
+    def isYAxis(self):
+        return self.member.member[0] == "y"
+
+    def isFirstAxis(self):
+        return self.member.member[-1] == "1"
+
+    def setDistance(self, value=None):
+        if value is None:
+            value = self.distance_slider.value()
+        if self.isYAxis():
+            if self.isFirstAxis():
+                axis = min(self.template.ytic1.x1, self.template.ytic1.x2)
+                direction = -1
+            else:
+                axis = max(self.template.ytic2.x1, self.template.ytic2.x2)
+                direction = 1
+            self.member.x = axis + direction * value / 100.
+        else:
+            if self.isFirstAxis():
+                axis = min(self.template.xtic1.y1, self.template.xtic1.y2)
+                direction = -1
+            else:
+                axis = max(self.template.xtic2.y1, self.template.xtic2.y2)
+                direction = 1
+            self.member.y = axis + direction * value / 100.
+        self.labelsUpdated.emit()
+
+    def setMember(self, member, template):
+        self.template = template
         self.hide_button.setChecked(member.priority > 0)
         self.text_chooser.setCurrentIndex(self.text_chooser.findText(member.texttable))
+
         self.member = member
 
     def edit_text(self):
-        pass
+        self.editTextStyle.emit(self.text_chooser.currentText())
 
     def setTextStyle(self, textstyle):
+        #self.member.texttable = textstyle
+        #self.member.textorientation = textstyle
         pass
+        #self.labelsUpdated.emit()
 
     def hideLabels(self):
-        pass
+        if self.hide_button.isChecked():
+            self.member.priority = 1
+        else:
+            self.member.priority = 0
+        self.labelsUpdated.emit()
 
 
 class TickEditor(QtGui.QWidget):
+    ticksUpdated = QtCore.Signal()
+    editLine = QtCore.Signal(str)
+
     def __init__(self, parent=None):
         super(TickEditor, self).__init__(parent=parent)
         initmod()
 
         self.member = None
+        self.template = None
+        self.inset = False
+        self.grid = False
 
         self.hide_button = QtGui.QPushButton(toggle_icon, u"")
         self.hide_button.setCheckable(True)
@@ -103,24 +166,69 @@ class TickEditor(QtGui.QWidget):
         layout.addLayout(bottom_widgets)
         self.setLayout(layout)
 
-    def setMember(self, member):
+    def setMember(self, member, template):
         self.member = member
-        if hasattr(self.member, "x1"):
-            has_x = True
-        else:
-            has_x = False
+        self.template = template
         self.hide_button.setChecked(member.priority > 0)
         self.line_chooser.setCurrentIndex(self.line_chooser.findText(member.line))
-        if has_x:
+        if self.isYAxis():
             self.length_slider.setValue(int(100 * abs(member.x1 - member.x2)))
         else:
             self.length_slider.setValue(int(100 * abs(member.y1 - member.y2)))
 
+    def isYAxis(self):
+        return self.member.member[0] == "y"
+
+    def isFirstAxis(self):
+        return self.member.member[-1] == "1"
+
+    def length(self):
+        if self.isYAxis():
+            return abs(self.member.x2 - self.member.x1)
+        else:
+            return abs(self.member.y2 - self.member.y1)
+
+    def setGrid(self, grid):
+        self.grid = grid
+        # Update lengths
+        self.placeTicks()
+
+    def setInset(self, inset):
+        self.inset = inset
+        self.placeTicks()
+
     def setLength(self, value):
-        pass
+        self.placeTicks(length=value/100.)
+
+    def placeTicks(self, length=None):
+        direction = -1 if self.isFirstAxis() else 1
+
+        if self.inset:
+            direction *= -1
+
+        if length is None:
+            length = self.length()
+
+        if self.isYAxis():
+            if self.isFirstAxis():
+                axis = min(self.template.data.x1, self.template.data.x2)
+            else:
+                axis = max(self.template.data.x1, self.template.data.x2)
+            self.member.x1 = axis
+            self.member.x2 = axis + direction * length
+        else:
+            if self.isFirstAxis():
+                axis = min(self.template.data.y1, self.template.data.y2)
+            else:
+                axis = max(self.template.data.y1, self.template.data.y2)
+            self.member.y1 = axis
+            self.member.y2 = axis + direction * length
+        self.member.list()
+        self.ticksUpdated.emit()
 
     def hideTicks(self):
-        pass
+        self.member.priority = 1 if self.hide_button.isChecked() else 0
+        self.ticksUpdated()
 
     def edit_line(self):
         pass
@@ -130,6 +238,10 @@ class TickEditor(QtGui.QWidget):
 
 
 class AxisEditor(QtGui.QWidget):
+    axisUpdated = QtCore.Signal()
+    editLine = QtCore.Signal(str)
+    editTextStyle = QtCore.Signal(str)
+
     def __init__(self, axis, num, parent=None):
         super(AxisEditor, self).__init__(parent=parent)
         self.axis = axis
@@ -141,19 +253,39 @@ class AxisEditor(QtGui.QWidget):
         layout = QtGui.QFormLayout()
 
         self.grid_box = QtGui.QCheckBox()
+        self.grid_box.stateChanged.connect(self.toggleGrid)
         layout.addRow("Show Grid", self.grid_box)
 
         self.inset_box = QtGui.QCheckBox()
+        self.inset_box.stateChanged.connect(self.toggleInset)
         layout.addRow("Inset Ticks", self.inset_box)
 
         self.tick_editor = TickEditor()
+        self.tick_editor.ticksUpdated.connect(self.adjustedTicks)
         layout.addRow("Ticks", self.tick_editor)
+
         self.minitick_editor = TickEditor()
         layout.addRow("Miniticks", self.minitick_editor)
         self.label_editor = AxisLabelEditor()
+        self.label_editor.labelsUpdated.connect(self.axisUpdated.emit)
         layout.addRow("Labels", self.label_editor)
 
         self.setLayout(layout)
+
+    def adjustedTicks(self):
+        self.label_editor.setDistance()
+
+    def toggleGrid(self, state):
+        self.tick_editor.setGrid(self.grid_box.isChecked())
+        self.axisUpdated.emit()
+
+    def toggleInset(self, state):
+        # Prevent double preview updates
+        block = self.blockSignals(True)
+        self.tick_editor.setInset(self.inset_box.isChecked())
+        self.minitick_editor.setInset(self.inset_box.isChecked())
+        self.blockSignals(block)
+        self.axisUpdated.emit()
 
     def ticks(self):
         if self.template is not None:
@@ -172,8 +304,8 @@ class AxisEditor(QtGui.QWidget):
         self.template = tmpl
 
         ticks = self.ticks()
-        self.tick_editor.setMember(ticks)
+        self.tick_editor.setMember(ticks, self.template)
         minticks = self.minticks()
-        self.minitick_editor.setMember(minticks)
+        self.minitick_editor.setMember(minticks, self.template)
         labels = self.labels()
-        self.label_editor.setMember(labels)
+        self.label_editor.setMember(labels, self.template)

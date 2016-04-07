@@ -39,11 +39,11 @@ class TemplateEditor(QtGui.QWidget):
 
         self.move_callback = None
 
-        middle_layout = QtGui.QHBoxLayout()
+        editors = QtGui.QTabWidget()
         self._template_labels = TemplateLabelEditor()
         self._template_labels.labelUpdated.connect(self.update)
         self._template_labels.moveLabel.connect(self.start_move)
-        middle_layout.addWidget(self._template_labels)
+        editors.addTab(self._template_labels, "Labels")
 
         plot_box = QtGui.QVBoxLayout()
         self._template_data = DataEditor()
@@ -54,15 +54,19 @@ class TemplateEditor(QtGui.QWidget):
         self._template_legend.moveBox.connect(self.start_move)
         plot_box.addWidget(self._template_data)
         plot_box.addWidget(self._template_legend)
-        middle_layout.addLayout(plot_box)
-
-        layout.addLayout(middle_layout)
+        plot_widget = QtGui.QWidget()
+        plot_widget.setLayout(plot_box)
+        editors.addTab(plot_widget, "Plot & Legend")
 
         axis_tabs = QtGui.QTabWidget()
         x1 = AxisEditor("x", 1)
+        x1.axisUpdated.connect(self.update)
         x2 = AxisEditor("x", 2)
+        x2.axisUpdated.connect(self.update)
         y1 = AxisEditor("y", 1)
+        y1.axisUpdated.connect(self.update)
         y2 = AxisEditor("y", 2)
+        y2.axisUpdated.connect(self.update)
         axis_tabs.addTab(x1, x1.name)
         axis_tabs.addTab(y1, y1.name)
         axis_tabs.addTab(x2, x2.name)
@@ -70,7 +74,9 @@ class TemplateEditor(QtGui.QWidget):
 
         self._axes = {"x1": x1, "x2": x2, "y1": y1, "y2": y2}
 
-        layout.addWidget(axis_tabs)
+        editors.addTab(axis_tabs, "Axes")
+
+        layout.addWidget(editors)
 
         self.setLayout(layout)
 

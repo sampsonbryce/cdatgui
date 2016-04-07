@@ -137,7 +137,9 @@ class TemplateLabelEditor(QtGui.QTabWidget):
             widget.labelUpdated.connect(self.labelUpdated.emit)
             widget.moveLabel.connect(self.moveLabel.emit)
             widget.editStyle.connect(self.edit_style)
-            self.addTab(widget, unicode(group[0].upper() + group[1:]))
+            scroll = QtGui.QScrollArea()
+            scroll.setWidget(widget)
+            self.addTab(scroll, unicode(group[0].upper() + group[1:]))
         self.current_member = None
 
     def edit_style(self, member, style):
@@ -191,13 +193,3 @@ class TemplateLabelEditor(QtGui.QTabWidget):
             for member in members[member_group]:
                 attr = getattr(self._template, member)
                 self.member_groups[member_group].get(member).setLabel(attr)
-
-if __name__ == "__main__":
-    app = QtGui.QApplication([])
-    template = vcs.createtemplate()
-    w = TemplateLabelEditor()
-    w.template = template
-    w.show()
-    w.raise_()
-    app.exec_()
-
