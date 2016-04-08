@@ -17,8 +17,10 @@ class PlotInfo(QtGui.QFrame):
 
         if callable(canvas):
             self._canvasfunc = canvas
+            print "print canvas from func", self._canvasfunc()
         else:
             self._canvas = canvas
+            print "canvas from var", self._canvas
 
         self.manager = PlotManager(self)
         self.manager.row = row
@@ -155,6 +157,7 @@ class PlotManager(QtCore.QObject):
 
     @property
     def canvas(self):
+        print "MANAGER CANVAS:", self.source.canvas
         return self.source.canvas
 
     def gm(self):

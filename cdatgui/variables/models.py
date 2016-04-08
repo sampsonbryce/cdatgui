@@ -12,7 +12,7 @@ class CDMSVariableListModel(ListModel):
             return self.get(var_name_or_index)
         else:
             for v in self.values:
-                print "Stored", type(v)
+                # print "Stored", type(v)
                 if v.id == var_name_or_index:
                     return v
             raise ValueError("No variable found with ID %s" % var_name_or_index)
@@ -26,13 +26,9 @@ class CDMSVariableListModel(ListModel):
         self.replace(ind, variable)
 
     def variable_exists(self, variable):
-        print "CHECKING IF EXISTS:", variable.id
         for var in self.values:
-            print "IDS:", var.id, variable.id
             if var.id == variable.id:
-                print "Variable exists"
                 return True
-        print "Variable does not exist"
         return False
 
     def get_dropped(self, md):
