@@ -39,10 +39,14 @@ class InspectorWidget(StaticDockWidget):
         self.plotters_updated.connect(con.setPlots)
         self.updateSheetSize.connect(con.updateSheetSize)
         con.createdPlot.connect(self.added_plot)
+        con.createdPlot.connect(self.emitPlots)
         spreadsheet.tabController.currentWidget().updateSheetSize()
         w.addTab(con, "Python")
 
         self.setWidget(w)
+
+    def emitPlots(self):
+        self.plotters_updated.emit(self.plots)
 
     def update(self):
         for plot in self.plots:

@@ -157,7 +157,7 @@ class PlotManager(QtCore.QObject):
 
     @property
     def canvas(self):
-        print "MANAGER CANVAS:", self.source.canvas
+        # print "MANAGER CANVAS:", self.source.canvas
         return self.source.canvas
 
     def gm(self):

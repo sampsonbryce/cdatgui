@@ -2,6 +2,8 @@ from PySide import QtGui, QtCore
 from functools import partial
 import string
 
+import re
+
 from cdatgui.variables import get_variables
 from cdatgui.utils import label
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
@@ -34,7 +36,12 @@ class ConsoleInspector(QtGui.QWidget):
         self.kernel = None
         self.jupyter_widget = None
         self.values = []
+        self.display_plots = []
         self.letters = list(string.ascii_uppercase)
+        self.reserved_words = ['and', 'del', 'from', 'not', 'while', 'as', 'elif', 'global', 'or', 'with',
+                               'assert', 'else', 'if', 'pass', 'yield', 'break', 'except', 'import', 'print', 'class',
+                               'exec', 'in', 'raise', 'continue', 'finally', 'is', 'return', 'def', 'for', 'lambda',
+                               'try']
 
         # Create ipython widget
         self.kernel_manager = QtInProcessKernelManager()
@@ -84,7 +91,7 @@ class ConsoleInspector(QtGui.QWidget):
     def updateSheetSize(self, plots):
         print "UPDATING SHEET SIZE"
         for plot in plots:
-            canvas_var_label = "canvas_{0}{1}".format(plot.row+1, self.letters[plot.col])
+            canvas_var_label = "canvas_{0}{1}".format(plot.row + 1, self.letters[plot.col])
             # this should be uncommented
             # self.kernel.shell.push({canvas_var_label: plot.canvas})
 
@@ -157,19 +164,28 @@ class ConsoleInspector(QtGui.QWidget):
                 for var in manager_obj.variables:
                     try:
                         v_name = var.id
+                        v_name = self.fixInvalidVariables(v_name)
                     except AttributeError:
                         continue
 
                     v_button = QtGui.QPushButton(v_name)
                     v_button.clicked.connect(partial(self.sendString, v_name))
                     self.grid.itemAtPosition(1, index + 1).layout().addWidget(v_button)
-                    self.kernel.shell.push({v_name: self.variable_list.get_variable(v_name)})
+                    try:
+                        self.kernel.shell.push({v_name: self.variable_list.get_variable(v_name)})
+                    except ValueError:
+                        # handle display plots
+                        for plot in self.display_plots:
+                            if plot.array[0].id == v_name:
+                                self.kernel.shell.push({v_name: plot})
+                                break
 
             if manager_obj.graphics_method:
                 gm = manager_obj.graphics_method.name
                 if gm[0:2] == "__":
                     gm = "{0}_{1}".format(vcs.graphicsmethodtype(manager_obj.graphics_method), index + 1)
 
+                gm = self.fixInvalidVariables(gm)
                 gm_button = QtGui.QPushButton(gm)
                 gm_button.clicked.connect(partial(self.sendString, gm))
                 self.grid.addWidget(gm_button, 2, index + 1)
@@ -177,6 +193,7 @@ class ConsoleInspector(QtGui.QWidget):
 
             if manager_obj.template:
                 tmp = manager_obj.template.name
+                tmp = self.fixInvalidVariables(tmp)
                 tmp_button = QtGui.QPushButton(tmp)
                 tmp_button.clicked.connect(partial(self.sendString, tmp))
                 self.grid.addWidget(tmp_button, 3, index + 1)
@@ -184,8 +201,8 @@ class ConsoleInspector(QtGui.QWidget):
 
             if manager_obj.canvas:
                 # should not be doing this here
-                canvas_var_label = "canvas_{0}{1}".format(plot.row+1, self.letters[plot.col])
-                self.kernel.shell.push({canvas_var_label: plot.canvas})
+                canvas_var_label = "canvas_{0}{1}".format(manager_obj.row + 1, self.letters[manager_obj.col])
+                self.kernel.shell.push({canvas_var_label: manager_obj.canvas})
                 canvas_dict[manager_obj.canvas] = manager_obj
 
         # create canvas buttons
@@ -195,10 +212,17 @@ class ConsoleInspector(QtGui.QWidget):
         for canvas in sorted(canvas_lists, key=lambda x: (x[1], x[2])):
             self.createCanvasButton(canvas[0], canvas_dict[canvas[0]].row, canvas_dict[canvas[0]].col)
 
+    def fixInvalidVariables(self, var):
+        var = var.replace(" ", "_")
+        if var in self.reserved_words or not re.match("^[a-zA-Z_]", var):
+            var = 'cdat_' + var
+        var = re.sub("[^a-zA-Z0-9_]+", '', var)
+        return var
+
     def createCanvasButton(self, canvas, row, col):
         print "CREATING BUTTON pos: {0} {1}".format(row, col)
         canvas_button = QtGui.QPushButton()
-        button_text = "canvas_{0}{1}".format(row+1, self.letters[col])
+        button_text = "canvas_{0}{1}".format(row + 1, self.letters[col])
         canvas_button.setText(button_text)
         self.canvas_buttons.addWidget(canvas_button)
 
