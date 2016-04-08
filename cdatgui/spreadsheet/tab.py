@@ -491,6 +491,8 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
                 if w is None or w.widget() is None:
                     # TODO: HOOK UP A SIGNAL TO TRIGGER SELECTIONCHANGE
                     widget = QCDATWidget(r, c)
+                    widget.plotAdded.connect(self.selectionChange)
+                    widget.canvasDisplayed.connect(self.updateSheetSize)
                     cellWidget = QCellContainer(widget)
                     self.setCellByWidget(r, c, cellWidget)
 

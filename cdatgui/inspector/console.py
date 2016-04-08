@@ -37,6 +37,7 @@ class ConsoleInspector(QtGui.QWidget):
         self.jupyter_widget = None
         self.values = []
         self.display_plots = []
+        self.canvas_labels = []
         self.letters = list(string.ascii_uppercase)
         self.reserved_words = ['and', 'del', 'from', 'not', 'while', 'as', 'elif', 'global', 'or', 'with',
                                'assert', 'else', 'if', 'pass', 'yield', 'break', 'except', 'import', 'print', 'class',
@@ -93,7 +94,7 @@ class ConsoleInspector(QtGui.QWidget):
         for plot in plots:
             canvas_var_label = "canvas_{0}{1}".format(plot.row + 1, self.letters[plot.col])
             # this should be uncommented
-            # self.kernel.shell.push({canvas_var_label: plot.canvas})
+            self.kernel.shell.push({canvas_var_label: plot.canvas})
 
     def codeExecuted(self, *varargs):
         checked_vars = []
@@ -146,6 +147,10 @@ class ConsoleInspector(QtGui.QWidget):
     def setPlots(self, plots):
         print "PLOTS:", plots
         canvas_dict = {}
+
+        for canvas in self.canvas_labels:
+            if canvas in self.kernel.shell.user_ns.keys():
+                self.kernel.shell.user_ns.pop(canvas, None)
 
         # get all unique canvases
         canvases = set()
@@ -202,6 +207,7 @@ class ConsoleInspector(QtGui.QWidget):
             if manager_obj.canvas:
                 # should not be doing this here
                 canvas_var_label = "canvas_{0}{1}".format(manager_obj.row + 1, self.letters[manager_obj.col])
+                self.canvas_labels.append(canvas_var_label)
                 self.kernel.shell.push({canvas_var_label: manager_obj.canvas})
                 canvas_dict[manager_obj.canvas] = manager_obj
 

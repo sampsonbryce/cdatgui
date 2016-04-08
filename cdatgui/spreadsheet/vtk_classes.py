@@ -12,13 +12,14 @@ cdms_mime = "application/x-cdms-variable-list"
 vcs_gm_mime = "application/x-vcs-gm"
 vcs_template_mime = "application/x-vcs-template"
 
-
 class QCDATWidget(QtGui.QFrame):
     # TODO: Add a signal for addedPlots
+    plotAdded = QtCore.Signal()
     visiblityChanged = QtCore.Signal(bool)
     setVariables = QtCore.Signal(list)
     setGraphicsMethod = QtCore.Signal(object)
     setTemplate = QtCore.Signal(object)
+    canvasDisplayed = QtCore.Signal()
 
     save_formats = ["PNG file (*.png)",
                     "GIF file (*.gif)",
@@ -125,6 +126,7 @@ class QCDATWidget(QtGui.QFrame):
 
         self.iren.show()
         self.dragTarget.hide()
+        self.plotAdded.emit()
 
     def dragEnterEvent(self, event):
         accepted = set([cdms_mime, vcs_gm_mime, vcs_template_mime])
@@ -155,6 +157,7 @@ class QCDATWidget(QtGui.QFrame):
         widget.deleteLater()
 
     def manageCanvas(self, showing):
+        print "MANAGING CANVAS"
         if showing and self.canvas is None:
             self.canvas = vcs.init(backend=self.mRenWin)
             self.canvas.open()
@@ -162,6 +165,7 @@ class QCDATWidget(QtGui.QFrame):
             self.canvas.onClosing((0, 0))
             self.canvas = None
 
+        self.canvasDisplayed.emit()
     def showEvent(self, e):
         super(QCDATWidget, self).showEvent(e)
         QtCore.QTimer.singleShot(0, self.becameVisible)

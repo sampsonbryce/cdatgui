@@ -39,14 +39,12 @@ class InspectorWidget(StaticDockWidget):
         self.plotters_updated.connect(con.setPlots)
         self.updateSheetSize.connect(con.updateSheetSize)
         con.createdPlot.connect(self.added_plot)
-        con.createdPlot.connect(self.emitPlots)
-        spreadsheet.tabController.currentWidget().updateSheetSize()
+        # con.createdPlot.connect(self.emitPlots)
+        con.createdPlot.connect(spreadsheet.tabController.currentWidget().selectionChange)
+        # spreadsheet.tabController.currentWidget().updateSheetSize()
         w.addTab(con, "Python")
 
         self.setWidget(w)
-
-    def emitPlots(self):
-        self.plotters_updated.emit(self.plots)
 
     def update(self):
         for plot in self.plots:
@@ -80,5 +78,5 @@ class InspectorWidget(StaticDockWidget):
             # cell is now a QCDATWidget
             plots.extend(cell.getPlotters())
         self.plots = plots
-        print "SELECTION CHANGED CANVAS", self.plots[0].canvas
+        #        print "SELECTION CHANGED CANVAS", self.plots[0].canvas
         self.plotters_updated.emit(self.plots)
