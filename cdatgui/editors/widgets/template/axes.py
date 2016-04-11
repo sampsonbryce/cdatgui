@@ -41,6 +41,7 @@ class AxisLabelEditor(QtGui.QWidget):
         self.hide_button.setCheckable(True)
         self.hide_button.clicked.connect(self.hideLabels)
 
+        self.inset = False
         self.text_chooser = QtGui.QComboBox()
         self.text_chooser.setModel(get_textstyles())
         self.text_chooser.currentIndexChanged[str].connect(self.setTextStyle)
@@ -80,30 +81,57 @@ class AxisLabelEditor(QtGui.QWidget):
     def setDistance(self, value=None):
         if value is None:
             value = self.distance_slider.value()
+        direction = -1 if self.inset else 1
+        if self.isFirstAxis():
+            direction *= -1
+        # Have to distance oneself from the appropriate end
+        min_or_max = min if direction < 0 else max
         if self.isYAxis():
             if self.isFirstAxis():
-                axis = min(self.template.ytic1.x1, self.template.ytic1.x2)
-                direction = -1
+                axis = min_or_max(self.template.ytic1.x1, self.template.ytic1.x2)
             else:
-                axis = max(self.template.ytic2.x1, self.template.ytic2.x2)
-                direction = 1
+                axis = min_or_max(self.template.ytic2.x1, self.template.ytic2.x2)
             self.member.x = axis + direction * value / 100.
         else:
             if self.isFirstAxis():
-                axis = min(self.template.xtic1.y1, self.template.xtic1.y2)
-                direction = -1
+                axis = min_or_max(self.template.xtic1.y1, self.template.xtic1.y2)
             else:
-                axis = max(self.template.xtic2.y1, self.template.xtic2.y2)
-                direction = 1
+                axis = min_or_max(self.template.xtic2.y1, self.template.xtic2.y2)
             self.member.y = axis + direction * value / 100.
         self.labelsUpdated.emit()
+
+    def setInset(self, inset):
+        self.inset = inset
+        self.setDistance()
 
     def setMember(self, member, template):
         self.template = template
         self.hide_button.setChecked(member.priority > 0)
         self.text_chooser.setCurrentIndex(self.text_chooser.findText(member.texttable))
-
         self.member = member
+
+        if self.isYAxis():
+            axis = self.template.ytic1 if self.isFirstAxis() else self.template.ytic2
+            distance_min = member.x - min(axis.x1, axis.x2)
+            distance_max = member.x - max(axis.x1, axis.x2)
+        else:
+            axis = self.template.xtic1 if self.isFirstAxis() else self.template.xtic2
+            distance_min = member.y - min(axis.y1, axis.y2)
+            distance_max = member.y - max(axis.y1, axis.y2)
+
+        if distance_min < 0:
+            # it's to the left
+            distance = abs(distance_min)
+        elif distance_max > 0:
+            # it's to the right
+            distance = distance_max
+        else:
+            # give up and default to 0
+            distance = 0
+
+        block = self.blockSignals(True)
+        self.setDistance(int(distance * 100))
+        self.blockSignals(block)
 
     def edit_text(self):
         self.editTextStyle.emit(self.text_chooser.currentText())
@@ -223,12 +251,11 @@ class TickEditor(QtGui.QWidget):
                 axis = max(self.template.data.y1, self.template.data.y2)
             self.member.y1 = axis
             self.member.y2 = axis + direction * length
-        self.member.list()
         self.ticksUpdated.emit()
 
     def hideTicks(self):
         self.member.priority = 1 if self.hide_button.isChecked() else 0
-        self.ticksUpdated()
+        self.ticksUpdated.emit()
 
     def edit_line(self):
         pass
@@ -277,6 +304,7 @@ class AxisEditor(QtGui.QWidget):
 
     def toggleGrid(self, state):
         self.tick_editor.setGrid(self.grid_box.isChecked())
+        self.minitick_editor.setGrid(self.grid_box.isChecked())
         self.axisUpdated.emit()
 
     def toggleInset(self, state):
@@ -284,6 +312,7 @@ class AxisEditor(QtGui.QWidget):
         block = self.blockSignals(True)
         self.tick_editor.setInset(self.inset_box.isChecked())
         self.minitick_editor.setInset(self.inset_box.isChecked())
+        self.label_editor.setInset(self.inset_box.isChecked())
         self.blockSignals(block)
         self.axisUpdated.emit()
 
