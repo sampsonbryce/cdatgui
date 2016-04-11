@@ -19,5 +19,5 @@ class GraphicsMethodInspector(QtGui.QWidget):
     def setPlots(self, plots):
         if plots:
             self.plot = plots[0]
-            self.editor.gm = plots[0].graphics_method
-            #self.editor.var = plots[0].variables[0]
+            if plots[0].graphics_method:
+                self.editor.gm = plots[0].graphics_method

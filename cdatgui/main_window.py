@@ -1,10 +1,10 @@
 from PySide import QtGui, QtCore
 
 from spreadsheet.window import SpreadsheetWindow
-from variables import VariableWidget
-from graphics import GraphicsMethodWidget
-from templates import TemplateWidget
-from inspector import InspectorWidget
+from variables.variable_widget import VariableWidget
+from graphics.graphics_method_widget import GraphicsMethodWidget
+from templates.template_widget import TemplateWidget
+from inspector.inspector_widget import InspectorWidget
 from main_menu import MainMenu
 import vcs
 

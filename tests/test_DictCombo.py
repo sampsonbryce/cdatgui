@@ -65,8 +65,7 @@ def test_insert(qtbot, editors):
         d = initial[1]
         keyList = initial[2]
 
-
-        assert d_e.rows.count() == len(d.keys())
+        assert len(d_e.grid.getWidgets()) == len(d.keys())
 
         qtbot.keyPress(d_e.key_value_rows[0].edit_value, Qt.Key_Enter)
 
@@ -76,7 +75,7 @@ def test_insert(qtbot, editors):
         d_e.insertRow()
         d_e.insertRow()
 
-        assert d_e.rows.count() == 5
+        assert len(d_e.grid.getWidgets()) == 5
         assert len(d_e.key_value_rows) == 5
 
 
@@ -105,10 +104,10 @@ def test_remove(qtbot, editors):
         d_e = initial[0]
 
         # test remove
-        row = d_e.rows.takeAt(1)
-        d_e.removeRow(row.widget())
+        row = d_e.grid.getWidgets()[1]
+        d_e.removeRow(row)
 
-        assert d_e.rows.count() == 1
+        assert len(d_e.grid.getWidgets()) == 1
         assert len(d_e.key_value_rows) == 1
 
         cur_keys = []
@@ -129,5 +128,5 @@ def test_reinitialize_blank(editors):
         # test new Dict
         d_e.setDict({})
 
-        assert d_e.rows.count() == 0
+        assert len(d_e.grid.getWidgets()) == 0
         assert len(d_e.key_value_rows) == 0

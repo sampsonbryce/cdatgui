@@ -81,7 +81,7 @@ def test_insert(qtbot, editors):
                 row.setValue("value" + str(index))
                 qtbot.keyPress(row.edit_key, Qt.Key_Enter)
 
-        assert d_e.rows.count() == 6
+        assert len(d_e.grid.getWidgets()) == 6
         assert len(d_e.key_value_rows) == 6
 
 
@@ -90,10 +90,10 @@ def test_remove(editors):
         d_e = initial[0]
 
         # check delete
-        row = d_e.rows.takeAt(0)
-        d_e.removeRow(row.widget())
+        row = d_e.grid.getWidgets()[0]
+        d_e.removeRow(row)
 
-        assert d_e.rows.count() == 1
+        assert len(d_e.grid.getWidgets()) == 1
         assert len(d_e.key_value_rows) == 1
 
 
@@ -130,7 +130,6 @@ def test_color_change(qtbot, editors):
             cur_keys.append(row.key())
 
         print cur_keys
-
 
         color = d_e.key_value_rows[0].edit_key.styleSheet()
         assert color == "color: rgb(255, 0, 0);"

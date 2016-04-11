@@ -26,7 +26,7 @@ class PlotInspector(QtGui.QWidget):
 
     def setPlots(self, plots):
         self.plot_list.plots = plots
-        self.plots = plots
+        self.plots = [p for p in plots if p.can_plot()]
         max_frames = 0
         for plot in plots:
             if plot.canvas.animate.created() is False:

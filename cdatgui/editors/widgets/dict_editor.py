@@ -1,6 +1,7 @@
 from PySide.QtCore import *
 from PySide.QtGui import *
 from functools import partial
+from cdatgui.bases.dynamic_grid_layout import DynamicGridLayout
 
 
 class KeyValueRow(QWidget):
@@ -85,15 +86,15 @@ class InputChecker(QValidator):
     inputInvalid = Signal()
     correctInput = Signal()
 
-    def __init__(self, index, editor):
+    def __init__(self, cur_widget, widgets):
         super(InputChecker, self).__init__()
-        self.editor = editor
-        self.index = index
+        self.widgets = widgets
+        self.cur_widget = cur_widget
 
     def validate(self, input, pos):
         keys = []
-        for index, row in enumerate(self.editor.key_value_rows):
-            if index != self.index:
+        for row in self.widgets:
+            if row != self.cur_widget:
                 keys.append(row.key())
 
         if input in keys:
@@ -111,16 +112,17 @@ class DictEditorWidget(QWidget):
         super(DictEditorWidget, self).__init__()
         self.valid_keys = None
         self.key_value_rows = []
-        self.rows = QVBoxLayout()
+        self.grid = DynamicGridLayout(350)
         self.clearing = False
 
         wrap = QVBoxLayout()
+
         add_button = QPushButton()
         add_button.setText("New Line")
         add_button.clicked.connect(self.insertRow)
 
         self.setLayout(wrap)
-        wrap.addLayout(self.rows)
+        wrap.addLayout(self.grid)
         wrap.addWidget(add_button)
 
     # Update Combo Boxes
@@ -145,7 +147,7 @@ class DictEditorWidget(QWidget):
             if l_text and l_text not in keys:
                 keys.append(l_text)
                 values.append(r_text)
-        return (keys, values)
+        return keys, values
 
     def emitSignal(self):
         keys, values = self.checkKeyValues()
@@ -154,7 +156,7 @@ class DictEditorWidget(QWidget):
 
     # populate if dictionary is given
     def insertRow(self, key="", value=""):
-        if self.valid_keys and self.rows.count() >= len(self.valid_keys) - 1:
+        if self.valid_keys and len(self.grid.getWidgets()) >= len(self.valid_keys) - 1:
             return
 
         new_row = KeyValueRow(key, value, self.valid_keys, self)
@@ -163,27 +165,22 @@ class DictEditorWidget(QWidget):
         new_row.clickedRemove.connect(self.removeRow)
 
         if not self.valid_keys:
-            validator = InputChecker(self.rows.count(), self)
+            validator = InputChecker(new_row, self.grid.getWidgets())
             new_row.setKeyValidator(validator)
         if self.valid_keys:
             new_row.updatedKey.connect(self.updateCBoxes)
 
-        self.rows.addWidget(new_row)
+        self.grid.addNewWidget(new_row)
         self.key_value_rows.append(new_row)
 
     def removeRow(self, row_widget):
-        layout = row_widget.layout()
-        child = layout.takeAt(0)
-
-        while child:
-            widget = child.widget()
-            child = layout.takeAt(0)
-            widget.deleteLater()
-
         # Remove from list
         self.key_value_rows.remove(row_widget)
 
-        layout.deleteLater()
+        # remove from reflow
+        self.grid.removeWidget(row_widget)
+
+        # delete widget
         row_widget.deleteLater()
 
         if not self.clearing:
@@ -197,20 +194,10 @@ class DictEditorWidget(QWidget):
 
     # set inital dictionary values
     def setDict(self, dictionary):
-
-        self.clearing = True
-        if self.rows.count() > 0:
-            row = self.rows.takeAt(0)
-
-            while row:
-                row_widget = row.widget()
-                self.removeRow(row_widget)
-                row = self.rows.takeAt(0)
+        self.clear()
 
         for key in sorted(dictionary.keys()):
             self.insertRow(key, dictionary[key])
-
-        self.clearing = False
 
     # return valid keys
     def validKeys(self):
@@ -224,3 +211,36 @@ class DictEditorWidget(QWidget):
             keys.append(row.key())
             values.append(row.value())
         return dict(zip(keys, values))
+
+    def clear(self):
+        self.grid.clearWidget()
+        self.clearing = True
+
+        while self.key_value_rows:
+            row = self.key_value_rows[0]
+            self.removeRow(row)
+
+        self.clearing = False
+
+
+def responseDict(dict):
+    print dict
+
+
+if __name__ == "__main__":
+    app = QApplication([])
+    editor = DictEditorWidget()
+    editor.dictEdited.connect(responseDict)
+    d = {}
+    d['taco'] = 23
+    d['potato'] = 30
+    d['chocolate'] = 40
+    editor.setDict(d)
+    editor.show()
+    editor.raise_()
+    b = {}
+    b['cheese'] = 3
+    b['egg'] = 69
+    b['bacon'] = 60
+    editor.setDict(b)
+    app.exec_()

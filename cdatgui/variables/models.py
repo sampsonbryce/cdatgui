@@ -4,17 +4,47 @@ from cdatgui.bases.list_model import ListModel
 
 class CDMSVariableListModel(ListModel):
 
-    add_variable = ListModel.append
-    get_variable = ListModel.get
     remove_variable = ListModel.remove
 
-    def update_variable(self, variable):
+    def get_variable(self, var_name_or_index):
+        if isinstance(var_name_or_index, int):
+            return self.get(var_name_or_index)
+        else:
+            for v in self.values:
+                # print "Stored", type(v)
+                if v[0] == var_name_or_index:
+                    return v[1]
+            raise ValueError("No variable found with ID %s" % var_name_or_index)
+
+    def get(self, ind):
+        return self.values[ind][1]
+
+    def append(self, variable):
+        super(CDMSVariableListModel, self).append((variable.id, variable))
+
+    add_variable = append
+
+    def update_variable(self, variable, label):
         for ind, var in enumerate(self.values):
-            if var.id == variable.id:
+            print "CHECKING", var[0], label
+            if var[0] == label:
                 break
         else:
             raise ValueError("No variable found with ID %s" % variable.id)
         self.replace(ind, variable)
+
+    def replace(self, index, value):
+        print "REPLACING AT INDEX:", index, value.id
+        if index < len(self.values):
+            super(CDMSVariableListModel, self).replace(index, (self.values[index][0], value))
+        else:
+            raise IndexError("Index %d out of range." % index)
+
+    def variable_exists(self, variable):
+        for var in self.values:
+            if var[0] == variable.id:
+                return True
+        return False
 
     def get_dropped(self, md):
         variables = []
@@ -26,12 +56,12 @@ class CDMSVariableListModel(ListModel):
             parts.append(char)
 
         indices = "".join(parts).split(",")
-        variables = [self.values[int(ind)].var for ind in indices]
-
+        variables = [self.values[int(ind)][1].var for ind in indices]
+        print "DROPPED VARS:", variables
         return variables
 
     def format_for_display(self, variable):
-        return unicode(variable.id)
+        return variable[0]
 
     def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
         return u"Variable Name"

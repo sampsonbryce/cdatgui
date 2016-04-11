@@ -13,7 +13,6 @@ class LegendPreviewWidget(QVCSWidget):
             self.update()
 
     def update(self):
-
         if self.canvas is None:
             return
         self.canvas.clear(render=False)
@@ -32,8 +31,11 @@ class LegendPreviewWidget(QVCSWidget):
         text_orientation.height = legend_size
         text_orientation.halign = "center"
         template.legend.textorientation = text_orientation.name
-
-        template.drawColorBar(self.legend.vcs_colors, self.legend.levels, self.legend.labels, ext_1=self.legend.ext_left, ext_2=self.legend.ext_right, x=self.canvas, cmap=self.legend.colormap)
+        template.drawColorBar(self.legend.vcs_colors, self.legend.levels, self.legend.labels,
+                              ext_1=self.legend.ext_left,
+                              ext_2=self.legend.ext_right, x=self.canvas, cmap=self.legend.colormap,
+                              style=[self.legend.fill_style], index=self.legend._gm.fillareaindices,
+                              opacity=self.legend._gm.fillareaopacity)
 
         self.canvas.backend.renWin.Render()
 

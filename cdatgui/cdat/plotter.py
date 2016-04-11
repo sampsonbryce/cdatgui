@@ -1,6 +1,8 @@
 import vcs
 from PySide import QtGui, QtCore
 from cdatgui.utils import header_label, label, icon
+from metadata import VariableMetadataWrapper
+
 
 cdms_mime = "application/x-cdms-variable-list"
 vcs_gm_mime = "application/x-vcs-gm"
@@ -11,15 +13,19 @@ class PlotInfo(QtGui.QFrame):
     initialized = QtCore.Signal()
     removed = QtCore.Signal(object)
 
-    def __init__(self, canvas, parent=None, f=0):
+    def __init__(self, canvas, row, col, parent=None, f=0):
         super(PlotInfo, self).__init__(parent=parent, f=f)
 
         if callable(canvas):
             self._canvasfunc = canvas
+            print "print canvas from func", self._canvasfunc()
         else:
             self._canvas = canvas
+            print "canvas from var", self._canvas
 
         self.manager = PlotManager(self)
+        self.manager.row = row
+        self.manager.col = col
         self.manager.removed.connect(self.removeSelf)
         # Icon to display till we actually get some data
         self.newIcon = QtGui.QLabel(self)
@@ -114,7 +120,8 @@ class PlotManager(QtCore.QObject):
     def __init__(self, source):
         super(PlotManager, self).__init__()
         self.source = source
-
+        self.row = None
+        self.col = None
         self.dp = None
         self._gm = None
         self._vars = None
@@ -151,6 +158,7 @@ class PlotManager(QtCore.QObject):
 
     @property
     def canvas(self):
+        # print "MANAGER CANVAS:", self.source.canvas
         return self.source.canvas
 
     def gm(self):
@@ -175,6 +183,14 @@ class PlotManager(QtCore.QObject):
         except IndexError:
             self._vars = (v[0], None)
 
+        # Strip metadatawrapper for plotting purposes
+        new_vars = []
+        for var in self._vars:
+            if isinstance(var, VariableMetadataWrapper):
+                new_vars.append(var.var)
+            else:
+                new_vars.append(var)
+        self._vars = new_vars
         if self.can_plot():
             self.plot()
 
@@ -224,6 +240,8 @@ class PlotManager(QtCore.QObject):
                     args.append(var)
             if self.template is not None:
                 args.append(self.template.name)
+            else:
+                args.append("default")
             if self.graphics_method is not None:
                 args.append(vcs.graphicsmethodtype(self.graphics_method))
                 args.append(self.graphics_method.name)
