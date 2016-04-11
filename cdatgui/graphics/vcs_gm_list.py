@@ -1,12 +1,12 @@
 import vcs
 from PySide import QtGui, QtCore
-from models import VCSGraphicsMethodModel
+from cdatgui.graphics import get_gms
 
 
 class GraphicsMethodList(QtGui.QTreeView):
     def __init__(self, parent=None):
         super(GraphicsMethodList, self).__init__(parent=parent)
-        self.setModel(VCSGraphicsMethodModel())
+        self.setModel(get_gms())
         self.setDragEnabled(True)
         self.header().close()
         self.setIndentation(10)

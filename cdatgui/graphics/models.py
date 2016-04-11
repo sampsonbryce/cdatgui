@@ -8,7 +8,7 @@ class VCSGraphicsMethodModel(QtCore.QAbstractItemModel):
     def __init__(self, parent=None):
         super(VCSGraphicsMethodModel, self).__init__(parent=parent)
         self.gm_types = sorted(vcs.graphicsmethodlist())
-        self.gms = {gmtype: vcs.elements[gmtype].values()
+        self.gms = {gmtype: [el for el in vcs.elements[gmtype].values() if el.name[:1] != "__"]
                     for gmtype in vcs.graphicsmethodlist()}
 
     def add_gm(self, gm):
