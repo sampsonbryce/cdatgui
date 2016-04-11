@@ -1,6 +1,7 @@
 import vcs
 from PySide import QtGui, QtCore
 from cdatgui.utils import header_label, label, icon
+from metadata import VariableMetadataWrapper
 
 
 cdms_mime = "application/x-cdms-variable-list"
@@ -182,6 +183,14 @@ class PlotManager(QtCore.QObject):
         except IndexError:
             self._vars = (v[0], None)
 
+        # Strip metadatawrapper for plotting purposes
+        new_vars = []
+        for var in self._vars:
+            if isinstance(var, VariableMetadataWrapper):
+                new_vars.append(var.var)
+            else:
+                new_vars.append(var)
+        self._vars = new_vars
         if self.can_plot():
             self.plot()
 
@@ -231,6 +240,8 @@ class PlotManager(QtCore.QObject):
                     args.append(var)
             if self.template is not None:
                 args.append(self.template.name)
+            else:
+                args.append("default")
             if self.graphics_method is not None:
                 args.append(vcs.graphicsmethodtype(self.graphics_method))
                 args.append(self.graphics_method.name)

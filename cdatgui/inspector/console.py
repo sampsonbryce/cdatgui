@@ -85,15 +85,20 @@ class ConsoleInspector(QtGui.QWidget):
             self.grid.addLayout(layout, 1, index)
 
     def updateVariables(self):
-        for var in self.variable_list.values:
-            if var.id not in self.kernel.shell.user_ns.keys():
-                self.kernel.shell.push({var.id: var})
+        print self.variable_list.values
+        for varname, var in self.variable_list.values:
+            if varname not in self.kernel.shell.user_ns.keys():
+                self.kernel.shell.push({varname: var})
 
     def updateSheetSize(self, plots):
         print "UPDATING SHEET SIZE"
+        print plots
+        for key in set(self.kernel.shell.user_ns) - set(self.original_ns):
+            if key in self.canvas_labels:
+                self.kernel.shell.user_ns.pop(key)
         for plot in plots:
             canvas_var_label = "canvas_{0}{1}".format(plot.row + 1, self.letters[plot.col])
-            # this should be uncommented
+            self.canvas_labels.append(canvas_var_label)
             self.kernel.shell.push({canvas_var_label: plot.canvas})
 
     def codeExecuted(self, *varargs):
@@ -114,19 +119,24 @@ class ConsoleInspector(QtGui.QWidget):
             value = namespace[key]
             if isinstance(value, cdms2.dataset.CdmsFile):
                 namespace[key] = FileMetadataWrapper(value)
-            print "Checking if cdms", value
-            if is_cdms_var(value) and id(value) not in checked_vars:
-                print "COUNT:", cdms_count
+            try:
+                print "Checking if cdms", value, value.id
+            except:
+                print "Checking if cdms", value
+            if id(value) in checked_vars:
+                print value, "Already updated"
+            if is_cdms_var(value):
+                # print "COUNT:", cdms_count
                 cdms_count += 1
                 checked_vars.append(id(value))
-                cdms_var = value
+                cdms_var = value()
                 cdms_var.id = key
                 if not self.variable_list.variable_exists(cdms_var):
                     print "adding variable"
                     self.variable_list.add_variable(cdms_var)
                 else:
                     print "updating variable"
-                    self.variable_list.update_variable(cdms_var)
+                    self.variable_list.update_variable(cdms_var, key)
 
             elif is_displayplot(value) and value not in self.display_plots:
                 # Should only emit if new!
@@ -136,6 +146,7 @@ class ConsoleInspector(QtGui.QWidget):
 
         if is_displayplot(last_line) and last_line not in self.display_plots:
             print "creatingPlot from output"
+
             self.display_plots.append(last_line)
             self.createdPlot.emit(last_line)
 
@@ -148,10 +159,6 @@ class ConsoleInspector(QtGui.QWidget):
         print "PLOTS:", plots
         canvas_dict = {}
 
-        for canvas in self.canvas_labels:
-            if canvas in self.kernel.shell.user_ns.keys():
-                self.kernel.shell.user_ns.pop(canvas, None)
-
         # get all unique canvases
         canvases = set()
         for plot in plots:
@@ -163,7 +170,7 @@ class ConsoleInspector(QtGui.QWidget):
         # create button grid
         for index, manager_obj in enumerate(plots):
             self.names.addWidget(label(manager_obj.name()))
-            # cur_instance = self.instances[manager_obj.canvas]
+
             # Add to grid
             if manager_obj.variables:
                 for var in manager_obj.variables:
@@ -205,10 +212,6 @@ class ConsoleInspector(QtGui.QWidget):
                 self.kernel.shell.push({tmp: manager_obj.template})
 
             if manager_obj.canvas:
-                # should not be doing this here
-                canvas_var_label = "canvas_{0}{1}".format(manager_obj.row + 1, self.letters[manager_obj.col])
-                self.canvas_labels.append(canvas_var_label)
-                self.kernel.shell.push({canvas_var_label: manager_obj.canvas})
                 canvas_dict[manager_obj.canvas] = manager_obj
 
         # create canvas buttons
@@ -219,10 +222,10 @@ class ConsoleInspector(QtGui.QWidget):
             self.createCanvasButton(canvas[0], canvas_dict[canvas[0]].row, canvas_dict[canvas[0]].col)
 
     def fixInvalidVariables(self, var):
-        var = var.replace(" ", "_")
+        var = re.sub(' +', '_', var)
+        var = re.sub("[^a-zA-Z0-9_]+", '', var)
         if var in self.reserved_words or not re.match("^[a-zA-Z_]", var):
             var = 'cdat_' + var
-        var = re.sub("[^a-zA-Z0-9_]+", '', var)
         return var
 
     def createCanvasButton(self, canvas, row, col):
