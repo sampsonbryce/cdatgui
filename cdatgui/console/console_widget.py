@@ -3,7 +3,7 @@ from functools import partial
 import string
 
 import re
-
+from cdatgui.bases.static_docked import StaticDockWidget
 from cdatgui.variables import get_variables
 from cdatgui.utils import label
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
@@ -20,14 +20,14 @@ def is_displayplot(v):
     return isinstance(v, vcs.displayplot.Dp)
 
 
-class ConsoleInspector(QtGui.QWidget):
+class ConsoleWidget(QtGui.QWidget):
     createdPlot = QtCore.Signal(object)
 
     def __init__(self, parent=None):
-        super(ConsoleInspector, self).__init__()
+        super(ConsoleWidget, self).__init__()
         self.variable_list = get_variables()
-        self.layout = QtGui.QVBoxLayout()
-        self.setLayout(self.layout)
+        self.vbox = QtGui.QVBoxLayout()
+        self.setLayout(self.vbox)
         self.names = QtGui.QHBoxLayout()
         self.canvas_buttons = QtGui.QHBoxLayout()
         self.grid = QtGui.QGridLayout()
@@ -65,11 +65,11 @@ class ConsoleInspector(QtGui.QWidget):
         self.variable_list.listUpdated.connect(self.updateVariables)
         self.updateVariables()
 
-        self.layout.addLayout(self.names)
-        self.layout.addWidget(self.jupyter_widget)
-        self.layout.addWidget(label("Selected Cell Data:"))
-        self.layout.addLayout(self.grid)
-        self.layout.addLayout(self.canvas_buttons)
+        self.vbox.addLayout(self.names)
+        self.vbox.addWidget(self.jupyter_widget)
+        self.vbox.addWidget(label("Selected Cell Data:"))
+        self.vbox.addLayout(self.grid)
+        self.vbox.addLayout(self.canvas_buttons)
 
         # add label column
         for index, text in enumerate(["Variables", "Graphics Methods", "Templates"]):
@@ -91,8 +91,6 @@ class ConsoleInspector(QtGui.QWidget):
                 self.kernel.shell.push({varname: var})
 
     def updateSheetSize(self, plots):
-        print "UPDATING SHEET SIZE"
-        print plots
         for key in set(self.kernel.shell.user_ns) - set(self.original_ns):
             if key in self.canvas_labels:
                 self.kernel.shell.user_ns.pop(key)
@@ -238,12 +236,12 @@ class ConsoleInspector(QtGui.QWidget):
         canvas_button.clicked.connect(partial(self.sendString, button_text))
 
     def clear(self):
-        name = self.layout.itemAt(0).layout().takeAt(0)
+        name = self.vbox.itemAt(0).layout().takeAt(0)
         while name:
             name.widget().deleteLater()
-            name = self.layout.itemAt(0).layout().takeAt(0)
+            name = self.vbox.itemAt(0).layout().takeAt(0)
 
-        grid = self.layout.itemAt(3)
+        grid = self.vbox.itemAt(3)
         for col in range(1, 5):
             for row in range(1, 4):
                 button = grid.itemAtPosition(row, col)
@@ -263,7 +261,7 @@ class ConsoleInspector(QtGui.QWidget):
 
 if __name__ == "__main__":
     app = QtGui.QApplication([])
-    con = ConsoleInspector(app)
+    con = ConsoleWidget(app)
     con.show()
     con.raise_()
     app.exec_()

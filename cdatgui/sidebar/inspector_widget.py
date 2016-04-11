@@ -4,12 +4,10 @@ from .plot import PlotInspector
 from .var import VariableInspector
 from .gm import GraphicsMethodInspector
 from cdatgui.editors.template import TemplateEditor
-from .console import ConsoleInspector
 
 
 class InspectorWidget(StaticDockWidget):
     plotters_updated = QtCore.Signal(list)
-    updateSheetSize = QtCore.Signal(list)
 
     def __init__(self, spreadsheet, parent=None):
         super(InspectorWidget, self).__init__("Inspector", parent=parent)
@@ -35,16 +33,6 @@ class InspectorWidget(StaticDockWidget):
         self.plotters_updated.connect(tmpl.setPlots)
         w.addTab(tmpl, "Layout")
 
-        con = ConsoleInspector()
-        spreadsheet.sheetSizeChanged.connect(self.sheet_size_changed)
-        self.plotters_updated.connect(con.setPlots)
-        self.updateSheetSize.connect(con.updateSheetSize)
-        con.createdPlot.connect(self.added_plot)
-        # con.createdPlot.connect(self.emitPlots)
-        con.createdPlot.connect(spreadsheet.tabController.currentWidget().selectionChange)
-        # spreadsheet.tabController.currentWidget().updateSheetSize()
-        w.addTab(con, "Python")
-
         self.setWidget(w)
 
     def update(self):
@@ -56,19 +44,6 @@ class InspectorWidget(StaticDockWidget):
             if displayplot.name in cell.canvas.display_names:
                 cell.loadPlot(displayplot)
                 break
-
-    def sheet_size_changed(self, cells):
-        print "IN sheet_size_changed"
-        plots = []
-        self.cells = []
-        for cell in cells:
-            cell = cell.containedWidget
-            self.cells.append(cell)
-            # cell is now a QCDATWidget
-            plotter = cell.getPlotters()
-            plots.extend(plotter)
-        self.plots = plots
-        self.updateSheetSize.emit(self.plots)
 
     def selection_change(self, selected):
         plots = []

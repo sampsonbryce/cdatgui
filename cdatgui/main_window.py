@@ -1,18 +1,17 @@
 from PySide import QtGui, QtCore
 
-from spreadsheet.window import SpreadsheetWindow
-from variables.variable_widget import VariableWidget
+from cdatgui.console.console_dock import ConsoleDockWidget
 from graphics.graphics_method_widget import GraphicsMethodWidget
-from templates.template_widget import TemplateWidget
-from inspector.inspector_widget import InspectorWidget
 from main_menu import MainMenu
-import vcs
+from sidebar.inspector_widget import InspectorWidget
+from spreadsheet.window import SpreadsheetWindow
+from templates.template_widget import TemplateWidget
+from variables.variable_widget import VariableWidget
 
 DockWidgetArea = QtCore.Qt.DockWidgetArea
 
 
 class MainWindow(QtGui.QMainWindow):
-
     def __init__(self, parent=None, f=QtCore.Qt.WindowFlags()):
         super(MainWindow, self).__init__(parent=parent)
         self.setWindowTitle(u"CDATGUI")
@@ -31,6 +30,9 @@ class MainWindow(QtGui.QMainWindow):
 
         inspector = InspectorWidget(self.spreadsheet, parent=self)
         self.add_right_dock(inspector)
+
+        con = ConsoleDockWidget(self.spreadsheet, parent=self)
+        self.add_right_dock(con)
 
         self.setMenuBar(MainMenu(self.spreadsheet, var_widget,
                                  gm_widget, tmpl_widget))
