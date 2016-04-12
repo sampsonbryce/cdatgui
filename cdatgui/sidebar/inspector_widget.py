@@ -4,6 +4,7 @@ from cdatgui.cdat.models import PlotterListModel
 from cdatgui.variables import get_variables
 from cdatgui.graphics import get_gms
 from cdatgui.templates import get_templates
+from cdatgui.variables.edit_variable_widget import EditVariableDialog
 import vcs
 
 
@@ -111,14 +112,37 @@ class InspectorWidget(StaticDockWidget):
         template_layout.addWidget(edit_templ)
 
         l.addLayout(template_layout)
-
+        self.var_editor = None
+        self.current_var = None
         self.setWidget(widget)
 
+    def editVar(self, var):
+        get_variables().update_variable(var, var.id)
+
+    def makeVar(self, var):
+        get_variables().add_variable(var)
+        combo = self.var_combos[self.current_var]
+        # Use the new variable
+        combo.setCurrentIndex(get_variables().rowCount() - 1)
+
+    def editVariable(self, var):
+        if self.var_editor:
+            self.var_editor.reject()
+            self.var_editor.deleteLater()
+        self.var_editor = EditVariableDialog(var)
+        self.var_editor.createdVariable.connect(self.makeVar)
+        self.var_editor.editedVariable.connect(self.editVar)
+        self.var_editor.show()
+
     def editFirstVar(self):
-        pass
+        var = get_variables().get(self.var_combos[0].currentIndex())
+        self.current_var = 0
+        self.editVariable(var)
 
     def editSecondVar(self):
-        pass
+        var = get_variables().get(self.var_combos[1].currentIndex())
+        self.current_var = 1
+        self.editVariable(var)
 
     def editGM(self):
         pass
