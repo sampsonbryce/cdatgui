@@ -44,28 +44,43 @@ class InspectorWidget(StaticDockWidget):
 
         l.addWidget(QtGui.QLabel("Variables:"))
 
+        var_1_layout = QtGui.QHBoxLayout()
         var_combo_1 = QtGui.QComboBox()
         var_combo_1.setModel(get_variables())
         var_combo_1.currentIndexChanged[str].connect(self.setFirstVar)
         var_combo_1.setEnabled(False)
+        var_1_layout.addWidget(var_combo_1)
 
+        edit_var_1 = QtGui.QPushButton("Edit")
+        edit_var_1.clicked.connect(self.editFirstVar)
+        var_1_layout.addWidget(edit_var_1)
+
+        var_2_layout = QtGui.QHBoxLayout()
         var_combo_2 = QtGui.QComboBox()
         var_combo_2.setModel(get_variables())
         var_combo_2.currentIndexChanged[str].connect(self.setFirstVar)
         var_combo_2.setEnabled(False)
+        var_2_layout.addWidget(var_combo_2)
+        edit_var_2 = QtGui.QPushButton("Edit")
+        edit_var_2.clicked.connect(self.editSecondVar)
+        var_2_layout.addWidget(edit_var_2)
 
         self.var_combos = [var_combo_1, var_combo_2]
 
-        for combo in self.var_combos:
-            l.addWidget(combo)
+        l.addLayout(var_1_layout)
+        l.addLayout(var_2_layout)
 
         l.addWidget(QtGui.QLabel("Graphics Method:"))
+
 
         self.gm_type_combo = QtGui.QComboBox()
         self.gm_type_combo.setModel(get_gms())
         self.gm_type_combo.currentIndexChanged.connect(self.setGMRoot)
         self.gm_type_combo.setEnabled(False)
+
         l.addWidget(self.gm_type_combo)
+
+        gm_layout = QtGui.QHBoxLayout()
 
         self.gm_instance_combo = QtGui.QComboBox()
         self.gm_instance_combo.setModel(get_gms())
@@ -73,17 +88,43 @@ class InspectorWidget(StaticDockWidget):
         self.gm_instance_combo.setCurrentIndex(0)
         self.gm_instance_combo.setEnabled(False)
         self.gm_instance_combo.currentIndexChanged.connect(self.updateGM)
-        l.addWidget(self.gm_instance_combo)
+        gm_layout.addWidget(self.gm_instance_combo)
+
+        edit_gm = QtGui.QPushButton("Edit")
+        edit_gm.clicked.connect(self.editGM)
+        gm_layout.addWidget(edit_gm)
+
+        l.addLayout(gm_layout)
 
         l.addWidget(QtGui.QLabel("Template:"))
+
+        template_layout = QtGui.QHBoxLayout()
 
         self.template_combo = QtGui.QComboBox()
         self.template_combo.setModel(get_templates())
         self.template_combo.setEnabled(False)
         self.template_combo.currentIndexChanged[str].connect(self.setTemplate)
-        l.addWidget(self.template_combo)
+        template_layout.addWidget(self.template_combo)
+
+        edit_templ = QtGui.QPushButton("Edit")
+        edit_templ.clicked.connect(self.editTemplate)
+        template_layout.addWidget(edit_templ)
+
+        l.addLayout(template_layout)
 
         self.setWidget(widget)
+
+    def editFirstVar(self):
+        pass
+
+    def editSecondVar(self):
+        pass
+
+    def editGM(self):
+        pass
+
+    def editTemplate(self):
+        pass
 
     def deletePlot(self):
         ind = self.plot_combo.currentIndex()
