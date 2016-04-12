@@ -3,6 +3,7 @@ from cdatgui.bases import StaticDockWidget
 from cdatgui.cdat.models import PlotterListModel
 from cdatgui.variables import get_variables
 from cdatgui.graphics import get_gms
+from cdatgui.templates import get_templates
 import vcs
 
 
@@ -67,10 +68,22 @@ class InspectorWidget(StaticDockWidget):
         self.gm_instance_combo.currentIndexChanged.connect(self.updateGM)
         l.addWidget(self.gm_instance_combo)
 
+        l.addWidget(QtGui.QLabel("Template:"))
+
+        self.template_combo = QtGui.QComboBox()
+        self.template_combo.setModel(get_templates())
+        self.template_combo.setEnabled(False)
+        self.template_combo.currentIndexChanged[str].connect(self.setTemplate)
+        l.addWidget(self.template_combo)
+
         self.setWidget(widget)
 
     def setGMRoot(self, index):
         self.gm_instance_combo.setRootModelIndex(get_gms().index(index, 0))
+
+    def setTemplate(self, template):
+        print template
+        self.current_plot.template = vcs.gettemplate(str(template))
 
     def updateGM(self, index):
         gm_type = self.gm_type_combo.currentText()
@@ -112,6 +125,10 @@ class InspectorWidget(StaticDockWidget):
             self.gm_instance_combo.blockSignals(block)
             self.gm_instance_combo.setEnabled(True)
             self.gm_type_combo.setEnabled(True)
+            self.template_combo.setEnabled(True)
+            block = self.template_combo.blockSignals(True)
+            self.template_combo.setCurrentIndex(self.template_combo.findText(plot.template.name))
+            self.template_combo.blockSignals(block)
         else:
             for var in self.var_combos:
                 block = var.blockSignals(True)
@@ -135,5 +152,6 @@ class InspectorWidget(StaticDockWidget):
             self.plot_combo.setEnabled(False)
             self.gm_type_combo.setEnabled(False)
             self.gm_instance_combo.setEnabled(False)
+            self.template_combo.setEnabled(False)
             for v in self.var_combos:
                 v.setEnabled(False)
