@@ -11,8 +11,8 @@ class ConsoleDockWidget(StaticDockWidget):
 
         self.console.createdPlot.connect(self.added_plot)
         self.console.createdPlot.connect(spreadsheet.tabController.currentWidget().selectionChange)
-        spreadsheet.selectionChanged.connect(self.selection_change)
-        spreadsheet.sheetSizeChanged.connect(self.sheet_size_changed)
+        # spreadsheet.selectionChanged.connect(self.selection_change)
+        spreadsheet.emitAllPlots.connect(self.updateAllPlots)
         self.setWidget(self.console)
 
     def added_plot(self, displayplot):
@@ -21,7 +21,7 @@ class ConsoleDockWidget(StaticDockWidget):
                 cell.loadPlot(displayplot)
                 break
 
-    def sheet_size_changed(self, cells):
+    def updateAllPlots(self, cells):
         plots = []
         self.cells = []
         for cell in cells:
@@ -31,7 +31,7 @@ class ConsoleDockWidget(StaticDockWidget):
             plotter = cell.getPlotters()
             plots.extend(plotter)
         self.plots = plots
-        self.console.updateSheetSize(self.plots)
+        self.console.updateAllPlots(self.plots)
 
     def selection_change(self, selected):
         plots = []

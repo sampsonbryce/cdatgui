@@ -12,16 +12,15 @@ vcs_template_mime = "application/x-vcs-template"
 class PlotInfo(QtGui.QFrame):
     initialized = QtCore.Signal()
     removed = QtCore.Signal(object)
+    something_changed = QtCore.Signal()
 
     def __init__(self, canvas, row, col, parent=None, f=0):
         super(PlotInfo, self).__init__(parent=parent, f=f)
 
         if callable(canvas):
             self._canvasfunc = canvas
-            print "print canvas from func", self._canvasfunc()
         else:
             self._canvas = canvas
-            print "canvas from var", self._canvas
 
         self.manager = PlotManager(self)
         self.manager.row = row
@@ -250,3 +249,6 @@ class PlotManager(QtCore.QObject):
                 self._template = vcs.gettemplate(self.dp._template_origin)
             if self.graphics_method is None:
                 self._gm = vcs.getgraphicsmethod(self.dp.g_type, self.dp.g_name)
+
+        self.source.something_changed.emit()
+

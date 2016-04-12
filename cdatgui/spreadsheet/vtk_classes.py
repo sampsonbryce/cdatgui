@@ -19,7 +19,7 @@ class QCDATWidget(QtGui.QFrame):
     setVariables = QtCore.Signal(list)
     setGraphicsMethod = QtCore.Signal(object)
     setTemplate = QtCore.Signal(object)
-    canvasDisplayed = QtCore.Signal()
+    emitAllPlots = QtCore.Signal()
 
     save_formats = ["PNG file (*.png)",
                     "GIF file (*.gif)",
@@ -107,7 +107,6 @@ class QCDATWidget(QtGui.QFrame):
                     any_updated = True
                     plot.variables(new_vars)
         if any_updated:
-            print "Running self.update"
             self.update()
 
     def dropEvent(self, event):
@@ -146,6 +145,7 @@ class QCDATWidget(QtGui.QFrame):
     def addedPlot(self):
         """Adds a new PlotInfo to the collection whenever one is made"""
         new_widget = PlotInfo(lambda: self.canvas, self.row, self.col)
+        new_widget.something_changed.connect(self.emitAllPlots.emit)
         self.dragLayout.addWidget(new_widget)
         self.plots.append(new_widget)
         new_widget.initialized.connect(self.addedPlot)
@@ -157,7 +157,7 @@ class QCDATWidget(QtGui.QFrame):
         widget.deleteLater()
 
     def manageCanvas(self, showing):
-        print "MANAGING CANVAS"
+        #print "MANAGING CANVAS"
         if showing and self.canvas is None:
             self.canvas = vcs.init(backend=self.mRenWin)
             self.canvas.open()
@@ -165,7 +165,8 @@ class QCDATWidget(QtGui.QFrame):
             self.canvas.onClosing((0, 0))
             self.canvas = None
 
-        self.canvasDisplayed.emit()
+        self.emitAllPlots.emit()
+
     def showEvent(self, e):
         super(QCDATWidget, self).showEvent(e)
         QtCore.QTimer.singleShot(0, self.becameVisible)

@@ -369,7 +369,6 @@ class StandardWidgetSheet(QtGui.QTableWidget):
 
         """
 
-        print "ROW MOVED"
         self.updateRowLabels(self.rowCount(), self.rowCount())
 
     def updateColumnLabels(self, oldCount, newCount):
@@ -389,7 +388,6 @@ class StandardWidgetSheet(QtGui.QTableWidget):
         Renumber the horizontal header labels when columns moved
 
         """
-        print "COlUMN MOVED"
         self.updateColumnLabels(self.columnCount(), self.columnCount())
 
     def setFitToWindow(self, fit=True):

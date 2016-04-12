@@ -19,6 +19,11 @@ class CDMSVariableListModel(ListModel):
     def get(self, ind):
         return self.values[ind][1]
 
+    def get_variable_label(self, var):
+        for label, value in self.values:
+            if value == var:
+                return label
+
     def append(self, variable):
         super(CDMSVariableListModel, self).append((variable.id, variable))
 
@@ -26,7 +31,7 @@ class CDMSVariableListModel(ListModel):
 
     def update_variable(self, variable, label):
         for ind, var in enumerate(self.values):
-            print "CHECKING", var[0], label
+            # print "CHECKING", var[0], label
             if var[0] == label:
                 break
         else:
@@ -34,7 +39,7 @@ class CDMSVariableListModel(ListModel):
         self.replace(ind, variable)
 
     def replace(self, index, value):
-        print "REPLACING AT INDEX:", index, value.id
+        # print "REPLACING AT INDEX:", index, value.id
         if index < len(self.values):
             super(CDMSVariableListModel, self).replace(index, (self.values[index][0], value))
         else:
@@ -57,7 +62,7 @@ class CDMSVariableListModel(ListModel):
 
         indices = "".join(parts).split(",")
         variables = [self.values[int(ind)][1].var for ind in indices]
-        print "DROPPED VARS:", variables
+        # print "DROPPED VARS:", variables
         return variables
 
     def format_for_display(self, variable):
