@@ -8,6 +8,54 @@ from cdatgui.variables.edit_variable_widget import EditVariableDialog
 import vcs
 
 
+class ComboButton(QtGui.QWidget):
+    clicked_button = QtCore.Signal(object)
+    selected_object = QtCore.Signal(object)
+
+    def __init__(self, model, button_text, parent=None):
+        super(ComboButton, self).__init__(parent=parent)
+        self.model = model
+
+        layout = QtGui.QHBoxLayout()
+
+        self.combo = QtGui.QComboBox()
+        self.combo.setModel(model)
+        self.combo.currentIndexChanged.connect(self.select)
+        layout.addWidget(self.combo, 1)
+
+        self.button = QtGui.QPushButton(button_text)
+        self.button.clicked.connect(self.click)
+        layout.addWidget(self.button, 0)
+
+        self.setLayout(layout)
+
+    def setEnabled(self, en):
+        self.combo.setEnabled(en)
+        self.button.setEnabled(en)
+
+    def currentObj(self):
+        ind = self.combo.currentIndex()
+        return self.model.get(ind)
+
+    def currentIndex(self):
+        return self.combo.currentIndex()
+
+    def setCurrentIndex(self, ind):
+        self.combo.setCurrentIndex(ind)
+
+    def findText(self, txt):
+        return self.combo.findText(txt)
+
+    def click(self):
+        self.clicked_button.emit(self.currentObj())
+
+    def select(self, ind):
+        if self.model.rowCount() > 0 and ind >= 0:
+            self.selected_object.emit(self.currentObj())
+        else:
+            self.selected_object.emit(None)
+
+
 class InspectorWidget(StaticDockWidget):
     plotters_updated = QtCore.Signal(list)
 
@@ -27,52 +75,27 @@ class InspectorWidget(StaticDockWidget):
         label = QtGui.QLabel("Plots:")
         l.addWidget(label)
 
-        plot_layout = QtGui.QHBoxLayout()
-
-        plot_combo = QtGui.QComboBox()
-        plot_combo.setEnabled(False)
-        plot_combo.setModel(self.plots)
-        plot_combo.currentIndexChanged[int].connect(self.selectPlot)
-        plot_layout.addWidget(plot_combo)
-
-        plot_remove = QtGui.QPushButton("Delete")
-        plot_remove.clicked.connect(self.deletePlot)
-        plot_layout.addWidget(plot_remove)
-
-        l.addLayout(plot_layout)
-
-        self.plot_combo = plot_combo
+        plots = ComboButton(self.plots, "Delete")
+        plots.selected_object.connect(self.selectPlot)
+        plots.clicked_button.connect(self.deletePlot)
+        l.addWidget(plots)
+        self.plot_combo = plots
 
         l.addWidget(QtGui.QLabel("Variables:"))
 
-        var_1_layout = QtGui.QHBoxLayout()
-        var_combo_1 = QtGui.QComboBox()
-        var_combo_1.setModel(get_variables())
-        var_combo_1.currentIndexChanged[str].connect(self.setFirstVar)
-        var_combo_1.setEnabled(False)
-        var_1_layout.addWidget(var_combo_1)
+        var_1 = ComboButton(get_variables(), "Edit")
+        var_1.selected_object.connect(self.setFirstVar)
+        var_1.clicked_button.connect(self.editFirstVar)
+        l.addWidget(var_1)
 
-        edit_var_1 = QtGui.QPushButton("Edit")
-        edit_var_1.clicked.connect(self.editFirstVar)
-        var_1_layout.addWidget(edit_var_1)
+        var_2 = ComboButton(get_variables(), "Edit")
+        var_2.selected_object.connect(self.setSecondVar)
+        var_2.clicked_button.connect(self.editSecondVar)
+        l.addWidget(var_2)
 
-        var_2_layout = QtGui.QHBoxLayout()
-        var_combo_2 = QtGui.QComboBox()
-        var_combo_2.setModel(get_variables())
-        var_combo_2.currentIndexChanged[str].connect(self.setFirstVar)
-        var_combo_2.setEnabled(False)
-        var_2_layout.addWidget(var_combo_2)
-        edit_var_2 = QtGui.QPushButton("Edit")
-        edit_var_2.clicked.connect(self.editSecondVar)
-        var_2_layout.addWidget(edit_var_2)
-
-        self.var_combos = [var_combo_1, var_combo_2]
-
-        l.addLayout(var_1_layout)
-        l.addLayout(var_2_layout)
+        self.var_combos = [var_1, var_2]
 
         l.addWidget(QtGui.QLabel("Graphics Method:"))
-
 
         self.gm_type_combo = QtGui.QComboBox()
         self.gm_type_combo.setModel(get_gms())
@@ -82,36 +105,32 @@ class InspectorWidget(StaticDockWidget):
         l.addWidget(self.gm_type_combo)
 
         gm_layout = QtGui.QHBoxLayout()
-
         self.gm_instance_combo = QtGui.QComboBox()
         self.gm_instance_combo.setModel(get_gms())
         self.gm_instance_combo.setRootModelIndex(get_gms().index(0, 0))
         self.gm_instance_combo.setCurrentIndex(0)
         self.gm_instance_combo.setEnabled(False)
         self.gm_instance_combo.currentIndexChanged.connect(self.updateGM)
-        gm_layout.addWidget(self.gm_instance_combo)
+        gm_layout.addWidget(self.gm_instance_combo, 1)
 
         edit_gm = QtGui.QPushButton("Edit")
         edit_gm.clicked.connect(self.editGM)
-        gm_layout.addWidget(edit_gm)
-
+        gm_layout.addWidget(edit_gm, 0)
+        self.edit_gm_button = edit_gm
+        edit_gm.setEnabled(False)
         l.addLayout(gm_layout)
 
         l.addWidget(QtGui.QLabel("Template:"))
 
-        template_layout = QtGui.QHBoxLayout()
+        self.template_combo = ComboButton(get_templates(), "Edit")
+        self.template_combo.selected_object.connect(self.setTemplate)
+        self.template_combo.clicked_button.connect(self.editTemplate)
+        l.addWidget(self.template_combo)
 
-        self.template_combo = QtGui.QComboBox()
-        self.template_combo.setModel(get_templates())
+        self.plot_combo.setEnabled(False)
+        for v in self.var_combos:
+            v.setEnabled(False)
         self.template_combo.setEnabled(False)
-        self.template_combo.currentIndexChanged[str].connect(self.setTemplate)
-        template_layout.addWidget(self.template_combo)
-
-        edit_templ = QtGui.QPushButton("Edit")
-        edit_templ.clicked.connect(self.editTemplate)
-        template_layout.addWidget(edit_templ)
-
-        l.addLayout(template_layout)
         self.var_editor = None
         self.current_var = None
         self.setWidget(widget)
@@ -134,25 +153,22 @@ class InspectorWidget(StaticDockWidget):
         self.var_editor.editedVariable.connect(self.editVar)
         self.var_editor.show()
 
-    def editFirstVar(self):
-        var = get_variables().get(self.var_combos[0].currentIndex())
+    def editFirstVar(self, var):
         self.current_var = 0
         self.editVariable(var)
 
-    def editSecondVar(self):
-        var = get_variables().get(self.var_combos[1].currentIndex())
+    def editSecondVar(self, var):
         self.current_var = 1
         self.editVariable(var)
 
     def editGM(self):
         pass
 
-    def editTemplate(self):
+    def editTemplate(self, tmpl):
         pass
 
-    def deletePlot(self):
+    def deletePlot(self, plot):
         ind = self.plot_combo.currentIndex()
-        plot = self.plots.get(ind)
         self.plots.remove(ind)
         plot.remove()
         self.selectPlot(ind - 1)
@@ -161,8 +177,7 @@ class InspectorWidget(StaticDockWidget):
         self.gm_instance_combo.setRootModelIndex(get_gms().index(index, 0))
 
     def setTemplate(self, template):
-        print template
-        self.current_plot.template = vcs.gettemplate(str(template))
+        self.current_plot.template = template
 
     def updateGM(self, index):
         gm_type = self.gm_type_combo.currentText()
@@ -171,25 +186,22 @@ class InspectorWidget(StaticDockWidget):
         gm = vcs.getgraphicsmethod(gm_type, gm_name)
         self.current_plot.graphics_method = gm
 
-    def setFirstVar(self, varId):
-        variable = get_variables().get_variable(varId)
-        self.current_plot.variables = [variable, self.current_plot.variables[1]]
+    def setFirstVar(self, var):
+        self.current_plot.variables = [var, self.current_plot.variables[1]]
 
-    def setSecondVar(self, varId):
-        variable = get_variables().get_variable(varId)
-        self.current_plot.variables = [self.current_plot.variables[0], variable]
+    def setSecondVar(self, var):
+        self.current_plot.variables = [self.current_plot.variables[0], var]
 
-    def selectPlot(self, plotIndex):
+    def selectPlot(self, plot):
+        plotIndex = self.plot_combo.currentIndex()
         if 0 <= plotIndex < self.plots.rowCount():
             self.plot_combo.setEnabled(True)
-            plot = self.plots.get(plotIndex)
             self.current_plot = plot
             # Set the variable combos to the correct indices
             for ind, var in enumerate(plot.variables):
                 block = self.var_combos[ind].blockSignals(True)
                 if var is None:
                     self.var_combos[ind].setEnabled(False)
-
                     self.var_combos[ind].setCurrentIndex(-1)
                 else:
                     self.var_combos[ind].setEnabled(True)
@@ -209,11 +221,13 @@ class InspectorWidget(StaticDockWidget):
             block = self.template_combo.blockSignals(True)
             self.template_combo.setCurrentIndex(self.template_combo.findText(plot.template.name))
             self.template_combo.blockSignals(block)
+            self.edit_gm_button.setEnabled(True)
         else:
             self.plot_combo.setEnabled(False)
             self.gm_type_combo.setEnabled(False)
             self.gm_instance_combo.setEnabled(False)
             self.template_combo.setEnabled(False)
+            self.edit_gm_button.setEnabled(False)
             for v in self.var_combos:
                 v.setEnabled(False)
 
@@ -228,4 +242,3 @@ class InspectorWidget(StaticDockWidget):
             for plot in cell.getPlotters()[:-1]:
                 self.plots.append(plot)
         self.plot_combo.setCurrentIndex(0)
-
