@@ -1,6 +1,8 @@
 from PySide import QtGui, QtCore
 from collections import OrderedDict
 from level_editor import LevelEditor
+from widgets.legend_widget import LegendEditorWidget
+from model.legend import VCSLegend
 
 
 class BoxfillEditor(QtGui.QWidget):
@@ -12,6 +14,7 @@ class BoxfillEditor(QtGui.QWidget):
         """Initialize the object."""
         super(BoxfillEditor, self).__init__(parent=parent)
         self._gm = None
+        self.var = None
 
         layout = QtGui.QVBoxLayout()
         self.setLayout(layout)
@@ -35,8 +38,12 @@ class BoxfillEditor(QtGui.QWidget):
 
         levels_button = QtGui.QPushButton("Edit Levels")
         levels_button.clicked.connect(self.editLevels)
+        legend_button = QtGui.QPushButton("Edit Legend")
+        legend_button.clicked.connect(self.editLegend)
         layout.addWidget(levels_button)
+        layout.addWidget(legend_button)
         self.level_editor = None
+        self.legend_editor = None
         self.type_group.buttonClicked.connect(self.setBoxfillType)
 
     def editLevels(self):
@@ -45,9 +52,21 @@ class BoxfillEditor(QtGui.QWidget):
             self.level_editor = LevelEditor()
             self.level_editor.levelsUpdated.connect(self.appliedLevels)
         self.level_editor.gm = self.gm
-        self.level_editor.var = self.parent().plot.variables[0]
+        self.level_editor.var = self.var.var
         self.level_editor.show()
         self.level_editor.raise_()
+
+    def editLegend(self):
+        if self.legend_editor is None:
+            self.legend_editor = LegendEditorWidget()
+            self.legend_editor.okPressed.connect(self.updatedLegend)
+        legend = VCSLegend(self.gm, self.var.var)
+        self.legend_editor.setObject(legend)
+        self.legend_editor.show()
+        self.legend_editor.raise_()
+
+    def updatedLegend(self):
+        self.graphicsMethodUpdated.emit(self._gm)
 
     def appliedLevels(self):
         """Finished editing levels."""

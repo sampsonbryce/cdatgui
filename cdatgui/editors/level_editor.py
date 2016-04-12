@@ -2,7 +2,7 @@
 
 from cdatgui.cdat.vcswidget import QVCSWidget
 from PySide import QtCore, QtGui
-from .widgets.dict_editor import DictEditorWidget
+from .widgets.adjust_values import AdjustValues
 import vcsaddons
 import vcs
 import numpy
@@ -20,8 +20,8 @@ class LevelEditor(QtGui.QWidget):
         self._gm = None
 
         self.canvas = QVCSWidget()
-        self.value_sliders = DictEditorWidget()
-        self.value_sliders.dictEdited.connect(self.update_levels)
+        self.value_sliders = AdjustValues()
+        self.value_sliders.valuesChanged.connect(self.update_levels)
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.canvas)

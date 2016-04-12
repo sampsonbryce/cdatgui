@@ -6,6 +6,7 @@ from cdatgui.graphics import get_gms
 from cdatgui.templates import get_templates
 from cdatgui.variables.edit_variable_widget import EditVariableDialog
 from cdatgui.templates.dialog import TemplateEditorDialog
+from cdatgui.graphics.dialog import BoxfillDialog
 import vcs
 
 
@@ -136,6 +137,7 @@ class InspectorWidget(StaticDockWidget):
         self.tmpl_editor = None
         self.var_editor = None
         self.current_var = None
+        self.gm_editor = None
         self.setWidget(widget)
 
     def editVar(self, var):
@@ -155,6 +157,7 @@ class InspectorWidget(StaticDockWidget):
         self.var_editor.createdVariable.connect(self.makeVar)
         self.var_editor.editedVariable.connect(self.editVar)
         self.var_editor.show()
+        self.var_editor.raise_()
 
     def editFirstVar(self, var):
         self.current_var = 0
@@ -164,8 +167,26 @@ class InspectorWidget(StaticDockWidget):
         self.current_var = 1
         self.editVariable(var)
 
+    def editGraphicsMethod(self, gm):
+        get_gms().replace(get_gms().indexOf("boxfill", gm), gm)
+
+    def makeGraphicsMethod(self, gm):
+        get_gms().add_gm(gm)
+        self.gm_instance_combo.setCurrentIndex(self.gm_instance_combo.count() - 1)
+
     def editGM(self):
-        pass
+        gm_type = self.gm_type_combo.currentText()
+        gm_name = self.gm_instance_combo.currentText()
+
+        gm = vcs.getgraphicsmethod(gm_type, gm_name)
+        if self.gm_editor:
+            self.gm_editor.reject()
+            self.gm_editor.deleteLater()
+        self.gm_editor = BoxfillDialog(gm, self.var_combos[0].currentObj())
+        self.gm_editor.createdGM.connect(self.makeGraphicsMethod)
+        self.gm_editor.editedGM.connect(self.editGraphicsMethod)
+        self.gm_editor.show()
+        self.gm_editor.raise_()
 
     def makeTmpl(self, template):
         get_templates().add_template(template)
@@ -183,6 +204,7 @@ class InspectorWidget(StaticDockWidget):
         self.tmpl_editor.createdTemplate.connect(self.makeTmpl)
         self.tmpl_editor.editedTemplate.connect(self.editTmpl)
         self.tmpl_editor.show()
+        self.tmpl_editor.raise_()
 
     def deletePlot(self, plot):
         ind = self.plot_combo.currentIndex()
@@ -238,7 +260,10 @@ class InspectorWidget(StaticDockWidget):
             block = self.template_combo.blockSignals(True)
             self.template_combo.setCurrentIndex(self.template_combo.findText(plot.template.name))
             self.template_combo.blockSignals(block)
-            self.edit_gm_button.setEnabled(True)
+            if self.gm_type_combo.currentText() == "boxfill":
+                self.edit_gm_button.setEnabled(True)
+            else:
+                self.edit_gm_button.setEnabled(False)
         else:
             self.plot_combo.setEnabled(False)
             self.gm_type_combo.setEnabled(False)
