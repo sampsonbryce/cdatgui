@@ -5,6 +5,7 @@ from cdatgui.variables import get_variables
 from cdatgui.graphics import get_gms
 from cdatgui.templates import get_templates
 from cdatgui.variables.edit_variable_widget import EditVariableDialog
+from cdatgui.templates.dialog import TemplateEditorDialog
 import vcs
 
 
@@ -131,6 +132,8 @@ class InspectorWidget(StaticDockWidget):
         for v in self.var_combos:
             v.setEnabled(False)
         self.template_combo.setEnabled(False)
+
+        self.tmpl_editor = None
         self.var_editor = None
         self.current_var = None
         self.setWidget(widget)
@@ -164,8 +167,22 @@ class InspectorWidget(StaticDockWidget):
     def editGM(self):
         pass
 
+    def makeTmpl(self, template):
+        get_templates().add_template(template)
+
+    def editTmpl(self, template):
+        ind = get_templates().indexOf(template)
+        if ind.isValid():
+            get_templates.replace(ind.row(), template)
+
     def editTemplate(self, tmpl):
-        pass
+        if self.tmpl_editor:
+            self.tmpl_editor.reject()
+            self.tmpl_editor.deleteLater()
+        self.tmpl_editor = TemplateEditorDialog(tmpl)
+        self.tmpl_editor.createdTemplate.connect(self.makeTmpl)
+        self.tmpl_editor.editedTemplate.connect(self.editTmpl)
+        self.tmpl_editor.show()
 
     def deletePlot(self, plot):
         ind = self.plot_combo.currentIndex()

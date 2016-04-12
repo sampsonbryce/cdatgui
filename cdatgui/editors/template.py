@@ -3,6 +3,9 @@ from PySide import QtGui, QtCore
 from widgets.template.labels import TemplateLabelEditor
 from widgets.template.plot import DataEditor, LegendEditor
 from widgets.template.axes import AxisEditor
+import vcs
+import cdms2
+import os
 
 
 class TemplateEditor(QtGui.QWidget):
@@ -11,8 +14,9 @@ class TemplateEditor(QtGui.QWidget):
         self._template = None
         layout = QtGui.QVBoxLayout()
 
-
         self._preview = TemplatePreviewWidget()
+        self._preview.gm = vcs.getboxfill()
+        self._preview.var = cdms2.open(os.path.join(vcs.sample_data, "clt.nc"))["clt"]
 
         self._yslider = QtGui.QSlider()
         self._yslider.setMinimum(0)
@@ -103,13 +107,6 @@ class TemplateEditor(QtGui.QWidget):
     def update(self, member=None):
         self._preview.update()
         # Need some way to trigger this, but that's a problem for later.
-        #self.plot.plot()
-
-    def setPlots(self, plots):
-        self.plot = plots[0]
-        self.setTemplate(plots[0].template)
-        self._preview.gm = plots[0].graphics_method
-        self._preview.var = plots[0].variables[0]
 
     def setTemplate(self, template):
         self._template = template

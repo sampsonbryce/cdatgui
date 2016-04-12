@@ -23,6 +23,15 @@ class VCSTemplateListModel(QtCore.QAbstractListModel):
 
         self.templates = sorted(self.templates, key=template_key)
 
+    def get(self, ind):
+        return self.templates[ind]
+
+    def indexOf(self, template):
+        for i, t in enumerate(self.templates):
+            if t.name == template.name:
+                return self.index(i, 0)
+        return QtCore.QModelIndex()
+
     def add_template(self, template):
         self.insertRows(self.rowCount(), 1, [template])
 
