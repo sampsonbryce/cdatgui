@@ -26,12 +26,19 @@ class InspectorWidget(StaticDockWidget):
         label = QtGui.QLabel("Plots:")
         l.addWidget(label)
 
+        plot_layout = QtGui.QHBoxLayout()
+
         plot_combo = QtGui.QComboBox()
         plot_combo.setEnabled(False)
         plot_combo.setModel(self.plots)
         plot_combo.currentIndexChanged[int].connect(self.selectPlot)
+        plot_layout.addWidget(plot_combo)
 
-        l.addWidget(plot_combo)
+        plot_remove = QtGui.QPushButton("Delete")
+        plot_remove.clicked.connect(self.deletePlot)
+        plot_layout.addWidget(plot_remove)
+
+        l.addLayout(plot_layout)
 
         self.plot_combo = plot_combo
 
@@ -78,6 +85,13 @@ class InspectorWidget(StaticDockWidget):
 
         self.setWidget(widget)
 
+    def deletePlot(self):
+        ind = self.plot_combo.currentIndex()
+        plot = self.plots.get(ind)
+        self.plots.remove(ind)
+        plot.remove()
+        self.selectPlot(ind - 1)
+
     def setGMRoot(self, index):
         self.gm_instance_combo.setRootModelIndex(get_gms().index(index, 0))
 
@@ -101,7 +115,8 @@ class InspectorWidget(StaticDockWidget):
         self.current_plot.variables = [self.current_plot.variables[0], variable]
 
     def selectPlot(self, plotIndex):
-        if plotIndex < self.plots.rowCount():
+        if 0 <= plotIndex < self.plots.rowCount():
+            self.plot_combo.setEnabled(True)
             plot = self.plots.get(plotIndex)
             self.current_plot = plot
             # Set the variable combos to the correct indices
@@ -130,10 +145,12 @@ class InspectorWidget(StaticDockWidget):
             self.template_combo.setCurrentIndex(self.template_combo.findText(plot.template.name))
             self.template_combo.blockSignals(block)
         else:
-            for var in self.var_combos:
-                block = var.blockSignals(True)
-                var.setCurrentIndex(-1)
-                var.blockSignals(block)
+            self.plot_combo.setEnabled(False)
+            self.gm_type_combo.setEnabled(False)
+            self.gm_instance_combo.setEnabled(False)
+            self.template_combo.setEnabled(False)
+            for v in self.var_combos:
+                v.setEnabled(False)
 
     def selection_change(self, selected):
         plots = []
@@ -145,13 +162,5 @@ class InspectorWidget(StaticDockWidget):
             # cell is now a QCDATWidget
             for plot in cell.getPlotters()[:-1]:
                 self.plots.append(plot)
-        if self.plots.rowCount() > 0:
-            self.plot_combo.setEnabled(True)
-            self.plot_combo.setCurrentIndex(0)
-        else:
-            self.plot_combo.setEnabled(False)
-            self.gm_type_combo.setEnabled(False)
-            self.gm_instance_combo.setEnabled(False)
-            self.template_combo.setEnabled(False)
-            for v in self.var_combos:
-                v.setEnabled(False)
+        self.plot_combo.setCurrentIndex(0)
+
