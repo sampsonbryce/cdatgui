@@ -15,6 +15,18 @@ class VCSGraphicsMethodModel(QtCore.QAbstractItemModel):
         parent_row = self.gm_types.index(vcs.graphicsmethodtype(gm))
         self.insertRows(self.rowCount(), 1, [gm], self.index(parent_row, 0))
 
+    def indexOf(self, gmtype, gm):
+        parent = self.gm_types.index(gmtype)
+        actual = self.gms[gmtype].index(gm)
+        return self.index(actual, 0, parent=self.index(parent, 0))
+
+    def replace(self, index, gm):
+        self.gms[vcs.graphicsmethodtype(gm)][index.row()] = gm
+        self.dataChanged.emit(index, index)
+
+    def get(self, index):
+        return self.get_gm(index)
+
     def get_gm(self, index):
         return self.gms[index]
 

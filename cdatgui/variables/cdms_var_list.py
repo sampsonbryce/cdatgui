@@ -10,6 +10,7 @@ class CDMSVariableList(QtGui.QListView):
         super(CDMSVariableList, self).__init__(parent=parent)
         self.setModel(get_variables())
         self.setDragEnabled(True)
+        self.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.activated.connect(self.sel)
 
     def remove_variable(self, variable):

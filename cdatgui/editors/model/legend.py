@@ -159,7 +159,8 @@ class VCSLegend(object):
                     parts.append("Negative Infinity")
                 else:
                     b = str(b)
-                    b = b[:b.index('.') + 4]
+                    if "." in b:
+                        b = b[:b.index('.') + 4]
                     parts.append(str(b))
             level_strings.append("-".join(parts))
 
