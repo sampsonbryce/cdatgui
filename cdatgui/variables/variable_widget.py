@@ -1,3 +1,5 @@
+from functools import partial
+
 from cdatgui.bases import StaticDockWidget
 from PySide import QtCore
 from cdatgui.toolbars import AddEditRemoveToolbar
@@ -46,8 +48,9 @@ class VariableWidget(StaticDockWidget):
             return
         index = indexes[0].row()
         variable = self.variable_widget.get_variable(index)
+        label = self.variable_widget.get_variable_label(variable)
         e = EditVariableDialog(variable, self)
-        e.editedVariable.connect(self.variable_widget.update_variable)
+        e.editedVariable.connect(partial(self.variable_widget.update_variable, label=label))
         e.createdVariable.connect(self.variable_widget.add_variable)
         e.show()
 
