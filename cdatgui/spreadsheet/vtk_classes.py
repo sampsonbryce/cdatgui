@@ -145,7 +145,6 @@ class QCDATWidget(QtGui.QFrame):
     def addedPlot(self):
         """Adds a new PlotInfo to the collection whenever one is made"""
         new_widget = PlotInfo(lambda: self.canvas, self.row, self.col)
-        new_widget.something_changed.connect(self.emitAllPlots.emit)
         self.dragLayout.addWidget(new_widget)
         self.plots.append(new_widget)
         new_widget.initialized.connect(self.addedPlot)
