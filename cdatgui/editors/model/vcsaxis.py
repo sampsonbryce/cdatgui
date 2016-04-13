@@ -131,11 +131,11 @@ class VCSAxis(object):
         if value < 0:
             cur_val = right
             target = left
-            comp = target.__lt__
+            comp = target.__le__
         else:
             cur_val = left
             target = right
-            comp = target.__gt__
+            comp = target.__ge__
 
         while comp(cur_val):
             tick_vals.append(cur_val)

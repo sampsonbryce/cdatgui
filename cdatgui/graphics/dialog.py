@@ -7,13 +7,14 @@ class BoxfillDialog(QtGui.QDialog):
     editedGM = QtCore.Signal(object)
     createdGM = QtCore.Signal(object)
 
-    def __init__(self, gm, var, parent=None):
+    def __init__(self, gm, var, tmpl, parent=None):
         super(BoxfillDialog, self).__init__(parent=parent)
         layout = QtGui.QVBoxLayout()
         self.gm = gm
         self.editor = BoxfillEditor()
         self.editor.gm = gm
         self.editor.var = var
+        self.editor.tmpl = tmpl
         layout.addWidget(self.editor)
 
         buttons = QtGui.QHBoxLayout()

@@ -169,10 +169,12 @@ class InspectorWidget(StaticDockWidget):
 
     def editGraphicsMethod(self, gm):
         get_gms().replace(get_gms().indexOf("boxfill", gm), gm)
+        self.current_plot.graphics_method = gm
 
     def makeGraphicsMethod(self, gm):
         get_gms().add_gm(gm)
         self.gm_instance_combo.setCurrentIndex(self.gm_instance_combo.count() - 1)
+        self.current_plot.graphics_method = gm
 
     def editGM(self):
         gm_type = self.gm_type_combo.currentText()
@@ -182,7 +184,7 @@ class InspectorWidget(StaticDockWidget):
         if self.gm_editor:
             self.gm_editor.reject()
             self.gm_editor.deleteLater()
-        self.gm_editor = BoxfillDialog(gm, self.var_combos[0].currentObj())
+        self.gm_editor = BoxfillDialog(gm, self.var_combos[0].currentObj(), self.template_combo.currentObj())
         self.gm_editor.createdGM.connect(self.makeGraphicsMethod)
         self.gm_editor.editedGM.connect(self.editGraphicsMethod)
         self.gm_editor.show()
@@ -210,7 +212,6 @@ class InspectorWidget(StaticDockWidget):
         ind = self.plot_combo.currentIndex()
         self.plots.remove(ind)
         plot.remove()
-        self.selectPlot(ind - 1)
 
     def setGMRoot(self, index):
         self.gm_instance_combo.setRootModelIndex(get_gms().index(index, 0))
