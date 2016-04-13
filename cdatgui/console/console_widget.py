@@ -1,15 +1,14 @@
-from PySide import QtGui, QtCore
-from functools import partial
-import string
-
 import re
-from cdatgui.bases.static_docked import StaticDockWidget
-from cdatgui.variables import get_variables
-from cdatgui.utils import label
-from qtconsole.rich_jupyter_widget import RichJupyterWidget
+import string
+from PySide import QtGui, QtCore
+
+import cdms2
+import vcs
 from qtconsole.inprocess import QtInProcessKernelManager
+from qtconsole.rich_jupyter_widget import RichJupyterWidget
+
 from cdatgui.cdat.metadata import FileMetadataWrapper, VariableMetadataWrapper
-import vcs, cdms2
+from cdatgui.variables import get_variables
 
 
 def is_cdms_var(v):
@@ -22,22 +21,21 @@ def is_displayplot(v):
 
 class ConsoleWidget(QtGui.QWidget):
     createdPlot = QtCore.Signal(object)
+    updatedVar = QtCore.Signal()
 
     def __init__(self, parent=None):
         super(ConsoleWidget, self).__init__()
         self.variable_list = get_variables()
         self.vbox = QtGui.QVBoxLayout()
         self.setLayout(self.vbox)
-        self.names = QtGui.QHBoxLayout()
-        self.canvas_buttons = QtGui.QHBoxLayout()
-        self.grid = QtGui.QGridLayout()
         self.kernel_manager = None
         self.kernel_client = None
         self.kernel = None
         self.jupyter_widget = None
         self.values = []
         self.display_plots = []
-        self.canvas_labels = []
+        self.shell_vars = {}
+        self.gm_count = {}
         self.letters = list(string.ascii_uppercase)
         self.reserved_words = ['and', 'del', 'from', 'not', 'while', 'as', 'elif', 'global', 'or', 'with',
                                'assert', 'else', 'if', 'pass', 'yield', 'break', 'except', 'import', 'print', 'class',
@@ -65,42 +63,89 @@ class ConsoleWidget(QtGui.QWidget):
         self.variable_list.listUpdated.connect(self.updateVariables)
         self.updateVariables()
 
-        self.vbox.addLayout(self.names)
         self.vbox.addWidget(self.jupyter_widget)
-        self.vbox.addWidget(label("Selected Cell Data:"))
-        self.vbox.addLayout(self.grid)
-        self.vbox.addLayout(self.canvas_buttons)
 
-        # add label column
-        for index, text in enumerate(["Variables", "Graphics Methods", "Templates"]):
-            self.grid.addWidget(label(text), index + 1, 0)
+    def clearShellVars(self):
+        self.gm_count = {}
+        for key, var_dict in self.shell_vars.items():
+            try:
+                self.kernel.shell.user_ns.pop(self.shell_vars[key]['canvas'])
+            except KeyError:
+                pass
+            try:
+                self.kernel.shell.user_ns.pop(self.shell_vars[key]['gm'])
+            except KeyError:
+                pass
+            try:
+                self.kernel.shell.user_ns.pop(self.shell_vars[key]['template'])
+            except KeyError:
+                pass
 
-        # add column column <-best wording N/A
-        for index in range(1, 5):
-            self.grid.addWidget(label(str(index)), 0, index, QtCore.Qt.AlignHCenter)
+        for var in self.values:
+            self.values.remove(var)
+            try:
+                self.kernel.shell.user_ns.pop(var)
+            except KeyError:
+                pass
 
-        # insert Hlayouts for variables
-        for index in range(1, 5):
-            layout = QtGui.QHBoxLayout()
-            self.grid.addLayout(layout, 1, index)
+    def updateVariables(self, plot=None):
+        for var in get_variables().values:
+            if var[0] not in self.values:
+                self.values.append(var[0])
+            self.kernel.shell.push({var[0]: var[1]})
+        if plot and plot.variables:
+            for var in plot.variables:
+                try:
+                    self.kernel.shell.push({var.id: var})
+                except AttributeError:
+                    pass
 
-    def updateVariables(self):
-        print self.variable_list.values
-        for varname, var in self.variable_list.values:
-            if varname not in self.kernel.shell.user_ns.keys():
-                self.kernel.shell.push({varname: var})
+    def updateCanvases(self, plot):
+        canvas_var_label = "canvas_{0}{1}".format(plot.row + 1, self.letters[plot.col])
+        self.shell_vars[plot]['canvas'] = canvas_var_label
+        self.kernel.shell.push({canvas_var_label: plot.canvas})
 
-    def updateSheetSize(self, plots):
-        for key in set(self.kernel.shell.user_ns) - set(self.original_ns):
-            if key in self.canvas_labels:
-                self.kernel.shell.user_ns.pop(key)
+    def updateGMS(self, plot):
+        if plot.graphics_method:
+            gm = plot.graphics_method.name
+            if gm[:2] == '__':
+                gm_prefix = vcs.graphicsmethodtype(plot.graphics_method)
+                gm_prefix = self.fixInvalidVariables(gm_prefix)
+                if gm_prefix not in self.gm_count.keys():
+                    self.gm_count[gm_prefix] = 1
+                else:
+                    self.gm_count[gm_prefix] += 1
+                gm = "{0}_{1}".format(gm_prefix, self.gm_count[gm_prefix])
+            else:
+                gm = self.fixInvalidVariables(gm)
+            if gm == 'default':
+                "{0}_default".format(vcs.graphicsmethodtype(plot.graphics_method))
+            self.shell_vars[plot]['gm'] = gm
+            self.kernel.shell.push({gm: plot.graphics_method})
+
+    def updateTemplates(self, plot):
+        if plot.template:
+            tmp = plot.template.name
+            tmp = self.fixInvalidVariables(tmp)
+            if tmp == 'default':
+                tmp = 'temp_default'
+            self.shell_vars[plot]['template'] = tmp
+            self.kernel.shell.push({tmp: plot.template})
+
+    def updateAllPlots(self, plots):
+        self.clearShellVars()
         for plot in plots:
-            canvas_var_label = "canvas_{0}{1}".format(plot.row + 1, self.letters[plot.col])
-            self.canvas_labels.append(canvas_var_label)
-            self.kernel.shell.push({canvas_var_label: plot.canvas})
+            self.shell_vars[plot] = {'canvas': '', 'template': '', 'gm': ''}
+            if plot.name() != "(Untitled)":
+                self.updateVariables(plot)
+                self.updateCanvases(plot)
+                self.updateGMS(plot)
+                self.updateTemplates(plot)
+            else:
+                self.updateVariables(plot)
+                self.updateCanvases(plot)
 
     def codeExecuted(self, *varargs):
-        checked_vars = []
         namespace = self.kernel.shell.user_ns
         cur_keys = set(namespace)
 
@@ -110,114 +155,30 @@ class ConsoleWidget(QtGui.QWidget):
             last_line = out_dict[max(out_dict)]
         else:
             last_line = None
-        cdms_count = 0
         for key in cur_keys - set(self.original_ns):
             if key[0] == "_":
                 continue
             value = namespace[key]
+
             if isinstance(value, cdms2.dataset.CdmsFile):
                 namespace[key] = FileMetadataWrapper(value)
-            try:
-                print "Checking if cdms", value, value.id
-            except:
-                print "Checking if cdms", value
-            if id(value) in checked_vars:
-                print value, "Already updated"
+
             if is_cdms_var(value):
-                # print "COUNT:", cdms_count
-                cdms_count += 1
-                checked_vars.append(id(value))
                 cdms_var = value()
                 cdms_var.id = key
                 if not self.variable_list.variable_exists(cdms_var):
-                    print "adding variable"
                     self.variable_list.add_variable(cdms_var)
                 else:
-                    print "updating variable"
                     self.variable_list.update_variable(cdms_var, key)
+                    self.updatedVar.emit()
 
             elif is_displayplot(value) and value not in self.display_plots:
-                # Should only emit if new!
-                print "creatingPlot from var"
                 self.display_plots.append(value)
                 self.createdPlot.emit(value)
 
         if is_displayplot(last_line) and last_line not in self.display_plots:
-            print "creatingPlot from output"
-
             self.display_plots.append(last_line)
             self.createdPlot.emit(last_line)
-
-    def sendString(self, string):
-        self.jupyter_widget._control.setText(self.jupyter_widget._control.toPlainText() + string)
-        self.jupyter_widget._control.setFocus()
-        self.jupyter_widget._control.moveCursor(QtGui.QTextCursor.End)
-
-    def setPlots(self, plots):
-        print "PLOTS:", plots
-        canvas_dict = {}
-
-        # get all unique canvases
-        canvases = set()
-        for plot in plots:
-            canvases.add(plot.canvas)
-
-        # clear button grid
-        self.clear()
-
-        # create button grid
-        for index, manager_obj in enumerate(plots):
-            self.names.addWidget(label(manager_obj.name()))
-
-            # Add to grid
-            if manager_obj.variables:
-                for var in manager_obj.variables:
-                    try:
-                        v_name = var.id
-                        v_name = self.fixInvalidVariables(v_name)
-                    except AttributeError:
-                        continue
-
-                    v_button = QtGui.QPushButton(v_name)
-                    v_button.clicked.connect(partial(self.sendString, v_name))
-                    self.grid.itemAtPosition(1, index + 1).layout().addWidget(v_button)
-                    try:
-                        self.kernel.shell.push({v_name: self.variable_list.get_variable(v_name)})
-                    except ValueError:
-                        # handle display plots
-                        for plot in self.display_plots:
-                            if plot.array[0].id == v_name:
-                                self.kernel.shell.push({v_name: plot})
-                                break
-
-            if manager_obj.graphics_method:
-                gm = manager_obj.graphics_method.name
-                if gm[0:2] == "__":
-                    gm = "{0}_{1}".format(vcs.graphicsmethodtype(manager_obj.graphics_method), index + 1)
-
-                gm = self.fixInvalidVariables(gm)
-                gm_button = QtGui.QPushButton(gm)
-                gm_button.clicked.connect(partial(self.sendString, gm))
-                self.grid.addWidget(gm_button, 2, index + 1)
-                self.kernel.shell.push({gm: manager_obj.graphics_method})
-
-            if manager_obj.template:
-                tmp = manager_obj.template.name
-                tmp = self.fixInvalidVariables(tmp)
-                tmp_button = QtGui.QPushButton(tmp)
-                tmp_button.clicked.connect(partial(self.sendString, tmp))
-                self.grid.addWidget(tmp_button, 3, index + 1)
-                self.kernel.shell.push({tmp: manager_obj.template})
-
-            if manager_obj.canvas:
-                canvas_dict[manager_obj.canvas] = manager_obj
-
-        # create canvas buttons
-        canvas_lists = []
-        for canvas in canvases:
-            canvas_lists.append([canvas, canvas_dict[canvas].row, canvas_dict[canvas].col])
-        for canvas in sorted(canvas_lists, key=lambda x: (x[1], x[2])):
-            self.createCanvasButton(canvas[0], canvas_dict[canvas[0]].row, canvas_dict[canvas[0]].col)
 
     def fixInvalidVariables(self, var):
         var = re.sub(' +', '_', var)
@@ -225,33 +186,6 @@ class ConsoleWidget(QtGui.QWidget):
         if var in self.reserved_words or not re.match("^[a-zA-Z_]", var):
             var = 'cdat_' + var
         return var
-
-    def createCanvasButton(self, canvas, row, col):
-        print "CREATING BUTTON pos: {0} {1}".format(row, col)
-        canvas_button = QtGui.QPushButton()
-        button_text = "canvas_{0}{1}".format(row + 1, self.letters[col])
-        canvas_button.setText(button_text)
-        self.canvas_buttons.addWidget(canvas_button)
-
-        canvas_button.clicked.connect(partial(self.sendString, button_text))
-
-    def clear(self):
-        name = self.vbox.itemAt(0).layout().takeAt(0)
-        while name:
-            name.widget().deleteLater()
-            name = self.vbox.itemAt(0).layout().takeAt(0)
-
-        grid = self.vbox.itemAt(3)
-        for col in range(1, 5):
-            for row in range(1, 4):
-                button = grid.itemAtPosition(row, col)
-                if isinstance(button, QtGui.QHBoxLayout):
-                    button = button.layout().takeAt(0)
-                if button:
-                    button.widget().deleteLater()
-
-        while self.canvas_buttons.count():
-            self.canvas_buttons.takeAt(0).widget().deleteLater()
 
     def stop(self):
         self.kernel_client.stop_channels()

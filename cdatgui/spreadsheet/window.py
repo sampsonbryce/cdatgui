@@ -52,7 +52,7 @@ from .tabcontroller import StandardWidgetTabController
 class SpreadsheetWindow(QtGui.QMainWindow):
 
     selectionChanged = QtCore.Signal(list)
-    sheetSizeChanged = QtCore.Signal(list)
+    emitAllPlots = QtCore.Signal(list)
 
     """
     SpreadsheetWindow is the top-level main window containing a
@@ -72,7 +72,7 @@ class SpreadsheetWindow(QtGui.QMainWindow):
         # The controller that handles the spreadsheets
         self.tabController = StandardWidgetTabController(self.stackedCentralWidget)
         self.tabController.selectionChanged.connect(self.selectionChanged.emit)
-        self.tabController.sheetSizeChanged.connect(self.sheetSizeChanged.emit)
+        self.tabController.emitAllPlots.connect(self.emitAllPlots.emit)
         self.stackedCentralWidget.addWidget(self.tabController)
         self.setCentralWidget(self.stackedCentralWidget)
         self.setStatusBar(QtGui.QStatusBar(self))

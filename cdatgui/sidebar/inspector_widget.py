@@ -44,7 +44,7 @@ class InspectorWidget(StaticDockWidget):
 
         var_combo_2 = QtGui.QComboBox()
         var_combo_2.setModel(get_variables())
-        var_combo_2.currentIndexChanged[str].connect(self.setFirstVar)
+        var_combo_2.currentIndexChanged[str].connect(self.setSecondVar)
         var_combo_2.setEnabled(False)
 
         self.var_combos = [var_combo_1, var_combo_2]
@@ -82,7 +82,6 @@ class InspectorWidget(StaticDockWidget):
         self.gm_instance_combo.setRootModelIndex(get_gms().index(index, 0))
 
     def setTemplate(self, template):
-        print template
         self.current_plot.template = vcs.gettemplate(str(template))
 
     def updateGM(self, index):
@@ -101,7 +100,7 @@ class InspectorWidget(StaticDockWidget):
         self.current_plot.variables = [self.current_plot.variables[0], variable]
 
     def selectPlot(self, plotIndex):
-        if plotIndex < self.plots.rowCount():
+        if 0 <= plotIndex < self.plots.rowCount():
             plot = self.plots.get(plotIndex)
             self.current_plot = plot
             # Set the variable combos to the correct indices

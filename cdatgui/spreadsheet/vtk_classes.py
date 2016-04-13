@@ -19,7 +19,7 @@ class QCDATWidget(QtGui.QFrame):
     setVariables = QtCore.Signal(list)
     setGraphicsMethod = QtCore.Signal(object)
     setTemplate = QtCore.Signal(object)
-    canvasDisplayed = QtCore.Signal()
+    emitAllPlots = QtCore.Signal()
 
     save_formats = ["PNG file (*.png)",
                     "GIF file (*.gif)",
@@ -107,7 +107,6 @@ class QCDATWidget(QtGui.QFrame):
                     any_updated = True
                     plot.variables(new_vars)
         if any_updated:
-            print "Running self.update"
             self.update()
 
     def dropEvent(self, event):
@@ -157,7 +156,6 @@ class QCDATWidget(QtGui.QFrame):
         widget.deleteLater()
 
     def manageCanvas(self, showing):
-        print "MANAGING CANVAS"
         if showing and self.canvas is None:
             self.canvas = vcs.init(backend=self.mRenWin)
             self.canvas.open()
@@ -165,7 +163,8 @@ class QCDATWidget(QtGui.QFrame):
             self.canvas.onClosing((0, 0))
             self.canvas = None
 
-        self.canvasDisplayed.emit()
+        self.emitAllPlots.emit()
+
     def showEvent(self, e):
         super(QCDATWidget, self).showEvent(e)
         QtCore.QTimer.singleShot(0, self.becameVisible)

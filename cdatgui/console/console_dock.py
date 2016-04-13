@@ -10,9 +10,9 @@ class ConsoleDockWidget(StaticDockWidget):
         self.plots = []
 
         self.console.createdPlot.connect(self.added_plot)
-        self.console.createdPlot.connect(spreadsheet.tabController.currentWidget().selectionChange)
-        spreadsheet.selectionChanged.connect(self.selection_change)
-        spreadsheet.sheetSizeChanged.connect(self.sheet_size_changed)
+        self.console.createdPlot.connect(spreadsheet.tabController.currentWidget().totalPlotsChanged)
+        self.console.updatedVar.connect(spreadsheet.tabController.currentWidget().totalPlotsChanged)
+        spreadsheet.emitAllPlots.connect(self.updateAllPlots)
         self.setWidget(self.console)
 
     def added_plot(self, displayplot):
@@ -21,7 +21,7 @@ class ConsoleDockWidget(StaticDockWidget):
                 cell.loadPlot(displayplot)
                 break
 
-    def sheet_size_changed(self, cells):
+    def updateAllPlots(self, cells):
         plots = []
         self.cells = []
         for cell in cells:
@@ -31,15 +31,4 @@ class ConsoleDockWidget(StaticDockWidget):
             plotter = cell.getPlotters()
             plots.extend(plotter)
         self.plots = plots
-        self.console.updateSheetSize(self.plots)
-
-    def selection_change(self, selected):
-        plots = []
-        self.cells = []
-        for cell in selected:
-            cell = cell.containedWidget
-            self.cells.append(cell)
-            # cell is now a QCDATWidget
-            plots.extend(cell.getPlotters())
-        self.plots = plots
-        self.console.setPlots(self.plots)
+        self.console.updateAllPlots(self.plots)

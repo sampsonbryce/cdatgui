@@ -60,7 +60,8 @@ class StandardWidgetTabController(QtGui.QTabWidget):
     needChangeTitle = QtCore.Signal()
     tabCloseRequested = QtCore.Signal()
     selectionChanged = QtCore.Signal(list)
-    sheetSizeChanged = QtCore.Signal(list)
+    emitAllPlots = QtCore.Signal(list)
+
     def __init__(self, parent=None):
         """ StandardWidgetTabController(parent: QWidget)
                                         -> StandardWidgetTabController
@@ -426,9 +427,8 @@ class StandardWidgetTabController(QtGui.QTabWidget):
         """ addTabWidget(tabWidget: QWidget, sheetLabel: str) -> int
         Add a new tab widget to the controller
         """
-        print "Added widget to controller", tabWidget
         tabWidget.selectionChanged.connect(self.selectionChanged.emit)
-        tabWidget.sheetSizeChanged.connect(self.sheetSizeChanged.emit)
+        tabWidget.emitAllPlots.connect(self.emitAllPlots.emit)
         return self.insertTabWidget(-1, tabWidget, sheetLabel)
 
     def insertTabWidget(self, index, tabWidget, sheetLabel):

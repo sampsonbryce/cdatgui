@@ -444,7 +444,7 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
     """
 
     selectionChanged = QtCore.Signal(list)
-    sheetSizeChanged = QtCore.Signal(list)
+    emitAllPlots = QtCore.Signal(list)
 
     def __init__(self, tabWidget, row=None, col=None):
         """ StandardWidgetSheet(tabWidget: QTabWidget,
@@ -480,7 +480,6 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
         selected_cells = []
         for index in indices:
             selected_cells.append(self.sheet.cellWidget(index.row(), index.column()))
-        print "TYPE SC:", type(selected_cells)
         self.selectionChanged.emit(selected_cells)
 
     def createContainers(self):
@@ -492,7 +491,8 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
                     # TODO: HOOK UP A SIGNAL TO TRIGGER SELECTIONCHANGE
                     widget = QCDATWidget(r, c)
                     widget.plotAdded.connect(self.selectionChange)
-                    widget.canvasDisplayed.connect(self.updateSheetSize)
+                    widget.emitAllPlots.connect(self.totalPlotsChanged)
+                    # widget.emitAllPlots.connect(self.totalPlotsChanged)
                     cellWidget = QCellContainer(widget)
                     self.setCellByWidget(r, c, cellWidget)
 
@@ -524,27 +524,26 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
             self.sheet.setRowCount(self.toolBar.rowSpinBox.value())
             self.sheet.stretchCells()
             self.createContainers()
-            self.updateSheetSize()
+            self.totalPlotsChanged()
 
     def colSpinBoxChanged(self):
         """ colSpinBoxChanged() -> None
         Handle the number of row changed
 
         """
-        print "COL SPIN BOX CHANGED"
         if self.toolBar.colSpinBox.value() != self.sheet.columnCount():
             self.removeContainers(new_cols=self.toolBar.colSpinBox.value())
             self.sheet.setColumnCount(self.toolBar.colSpinBox.value())
             self.sheet.stretchCells()
             self.createContainers()
-            self.updateSheetSize()
+            self.totalPlotsChanged()
 
-    def updateSheetSize(self):
+    def totalPlotsChanged(self):
         total_tabs = []
         for row in range(self.toolBar.rowSpinBox.value()):
             for col in range(self.toolBar.colSpinBox.value()):
                 total_tabs.append(self.sheet.cellWidget(row, col))
-        self.sheetSizeChanged.emit(total_tabs)
+        self.emitAllPlots.emit(total_tabs)
 
     ### Belows are API Wrappers to connect to self.sheet
 
