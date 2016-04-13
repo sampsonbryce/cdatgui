@@ -157,7 +157,6 @@ class QCDATWidget(QtGui.QFrame):
         widget.deleteLater()
 
     def manageCanvas(self, showing):
-        #print "MANAGING CANVAS"
         if showing and self.canvas is None:
             self.canvas = vcs.init(backend=self.mRenWin)
             self.canvas.open()

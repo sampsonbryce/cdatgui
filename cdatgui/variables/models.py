@@ -60,7 +60,6 @@ class CDMSVariableListModel(ListModel):
 
         indices = "".join(parts).split(",")
         variables = [self.values[int(ind)][1].var for ind in indices]
-        # print "DROPPED VARS:", variables
         return variables
 
     def format_for_display(self, variable):
