@@ -1,7 +1,7 @@
-
 from PySide import QtGui, QtCore
 from axis_bounds import AxisBoundsChooser
 from cdatgui.utils import header_label
+from region import ROIPreview
 
 
 class QAxisList(QtGui.QWidget):
@@ -26,7 +26,15 @@ class QAxisList(QtGui.QWidget):
 
         self.latitude = None
         self.longitude = None
+        self.roi_vbox = QtGui.QVBoxLayout()
+        self.roi_layout = QtGui.QHBoxLayout()
+        self.roi_layout.addLayout(self.roi_vbox)
 
+        roi_preview = QtGui.QVBoxLayout()
+        self.roi_sample = ROIPreview((200, 200))
+        roi_preview.addWidget(self.roi_sample)
+        self.roi_layout.addLayout(roi_preview)
+        vbox.addLayout(self.roi_layout)
         self.var = var
 
     def clear(self):
@@ -35,7 +43,6 @@ class QAxisList(QtGui.QWidget):
         """
         for widget in self.axisWidgets:
             widget.deleteLater()
-
         self.axisWidgets = []
 
     def getKwargs(self):
@@ -75,6 +82,12 @@ class QAxisList(QtGui.QWidget):
         if longitude is not None and self.longitude is not None:
             self.longitude.setBotTop(*longitude)
 
+    def updateROI(self, axis):
+        min_lat, max_lat = self.latitude.getBotTop()
+        min_lon, max_lon = self.longitude.getBotTop()
+        self.roi_sample.setLatRange(min_lat, max_lat)
+        self.roi_sample.setLonRange(min_lon, max_lon)
+
     def getVar(self):
         return self._var.get_original()(**self.getKwargs())
 
@@ -96,10 +109,24 @@ class QAxisList(QtGui.QWidget):
             w = AxisBoundsChooser(var_axes[axis.id], source_axis=axis)
             if axis.isLatitude():
                 self.latitude = w
-            if axis.isLongitude():
+            elif axis.isLongitude():
                 self.longitude = w
+            else:
+                self.vbox.addWidget(w)
             w.boundsEdited.connect(self.axisEdited.emit)
             self.axisWidgets.append(w)
-            self.vbox.addWidget(w)
+
+        if self.latitude is not None:
+            if self.longitude is not None:
+                self.roi_vbox.addWidget(self.latitude)
+                self.roi_vbox.addWidget(self.longitude)
+                self.layout().addLayout(self.roi_layout)
+                self.latitude.boundsEdited.connect(self.updateROI)
+                self.longitude.boundsEdited.connect(self.updateROI)
+            else:
+                self.layout().addWidget(self.latitude)
+        elif self.longitude is not None:
+            self.layout().addWidget(self.longitude)
+
 
     var = property(getVar, setVar)

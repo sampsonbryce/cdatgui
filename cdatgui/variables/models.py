@@ -1,25 +1,53 @@
 from PySide import QtCore
+from cdatgui.bases.list_model import ListModel
 
 
-class CDMSVariableListModel(QtCore.QAbstractListModel):
-    def __init__(self, parent=None):
-        super(CDMSVariableListModel, self).__init__(parent=parent)
-        self.variables = []
+class CDMSVariableListModel(ListModel):
 
-    def add_variable(self, variable):
-        self.insertRows(self.rowCount(), 1, [variable])
+    remove_variable = ListModel.remove
 
-    def get_variable(self, index):
-        return self.variables[index]
+    def get_variable(self, var_name_or_index):
+        if isinstance(var_name_or_index, int):
+            return self.get(var_name_or_index)
+        else:
+            for v in self.values:
+                # print "Stored", type(v)
+                if v[0] == var_name_or_index:
+                    return v[1]
+            raise ValueError("No variable found with ID %s" % var_name_or_index)
 
-    def update_variable(self, variable):
-        for ind, var in enumerate(self.variables):
-            if var.id == variable.id:
+    def get(self, ind):
+        return self.values[ind][1]
+
+    def get_variable_label(self, var):
+        for label, value in self.values:
+            if value == var:
+                return label
+
+    def append(self, variable):
+        super(CDMSVariableListModel, self).append((variable.id, variable))
+
+    add_variable = append
+
+    def update_variable(self, variable, label):
+        for ind, var in enumerate(self.values):
+            if var[0] == label:
                 break
         else:
             raise ValueError("No variable found with ID %s" % variable.id)
+        self.replace(ind, variable)
 
-        self.variables[ind] = variable
+    def replace(self, index, value):
+        if index < len(self.values):
+            super(CDMSVariableListModel, self).replace(index, (self.values[index][0], value))
+        else:
+            raise IndexError("Index %d out of range." % index)
+
+    def variable_exists(self, variable):
+        for var in self.values:
+            if var[0] == variable.id:
+                return True
+        return False
 
     def get_dropped(self, md):
         variables = []
@@ -31,21 +59,11 @@ class CDMSVariableListModel(QtCore.QAbstractListModel):
             parts.append(char)
 
         indices = "".join(parts).split(",")
-        variables = [self.variables[int(ind)].var for ind in indices]
-
+        variables = [self.values[int(ind)][1].var for ind in indices]
         return variables
 
-    def insertRows(self, row, count, variables, parent=QtCore.QModelIndex()):
-        self.beginInsertRows(parent, row, row + count)
-        self.variables = self.variables[:row] + variables + self.variables[row:]
-        self.endInsertRows()
-
-    def rowCount(self, modelIndex=None):
-        return len(self.variables)
-
-    def data(self, index, role=QtCore.Qt.DisplayRole):
-        if role == QtCore.Qt.DisplayRole:
-            return unicode(self.variables[index.row()].id)
+    def format_for_display(self, variable):
+        return variable[0]
 
     def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
         return u"Variable Name"
@@ -71,3 +89,6 @@ class CDMSVariableListModel(QtCore.QAbstractListModel):
 
         md.setData("application/x-cdms-variable-list", ba)
         return md
+
+    def format_for_icon(self, value):
+        return None

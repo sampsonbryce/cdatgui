@@ -21,3 +21,5 @@ cov.save()
 print "Saving html report..."
 
 cov.html_report(directory="htmlcov")
+
+print "Saved report"

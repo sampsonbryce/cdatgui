@@ -2,6 +2,8 @@
 
 from setuptools import setup, find_packages
 
+import os
+
 setup(
     name="CDAT GUI",
     version="0.1",
@@ -9,7 +11,7 @@ setup(
     author="Sam Fries",
     author_email="fries2@llnl.gov",
     packages=find_packages(exclude="tests"),
+    package_data={"cdatgui": ["resources/*.*", "resources/pattern_thumbs/*.*"]},
     scripts=["scripts/cdatgui"],
-    package_data={"cdatgui": ["resources/*"]},
     install_requires=["sqlalchemy>=1.0"]
 )

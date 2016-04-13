@@ -1,6 +1,8 @@
 import vcs
 from PySide import QtGui, QtCore
 from cdatgui.utils import header_label, label, icon
+from metadata import VariableMetadataWrapper
+
 
 cdms_mime = "application/x-cdms-variable-list"
 vcs_gm_mime = "application/x-vcs-gm"
@@ -9,8 +11,9 @@ vcs_template_mime = "application/x-vcs-template"
 
 class PlotInfo(QtGui.QFrame):
     initialized = QtCore.Signal()
+    removed = QtCore.Signal(object)
 
-    def __init__(self, canvas, parent=None, f=0):
+    def __init__(self, canvas, row, col, parent=None, f=0):
         super(PlotInfo, self).__init__(parent=parent, f=f)
 
         if callable(canvas):
@@ -19,7 +22,9 @@ class PlotInfo(QtGui.QFrame):
             self._canvas = canvas
 
         self.manager = PlotManager(self)
-
+        self.manager.row = row
+        self.manager.col = col
+        self.manager.removed.connect(self.removeSelf)
         # Icon to display till we actually get some data
         self.newIcon = QtGui.QLabel(self)
         self.newIcon.setPixmap(icon("add_plot.svg").pixmap(128, 128))
@@ -50,6 +55,9 @@ class PlotInfo(QtGui.QFrame):
         self.tmpl_label = QtGui.QLabel()
         layout.addWidget(header_label("Template:"))
         layout.addWidget(self.tmpl_label)
+
+    def removeSelf(self):
+        self.removed.emit(self)
 
     def load(self, display):
         # Set up the labels correctly
@@ -104,28 +112,51 @@ class PlotInfo(QtGui.QFrame):
             self.var_labels[ind].setText(var.id)
 
 
-class PlotManager(object):
-    def __init__(self, source):
-        self.source = source
+class PlotManager(QtCore.QObject):
+    removed = QtCore.Signal()
 
+    def __init__(self, source):
+        super(PlotManager, self).__init__()
+        self.source = source
+        self.row = None
+        self.col = None
         self.dp = None
-        self.dp_ind = 0
         self._gm = None
         self._vars = None
         self._template = None
 
+    def name(self):
+        if self.can_plot() is False:
+            return "(Untitled)"
+
+        vars = []
+        for v in self._vars:
+            if v is None:
+                continue
+            try:
+                vars.append(v.long_name)
+            except AttributeError:
+                try:
+                    vars.append(v.title)
+                except AttributeError:
+                    vars.append(v.id)
+
+        gm_type = vcs.graphicsmethodtype(self._gm)
+        vars = " x ".join(vars)
+        return "%s (%s)" % (vars, gm_type)
+
     def load(self, display):
         self.dp = display
-        self.dp_ind = self.canvas.display_names.index(display.name)
         self._gm = vcs.getgraphicsmethod(display.g_type, display.g_name)
         self._vars = display.array
         self._template = vcs.gettemplate(display._template_origin)
 
     def can_plot(self):
-        return self.dp is not None or (self._template is not None and self._vars is not None and self._gm is not None)
+        return self.dp is not None or (self._vars is not None and any((v is not None for v in self._vars)))
 
     @property
     def canvas(self):
+        # print "MANAGER CANVAS:", self.source.canvas
         return self.source.canvas
 
     def gm(self):
@@ -150,6 +181,14 @@ class PlotManager(object):
         except IndexError:
             self._vars = (v[0], None)
 
+        # Strip metadatawrapper for plotting purposes
+        new_vars = []
+        for var in self._vars:
+            if isinstance(var, VariableMetadataWrapper):
+                new_vars.append(var.var)
+            else:
+                new_vars.append(var)
+        self._vars = new_vars
         if self.can_plot():
             self.plot()
 
@@ -166,18 +205,18 @@ class PlotManager(object):
 
     template = property(templ, set_templ)
 
+    def remove(self):
+        if self.dp is not None:
+            self.canvas.display_names.remove(self.dp.name)
+            self.canvas.update()
+            self.dp = None
+            self.removed.emit()
+
     def plot(self):
         if self.variables is None:
             raise ValueError("No variables specified")
-        if self.graphics_method is None:
-            raise ValueError("No graphics method specified")
-        # Check if gm supports templates
-        if self.template is None:
-            raise ValueError("No template specified")
 
         if self.dp is not None:
-            if self.dp.name not in self.canvas.display_names:
-                self.dp = vcs.elements["display"][self.canvas.display_names[self.dp_ind]]
             # Set the slabs appropriately
             self.dp.array[0] = self.variables[0]
             self.dp.array[1] = self.variables[1]
@@ -189,20 +228,23 @@ class PlotManager(object):
             self.dp.g_name = self.graphics_method.name
             self.dp.g_type = vcs.graphicsmethodtype(self.graphics_method)
 
-            ind = self.canvas.display_names.index(self.dp.name)
-
             # Update the canvas
             self.canvas.update()
-
-            self.dp = vcs.elements["display"][self.canvas.display_names[ind]]
 
         else:
             args = []
             for var in self.variables:
                 if var is not None:
                     args.append(var)
-            args.append(self.template.name)
-            args.append(vcs.graphicsmethodtype(self.graphics_method))
-            args.append(self.graphics_method.name)
+            if self.template is not None:
+                args.append(self.template.name)
+            else:
+                args.append("default")
+            if self.graphics_method is not None:
+                args.append(vcs.graphicsmethodtype(self.graphics_method))
+                args.append(self.graphics_method.name)
             self.dp = self.canvas.plot(*args)
-            self.dp_ind = self.canvas.display_names.index(self.dp.name)
+            if self.template is None:
+                self._template = vcs.gettemplate(self.dp._template_origin)
+            if self.graphics_method is None:
+                self._gm = vcs.getgraphicsmethod(self.dp.g_type, self.dp.g_name)

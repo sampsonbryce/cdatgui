@@ -61,6 +61,7 @@ class SizeSpinBox(QtGui.QSpinBox):
     'editingFinished()' signal when the user interact with mouse
 
     """
+
     def __init__(self, initValue=0, parent=None):
         """ SizeSpinBox(initValue: int, parent: QWidget) -> SizeSpinBox
         Initialize with a default width of 50 and a value of 0
@@ -88,6 +89,7 @@ class StandardWidgetToolBar(QtGui.QToolBar):
     included
 
     """
+
     def __init__(self, parent=None):
         """ StandardWidgetToolBar(parent: QWidget) -> StandardWidgetToolBar
         Init the toolbar with default actions
@@ -140,7 +142,7 @@ class StandardWidgetToolBar(QtGui.QToolBar):
 
         """
         if (not self.currentToolBarAction or
-            self.widgetForAction(self.currentToolBarAction)!=cellToolBar):
+                    self.widgetForAction(self.currentToolBarAction) != cellToolBar):
             if self.currentToolBarAction:
                 self.removeAction(self.currentToolBarAction)
             if cellToolBar:
@@ -157,6 +159,7 @@ class StandardWidgetSheetTabInterface(object):
     controller to call for manipulating a tab
 
     """
+
     ### Belows are API Wrappers to connect to self.sheet
 
     def __init__(self):
@@ -175,7 +178,7 @@ class StandardWidgetSheetTabInterface(object):
         Get the sheet dimensions
 
         """
-        return (0,0)
+        return (0, 0)
 
     def setDimension(self, rc, cc):
         """ setDimension(rc: int, cc: int) -> None
@@ -242,11 +245,11 @@ class StandardWidgetSheetTabInterface(object):
                 toolBarType = QCellToolBar
             container = self.getCellWidget(row, col)
             if isinstance(container, QCellContainer):
-                if container.toolBar==None:
+                if container.toolBar == None:
                     container.toolBar = toolBarType(self)
                 return container.toolBar
         else:
-            if self.emptyCellToolBar==None:
+            if self.emptyCellToolBar == None:
                 self.emptyCellToolBar = QCellToolBar(self)
             return self.emptyCellToolBar
 
@@ -275,12 +278,12 @@ class StandardWidgetSheetTabInterface(object):
         for r in xrange(rowCount):
             for c in xrange(colCount):
                 w = self.getCell(r, c)
-                if w==None:
-                    return (r,c)
+                if w == None:
+                    return (r, c)
         (r, c) = self.lastCellLocation
         (rs, cs) = self.getSpan(r, c)
-        index = (colCount * r + c + cs) % (rowCount*colCount)
-        return (index//colCount, index%colCount)
+        index = (colCount * r + c + cs) % (rowCount * colCount)
+        return (index // colCount, index % colCount)
 
     def setCellByType(self, row, col, cellType, inputPorts):
         """ setCellByType(row: int,
@@ -368,7 +371,7 @@ class StandardWidgetSheetTabInterface(object):
 
         """
         (rCount, cCount) = self.getDimension()
-        if rCount<1 or cCount<1: return
+        if rCount < 1 or cCount < 1: return
         cellHeights = [self.getCellRect(r, 0).height()
                        for r in xrange(rCount)]
         cellWidths = [self.getCellRect(0, c).width()
@@ -383,19 +386,19 @@ class StandardWidgetSheetTabInterface(object):
                 widget = self.getCell(r, c)
                 if widget:
                     pix = widget.grabWindowPixmap()
-                    cx = (cellWidths[c]-pix.width())//2
-                    cy = (cellHeights[r]-pix.height())//2
-                    painter.drawPixmap(x+cx, y+cy, widget.grabWindowPixmap())
+                    cx = (cellWidths[c] - pix.width()) // 2
+                    cy = (cellHeights[r] - pix.height()) // 2
+                    painter.drawPixmap(x + cx, y + cy, widget.grabWindowPixmap())
                 x += cellWidths[c]
             y += cellHeights[r]
         painter.end()
 
-        #forcing png format if no extension was provided
-        (_,ext) = os.path.splitext(fileName)
+        # forcing png format if no extension was provided
+        (_, ext) = os.path.splitext(fileName)
         if ext == '':
             finalImage.save(fileName, 'png')
         else:
-            #try to guess based on the extension
+            # try to guess based on the extension
             finalImage.save(fileName)
 
     def exportSheetToImages(self, dirPath, format='png'):
@@ -408,10 +411,10 @@ class StandardWidgetSheetTabInterface(object):
             for c in xrange(cCount):
                 widget = self.getCell(r, c)
                 if widget:
-                    widget.grabWindowPixmap().save(dirPath+'/'+
-                                                   chr(c+ord('a'))+
-                                                   str(r+1)+
-                                                   '.'+format)
+                    widget.grabWindowPixmap().save(dirPath + '/' +
+                                                   chr(c + ord('a')) +
+                                                   str(r + 1) +
+                                                   '.' + format)
 
     def setSpan(self, row, col, rowSpan, colSpan):
         """ setSpan(row, col, rowSpan, colSpan: int) -> None
@@ -439,7 +442,11 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
     displaying the spreadsheet.
 
     """
-    def __init__(self, tabWidget,row=None , col=None):
+
+    selectionChanged = QtCore.Signal(list)
+    emitAllPlots = QtCore.Signal(list)
+
+    def __init__(self, tabWidget, row=None, col=None):
         """ StandardWidgetSheet(tabWidget: QTabWidget,
                                 row: int,
                                 col: int) -> StandardWidgetSheet
@@ -449,22 +456,31 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
         QtGui.QWidget.__init__(self, None)
         StandardWidgetSheetTabInterface.__init__(self)
         if not row:
-            row = 2 # configuration.rowCount
+            row = 2  # configuration.rowCount
         if not col:
-            col = 1 #configuration.columnCount
+            col = 1  # configuration.columnCount
         self.type = 'StandardWidgetSheetTab'
         self.tabWidget = tabWidget
         self.sheet = StandardWidgetSheet(row, col, self)
+        self.sheet.itemSelectionChanged.connect(self.selectionChange)
         self.sheet.setFitToWindow(True)
         self.toolBar = StandardWidgetToolBar(self)
         self.vLayout = QtGui.QVBoxLayout()
         self.vLayout.setSpacing(0)
-        self.vLayout.setContentsMargins(0,0,0,0)
+        self.vLayout.setContentsMargins(0, 0, 0, 0)
         self.vLayout.addWidget(self.toolBar, 0)
         self.vLayout.addWidget(self.sheet, 1)
         self.setLayout(self.vLayout)
         self.setAcceptDrops(True)
         self.createContainers()
+
+    def selectionChange(self):
+        # Get selection
+        indices = self.sheet.selectedIndexes()
+        selected_cells = []
+        for index in indices:
+            selected_cells.append(self.sheet.cellWidget(index.row(), index.column()))
+        self.selectionChanged.emit(selected_cells)
 
     def createContainers(self):
         row_count, col_count = self.getDimension()
@@ -472,7 +488,11 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
             for c in xrange(col_count):
                 w = self.getCellWidget(r, c)
                 if w is None or w.widget() is None:
-                    widget = QCDATWidget()
+                    # TODO: HOOK UP A SIGNAL TO TRIGGER SELECTIONCHANGE
+                    widget = QCDATWidget(r, c)
+                    widget.plotAdded.connect(self.selectionChange)
+                    widget.emitAllPlots.connect(self.totalPlotsChanged)
+                    # widget.emitAllPlots.connect(self.totalPlotsChanged)
                     cellWidget = QCellContainer(widget)
                     self.setCellByWidget(r, c, cellWidget)
 
@@ -499,22 +519,31 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
         Handle the number of row changed
 
         """
-        if self.toolBar.rowSpinBox.value()!=self.sheet.rowCount():
+        if self.toolBar.rowSpinBox.value() != self.sheet.rowCount():
             self.removeContainers(new_rows=self.toolBar.rowSpinBox.value())
             self.sheet.setRowCount(self.toolBar.rowSpinBox.value())
             self.sheet.stretchCells()
             self.createContainers()
+            self.totalPlotsChanged()
 
     def colSpinBoxChanged(self):
         """ colSpinBoxChanged() -> None
         Handle the number of row changed
 
         """
-        if self.toolBar.colSpinBox.value()!=self.sheet.columnCount():
+        if self.toolBar.colSpinBox.value() != self.sheet.columnCount():
             self.removeContainers(new_cols=self.toolBar.colSpinBox.value())
             self.sheet.setColumnCount(self.toolBar.colSpinBox.value())
             self.sheet.stretchCells()
             self.createContainers()
+            self.totalPlotsChanged()
+
+    def totalPlotsChanged(self):
+        total_tabs = []
+        for row in range(self.toolBar.rowSpinBox.value()):
+            for col in range(self.toolBar.colSpinBox.value()):
+                total_tabs.append(self.sheet.cellWidget(row, col))
+        self.emitAllPlots.emit(total_tabs)
 
     ### Belows are API Wrappers to connect to self.sheet
 
@@ -566,8 +595,8 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
         row = self.sheet.rowAt(localPos.y())
         col = self.sheet.columnAt(localPos.x())
         rect = self.sheet.getCellRect(row, col)
-        show =  show and (rect.x()+rect.width()-localPos.x()<100 and
-                          rect.y()+rect.height()-localPos.y()<100)
+        show = show and (rect.x() + rect.width() - localPos.x() < 100 and
+                         rect.y() + rect.height() - localPos.y() < 100)
         self.sheet.showHelpers(show, row, col)
 
     def getSelectedLocations(self):
@@ -612,14 +641,14 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
         """
         mimeData = event.mimeData()
         if (hasattr(mimeData, 'versionId') and
-            hasattr(mimeData, 'controller')):
+                hasattr(mimeData, 'controller')):
             event.accept()
         else:
             event.ignore()
 
     def dropEvent(self, event):
         """ Execute the pipeline at the particular location """
-        pass #event.ignore()
+        pass  # event.ignore()
 
     def setSpan(self, row, col, rowSpan, colSpan):
         """ setSpan(row, col, rowSpan, colSpan: int) -> None
@@ -629,12 +658,12 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
         colSpan = max(colSpan, 1)
         rowSpan = max(rowSpan, 1)
         (curRowSpan, curColSpan) = self.getSpan(row, col)
-        if rowSpan!=curRowSpan or colSpan!=curColSpan:
+        if rowSpan != curRowSpan or colSpan != curColSpan:
             # Need to remove all cell except the top-left
             for r in xrange(rowSpan):
                 for c in xrange(colSpan):
-                    if r!=0 or c!=0:
-                        self.deleteCell(row+r, col+c)
+                    if r != 0 or c != 0:
+                        self.deleteCell(row + r, col + c)
 
             # Take the current widget out
             curWidget = self.takeCell(row, col)
@@ -662,6 +691,7 @@ class StandardWidgetTabBarEditor(QtGui.QLineEdit):
     edit when Esc is pressed
 
     """
+
     def __init__(self, text='', parent=None):
         """ StandardWidgetTabBarEditor(text: str, parent: QWidget)
                                        -> StandardWidgetTabBarEditor
@@ -676,7 +706,7 @@ class StandardWidgetTabBarEditor(QtGui.QLineEdit):
         Override keyPressEvent to handle Esc key
 
         """
-        if e.key()==QtCore.Qt.Key_Escape:
+        if e.key() == QtCore.Qt.Key_Escape:
             e.ignore()
             self.setText(self.originalText)
             self.clearFocus()
@@ -722,16 +752,16 @@ class StandardWidgetTabBar(QtGui.QTabBar):
         Handle Double-Click event to start the editor
 
         """
-        if e.buttons()!=QtCore.Qt.LeftButton or self.editor: return
+        if e.buttons() != QtCore.Qt.LeftButton or self.editor: return
 
         # Update the current editing tab widget
         self.editingIndex = self.currentIndex()
 
         # A hack to capture the rect of the triangular tab from commonstyle.cpp
         rect = self.tabRect(self.editingIndex)
-        h = rect.height()-2
-        dx = h//3 + 3
-        rect.adjust(dx+1, 1, -dx, -1)
+        h = rect.height() - 2
+        dx = h // 3 + 3
+        rect.adjust(dx + 1, 1, -dx, -1)
 
         # Display the editor inplace of the tab text
         text = self.tabText(self.editingIndex)
@@ -751,10 +781,10 @@ class StandardWidgetTabBar(QtGui.QTabBar):
         Update the tab text after editing has been finished
 
         """
-        if self.editingIndex>=0 and self.editor:
+        if self.editingIndex >= 0 and self.editor:
             self.setTabText(self.editingIndex, self.editor.text())
             self.emit(QtCore.SIGNAL('tabTextChanged(int,QString)'),
-                      self.editingIndex,self.editor.text())
+                      self.editingIndex, self.editor.text())
             self.editor.deleteLater()
             self.editingIndex = -1
             self.editor = None
@@ -777,7 +807,7 @@ class StandardWidgetTabBar(QtGui.QTabBar):
 
         """
         QtGui.QTabBar.mousePressEvent(self, e)
-        if e.buttons()==QtCore.Qt.LeftButton and self.editor==None:
+        if e.buttons() == QtCore.Qt.LeftButton and self.editor == None:
             self.startDragPos = QtCore.QPoint(e.x(), e.y())
 
     def getGlobalRect(self, index):
@@ -785,7 +815,7 @@ class StandardWidgetTabBar(QtGui.QTabBar):
         Get the rectangle of a tab in global coordinates
 
         """
-        if index<0: return None
+        if index < 0: return None
         rect = self.tabRect(index)
         rect.moveTo(self.mapToGlobal(rect.topLeft()))
         return rect
@@ -795,7 +825,7 @@ class StandardWidgetTabBar(QtGui.QTabBar):
         Highlight the rubber band of a tab
 
         """
-        if index==-1:
+        if index == -1:
             self.innerRubberBand.hide()
         else:
             self.innerRubberBand.setGeometry(self.tabRect(index))
@@ -809,21 +839,21 @@ class StandardWidgetTabBar(QtGui.QTabBar):
         QtGui.QTabBar.mouseMoveEvent(self, e)
         if self.startDragPos:
             # We already move more than 4 pixels
-            if (self.startDragPos-e.pos()).manhattanLength()>=4:
+            if (self.startDragPos - e.pos()).manhattanLength() >= 4:
                 self.startDragPos = None
                 self.dragging = True
         if self.dragging:
             t = self.indexAtPos(e.pos())
-            if t!=-1:
-                if t!=self.targetTab:
+            if t != -1:
+                if t != self.targetTab:
                     self.targetTab = t
                     self.outerRubberBand.hide()
                     self.highlightTab(t)
             else:
                 self.highlightTab(-1)
-                if t!=self.targetTab:
+                if t != self.targetTab:
                     self.targetTab = t
-                if self.count()>0:
+                if self.count() > 0:
                     if not self.outerRubberBand.isVisible():
                         index = self.getGlobalRect(self.currentIndex())
                         self.outerRubberBand.setGeometry(index)
@@ -839,11 +869,11 @@ class StandardWidgetTabBar(QtGui.QTabBar):
         """
         QtGui.QTabBar.mouseReleaseEvent(self, e)
         if self.dragging:
-            if self.targetTab!=-1 and self.targetTab!=self.currentIndex():
+            if self.targetTab != -1 and self.targetTab != self.currentIndex():
                 self.emit(QtCore.SIGNAL('tabMoveRequest(int,int)'),
                           self.currentIndex(),
                           self.targetTab)
-            elif self.targetTab==-1:
+            elif self.targetTab == -1:
                 self.emit(QtCore.SIGNAL('tabSplitRequest(int,QPoint)'),
                           self.currentIndex(),
                           e.globalPos())
@@ -861,10 +891,10 @@ class StandardWidgetTabBar(QtGui.QTabBar):
         for i in xrange(self.count()):
             r = self.tabRect(i)
             if self.isTabEnabled(i) and r.contains(p):
-                if p.x() < (r.x()+r.width()//2):
+                if p.x() < (r.x() + r.width() // 2):
                     return i
                 else:
-                    return i+1
+                    return i + 1
         return -1
 
     def slotGeometry(self, idx):
@@ -872,15 +902,15 @@ class StandardWidgetTabBar(QtGui.QTabBar):
         Return the geometry between the slots at cursor pos
 
         """
-        if idx<0 or self.count()==0: return None
-        if idx<self.count():
+        if idx < 0 or self.count() == 0: return None
+        if idx < self.count():
             rect = self.getGlobalRect(idx)
-            rect = QtCore.QRect(rect.x()-5, rect.y(), 5*2, rect.height())
+            rect = QtCore.QRect(rect.x() - 5, rect.y(), 5 * 2, rect.height())
             return rect
         else:
-            rect = self.getGlobalRect(self.count()-1)
-            rect = QtCore.QRect(rect.x()+rect.width()-5, rect.y(),
-                                5*2, rect.height())
+            rect = self.getGlobalRect(self.count() - 1)
+            rect = QtCore.QRect(rect.x() + rect.width() - 5, rect.y(),
+                                5 * 2, rect.height())
             return rect
 
     def dragEnterEvent(self, event):
@@ -893,7 +923,7 @@ class StandardWidgetTabBar(QtGui.QTabBar):
             event.setDropAction(QtCore.Qt.MoveAction)
             event.accept()
             idx = self.indexAtPos(event.pos())
-            if idx>=0:
+            if idx >= 0:
                 self.setCurrentIndex(idx)
         else:
             event.ignore()
@@ -904,7 +934,7 @@ class StandardWidgetTabBar(QtGui.QTabBar):
 
         """
         idx = self.indexAtPos(event.pos())
-        if idx>=0:
+        if idx >= 0:
             self.setCurrentIndex(idx)
 
 
@@ -914,6 +944,7 @@ class StandardTabDockWidget(QtGui.QDockWidget):
     widget floating around that can be merge back to tab controller
 
     """
+
     def __init__(self, title, tabWidget, tabBar, tabController):
         """ StandardTabDockWidget(title: str,
                                   tabWidget: QTabWidget,
@@ -960,9 +991,9 @@ class StandardTabDockWidget(QtGui.QDockWidget):
         Event filter the floating button to makes it merge to the tab controller
 
         """
-        if q and q==self.floatingButton:
-            if (e.type()==QtCore.QEvent.MouseButtonRelease and
-                e.button()&QtCore.Qt.LeftButton):
+        if q and q == self.floatingButton:
+            if (e.type() == QtCore.QEvent.MouseButtonRelease and
+                        e.button() & QtCore.Qt.LeftButton):
                 if self.isMaximized():
                     self.showNormal()
                 else:
@@ -974,11 +1005,11 @@ class StandardTabDockWidget(QtGui.QDockWidget):
         """ Check if any of common parent of the tab controller and tb
         is under the mouse """
         tbp = []
-        while tb!=None:
+        while tb != None:
             tbp.append(tb)
             tb = tb.parent()
         tc = self.tabController
-        while tc!=None:
+        while tc != None:
             if tc in tbp:
                 return True
             tc = tc.parent()
@@ -990,52 +1021,52 @@ class StandardTabDockWidget(QtGui.QDockWidget):
 
         """
         # MOUSE PRESS (QtCore.QEvent.NonClientAreaMouseButtonPress=174)
-        if e.type() in [QtCore.QEvent.MouseButtonPress,174]:
-            if e.type()==174:
+        if e.type() in [QtCore.QEvent.MouseButtonPress, 174]:
+            if e.type() == 174:
                 gp = QtGui.QCursor.pos()
                 ontitle = True
             else:
                 gp = e.globalPos()
-                ontitle = e.y()<self.widget().y() and e.buttons()&QtCore.Qt.LeftButton
+                ontitle = e.y() < self.widget().y() and e.buttons() & QtCore.Qt.LeftButton
             if ontitle:
                 self.startDragPos = QtCore.QPoint(gp)
                 self.grabMouse()
             return True
 
-        elif e.type()==QtCore.QEvent.MouseMove:
+        elif e.type() == QtCore.QEvent.MouseMove:
             if not (e.buttons() & QtCore.Qt.LeftButton):
                 self.windowRubberBand.hide()
                 self.setMouseTracking(False)
                 return QtGui.QDockWidget.event(self, e)
             gp = e.globalPos()
             if (not self.startDragging and
-                self.startDragPos and
-                (self.startDragPos-gp).manhattanLength()>=4):
+                    self.startDragPos and
+                        (self.startDragPos - gp).manhattanLength() >= 4):
                 self.startDragging = True
                 self.windowRubberBand.setGeometry(self.geometry())
-                self.startDragPos = self.pos()-gp
+                self.startDragPos = self.pos() - gp
                 self.windowRubberBand.show()
                 self.setMouseTracking(True)
             if self.startDragging:
                 tb = QtGui.QApplication.widgetAt(gp)
-                if tb==self.tabBar:
+                if tb == self.tabBar:
                     idx = tb.slotIndex(gp)
-                    if idx>=0:
+                    if idx >= 0:
                         self.windowRubberBand.setGeometry(tb.slotGeometry(idx))
-                elif (tb!=None and self.tabController.count()==0 and
-                      self.isTabControllerUnderMouse(tb)):
+                elif (tb != None and self.tabController.count() == 0 and
+                          self.isTabControllerUnderMouse(tb)):
                     r = self.tabController.frameGeometry()
                     r.moveTo(self.tabController.mapToGlobal(r.topLeft()))
                     self.windowRubberBand.setGeometry(r)
                 else:
-                    rect = QtCore.QRect(self.startDragPos+gp, self.size())
+                    rect = QtCore.QRect(self.startDragPos + gp, self.size())
                     self.windowRubberBand.setGeometry(rect)
             return True
 
         # MOUSE RELEASE (QtCore.QEvent.NonClientAreaMouseRelease=175)
-        elif e.type()==QtCore.QEvent.MouseButtonRelease:
+        elif e.type() == QtCore.QEvent.MouseButtonRelease:
             if self.startDragging:
-                if e.type()==173:
+                if e.type() == 173:
                     gp = QtGui.QCursor.pos()
                 else:
                     gp = e.globalPos()
@@ -1044,13 +1075,13 @@ class StandardTabDockWidget(QtGui.QDockWidget):
                 self.startDragPos = None
                 self.startDragging = False
                 tb = QtGui.QApplication.widgetAt(gp)
-                if tb==self.tabBar:
+                if tb == self.tabBar:
                     idx = tb.slotIndex(gp)
-                    if idx>=0:
+                    if idx >= 0:
                         self.hide()
                         self.tabController.mergeTab(self, idx)
-                elif (tb!=None and self.tabController.count()==0 and
-                      self.isTabControllerUnderMouse(tb)):
+                elif (tb != None and self.tabController.count() == 0 and
+                          self.isTabControllerUnderMouse(tb)):
                     self.hide()
                     self.tabController.mergeTab(self, 0)
                 else:
@@ -1061,7 +1092,7 @@ class StandardTabDockWidget(QtGui.QDockWidget):
 
         # MOUSE DOUBLE CLICK (QtCore.QEvent.NonClientAreaMouseButtonDblClick=176)
         elif e.type() in [QtCore.QEvent.MouseButtonDblClick, 176]:
-            if (e.type()==176) or (e.buttons()&QtCore.Qt.LeftButton):
+            if (e.type() == 176) or (e.buttons() & QtCore.Qt.LeftButton):
                 self.hide()
                 self.tabController.mergeTab(self, self.tabController.count())
                 return True
@@ -1072,5 +1103,3 @@ class StandardTabDockWidget(QtGui.QDockWidget):
         """ On close event dock the sheet back to the spreadsheet window """
         self.tabController.mergeTab(self, self.tabController.count())
         event.accept()
-
-

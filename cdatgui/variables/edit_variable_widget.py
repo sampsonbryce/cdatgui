@@ -14,7 +14,7 @@
 #                                                                             #
 ###############################################################################
 from PySide import QtCore, QtGui
-from roi_selector import ROISelectionDialog
+from region import ROISelectionDialog
 from axes_widgets import QAxisList
 
 

@@ -5,18 +5,21 @@ import vcs
 from vtk.qt4.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from cdatgui.cdat.plotter import PlotInfo
 from functools import partial
+from cdatgui.variables import get_variables
+
 
 cdms_mime = "application/x-cdms-variable-list"
 vcs_gm_mime = "application/x-vcs-gm"
 vcs_template_mime = "application/x-vcs-template"
 
-
 class QCDATWidget(QtGui.QFrame):
-
+    # TODO: Add a signal for addedPlots
+    plotAdded = QtCore.Signal()
     visiblityChanged = QtCore.Signal(bool)
     setVariables = QtCore.Signal(list)
     setGraphicsMethod = QtCore.Signal(object)
     setTemplate = QtCore.Signal(object)
+    emitAllPlots = QtCore.Signal()
 
     save_formats = ["PNG file (*.png)",
                     "GIF file (*.gif)",
@@ -24,8 +27,11 @@ class QCDATWidget(QtGui.QFrame):
                     "Postscript file (*.ps)",
                     "SVG file (*.svg)"]
 
-    def __init__(self, parent=None):
+    def __init__(self, row, col, parent=None):
         super(QCDATWidget, self).__init__(parent=parent)
+
+        self.row = row
+        self.col = col
 
         self.setAcceptDrops(True)
 
@@ -51,7 +57,7 @@ class QCDATWidget(QtGui.QFrame):
 
         self.dragLayout = QtGui.QHBoxLayout()
         self.dragTarget.setLayout(self.dragLayout)
-
+        get_variables().dataChanged.connect(self.variablesChanged)
         self.plots = []
         # Creates and hooks up the initial PlotInfo widget
         self.addedPlot()
@@ -71,13 +77,37 @@ class QCDATWidget(QtGui.QFrame):
             info = self.plots[-1]
             info.load(display)
 
-
     def dragMoveEvent(self, event):
         plot = self.plot_at_point(event.pos())
         if plot:
             event.accept(plot.rect())
         else:
             event.ignore()
+
+    def variablesChanged(self, start, end):
+        vars = get_variables()
+        any_updated = False
+        for i in range(start.row(), end.row() + 1):
+            var = vars.get(i)
+            for plot in self.plots:
+                plot_vars = plot.manager.variables
+                if plot_vars is None:
+                    continue
+                changed = False
+                new_vars = []
+                for v in plot_vars:
+                    if v is None:
+                        continue
+                    if v.id == var.id:
+                        changed = True
+                        new_vars.append(var.var)
+                    else:
+                        new_vars.append(v)
+                if changed:
+                    any_updated = True
+                    plot.variables(new_vars)
+        if any_updated:
+            self.update()
 
     def dropEvent(self, event):
         dropped = event.source().model().get_dropped(event.mimeData())
@@ -95,6 +125,7 @@ class QCDATWidget(QtGui.QFrame):
 
         self.iren.show()
         self.dragTarget.hide()
+        self.plotAdded.emit()
 
     def dragEnterEvent(self, event):
         accepted = set([cdms_mime, vcs_gm_mime, vcs_template_mime])
@@ -108,12 +139,21 @@ class QCDATWidget(QtGui.QFrame):
         self.iren.show()
         self.dragTarget.hide()
 
+    def loadPlot(self, dp):
+        self.plots[-1].load(dp)
+
     def addedPlot(self):
         """Adds a new PlotInfo to the collection whenever one is made"""
-        new_widget = PlotInfo(lambda: self.canvas)
+        new_widget = PlotInfo(lambda: self.canvas, self.row, self.col)
         self.dragLayout.addWidget(new_widget)
         self.plots.append(new_widget)
         new_widget.initialized.connect(self.addedPlot)
+        new_widget.removed.connect(self.removeWidget)
+
+    def removeWidget(self, widget):
+        self.plots.remove(widget)
+        self.dragLayout.removeWidget(widget)
+        widget.deleteLater()
 
     def manageCanvas(self, showing):
         if showing and self.canvas is None:
@@ -122,6 +162,8 @@ class QCDATWidget(QtGui.QFrame):
         if not showing and self.canvas is not None:
             self.canvas.onClosing((0, 0))
             self.canvas = None
+
+        self.emitAllPlots.emit()
 
     def showEvent(self, e):
         super(QCDATWidget, self).showEvent(e)
@@ -143,7 +185,7 @@ class QCDATWidget(QtGui.QFrame):
         return getattr(self.canvas, method_name)(gmName)
 
     def getPlotters(self):
-        return [plot.manager for plot in self.plots if plot.manager.can_plot()]
+        return [plot.manager for plot in self.plots]
 
     def deleteLater(self):
         """ deleteLater() -> None

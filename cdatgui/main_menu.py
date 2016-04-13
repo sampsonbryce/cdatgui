@@ -65,7 +65,7 @@ class MainMenu(QtGui.QMenuBar):
             for c in range(columns):
                 cell = self.ss.getCell(r, c)
                 cells.append(cell)
-                plotters.append(cell.getPlotters())
+                plotters.append(cell.getPlotters()[:-1])
 
         var_manager = manager()
         all_files = var_manager.files.values()
