@@ -31,7 +31,6 @@ class CDMSVariableListModel(ListModel):
 
     def update_variable(self, variable, label):
         for ind, var in enumerate(self.values):
-            # print "CHECKING", var[0], label
             if var[0] == label:
                 break
         else:
@@ -39,7 +38,6 @@ class CDMSVariableListModel(ListModel):
         self.replace(ind, variable)
 
     def replace(self, index, value):
-        # print "REPLACING AT INDEX:", index, value.id
         if index < len(self.values):
             super(CDMSVariableListModel, self).replace(index, (self.values[index][0], value))
         else:

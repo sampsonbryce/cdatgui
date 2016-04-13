@@ -1,12 +1,14 @@
-from PySide import QtGui, QtCore
-import string
-
 import re
-from cdatgui.variables import get_variables
-from qtconsole.rich_jupyter_widget import RichJupyterWidget
+import string
+from PySide import QtGui, QtCore
+
+import cdms2
+import vcs
 from qtconsole.inprocess import QtInProcessKernelManager
+from qtconsole.rich_jupyter_widget import RichJupyterWidget
+
 from cdatgui.cdat.metadata import FileMetadataWrapper, VariableMetadataWrapper
-import vcs, cdms2
+from cdatgui.variables import get_variables
 
 
 def is_cdms_var(v):
@@ -19,6 +21,7 @@ def is_displayplot(v):
 
 class ConsoleWidget(QtGui.QWidget):
     createdPlot = QtCore.Signal(object)
+    updatedVar = QtCore.Signal()
 
     def __init__(self, parent=None):
         super(ConsoleWidget, self).__init__()
@@ -32,6 +35,7 @@ class ConsoleWidget(QtGui.QWidget):
         self.values = []
         self.display_plots = []
         self.shell_vars = {}
+        self.gm_count = {}
         self.letters = list(string.ascii_uppercase)
         self.reserved_words = ['and', 'del', 'from', 'not', 'while', 'as', 'elif', 'global', 'or', 'with',
                                'assert', 'else', 'if', 'pass', 'yield', 'break', 'except', 'import', 'print', 'class',
@@ -62,6 +66,7 @@ class ConsoleWidget(QtGui.QWidget):
         self.vbox.addWidget(self.jupyter_widget)
 
     def clearShellVars(self):
+        self.gm_count = {}
         for key, var_dict in self.shell_vars.items():
             try:
                 self.kernel.shell.user_ns.pop(self.shell_vars[key]['canvas'])
@@ -83,44 +88,64 @@ class ConsoleWidget(QtGui.QWidget):
             except KeyError:
                 pass
 
-    def updateVariables(self):
+    def updateVariables(self, plot=None):
         for var in get_variables().values:
             if var[0] not in self.values:
                 self.values.append(var[0])
-                self.kernel.shell.push({var[0]: var[1]})
+            self.kernel.shell.push({var[0]: var[1]})
+        if plot and plot.variables:
+            for var in plot.variables:
+                try:
+                    self.kernel.shell.push({var.id: var})
+                except AttributeError:
+                    pass
 
-    def updateCanvases(self, plots):
-        for plot in plots:
-            canvas_var_label = "canvas_{0}{1}".format(plot.row + 1, self.letters[plot.col])
-            self.shell_vars[plot.canvas]['canvas'] = canvas_var_label
-            self.kernel.shell.push({canvas_var_label: plot.canvas})
+    def updateCanvases(self, plot):
+        canvas_var_label = "canvas_{0}{1}".format(plot.row + 1, self.letters[plot.col])
+        self.shell_vars[plot]['canvas'] = canvas_var_label
+        self.kernel.shell.push({canvas_var_label: plot.canvas})
 
-    def updateGMS(self, plots):
-        for plot in plots:
-            if plot.graphics_method:
-                gm = plot.graphics_method.name
+    def updateGMS(self, plot):
+        if plot.graphics_method:
+            gm = plot.graphics_method.name
+            if gm[:2] == '__':
+                gm_prefix = vcs.graphicsmethodtype(plot.graphics_method)
+                gm_prefix = self.fixInvalidVariables(gm_prefix)
+                if gm_prefix not in self.gm_count.keys():
+                    self.gm_count[gm_prefix] = 1
+                else:
+                    self.gm_count[gm_prefix] += 1
+                gm = "{0}_{1}".format(gm_prefix, self.gm_count[gm_prefix])
+            else:
                 gm = self.fixInvalidVariables(gm)
-                self.shell_vars[plot.canvas]['gm'] = gm
-                self.kernel.shell.push({gm: plot.graphics_method})
+            if gm == 'default':
+                "{0}_default".format(vcs.graphicsmethodtype(plot.graphics_method))
+            self.shell_vars[plot]['gm'] = gm
+            self.kernel.shell.push({gm: plot.graphics_method})
 
-    def updateTemplates(self, plots):
-        for plot in plots:
-            if plot.template:
-                tmp = plot.template.name
-                tmp = self.fixInvalidVariables(tmp)
-                self.shell_vars[plot.canvas]['template'] = tmp
-                self.kernel.shell.push({tmp: plot.template})
+    def updateTemplates(self, plot):
+        if plot.template:
+            tmp = plot.template.name
+            tmp = self.fixInvalidVariables(tmp)
+            if tmp == 'default':
+                tmp = 'temp_default'
+            self.shell_vars[plot]['template'] = tmp
+            self.kernel.shell.push({tmp: plot.template})
 
     def updateAllPlots(self, plots):
         self.clearShellVars()
         for plot in plots:
-            self.shell_vars[plot.canvas] = {'canvas': '', 'template': '', 'gm': ''}
-        self.updateVariables()
-        self.updateCanvases(plots)
-        self.updateGMS(plots)
+            self.shell_vars[plot] = {'canvas': '', 'template': '', 'gm': ''}
+            if plot.name() != "(Untitled)":
+                self.updateVariables(plot)
+                self.updateCanvases(plot)
+                self.updateGMS(plot)
+                self.updateTemplates(plot)
+            else:
+                self.updateVariables(plot)
+                self.updateCanvases(plot)
 
     def codeExecuted(self, *varargs):
-        checked_vars = []
         namespace = self.kernel.shell.user_ns
         cur_keys = set(namespace)
 
@@ -130,23 +155,22 @@ class ConsoleWidget(QtGui.QWidget):
             last_line = out_dict[max(out_dict)]
         else:
             last_line = None
-        cdms_count = 0
         for key in cur_keys - set(self.original_ns):
             if key[0] == "_":
                 continue
             value = namespace[key]
+
             if isinstance(value, cdms2.dataset.CdmsFile):
                 namespace[key] = FileMetadataWrapper(value)
 
             if is_cdms_var(value):
-                cdms_count += 1
-                checked_vars.append(id(value))
                 cdms_var = value()
                 cdms_var.id = key
                 if not self.variable_list.variable_exists(cdms_var):
                     self.variable_list.add_variable(cdms_var)
                 else:
                     self.variable_list.update_variable(cdms_var, key)
+                    self.updatedVar.emit()
 
             elif is_displayplot(value) and value not in self.display_plots:
                 self.display_plots.append(value)
