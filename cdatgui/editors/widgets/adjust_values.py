@@ -34,6 +34,7 @@ class AdjustValues(QWidget):
             self.send_values()
 
     def update(self, minval, maxval, values):
+        print "UPDATING:", minval, maxval, values
         if minval >= maxval:
             raise ValueError("Minimum value %d >= maximum value %d" % (minval, maxval))
         self.min_val = minval

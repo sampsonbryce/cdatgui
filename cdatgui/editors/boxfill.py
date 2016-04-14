@@ -1,26 +1,20 @@
 from PySide import QtGui, QtCore
 from collections import OrderedDict
-from level_editor import LevelEditor
+
 from widgets.legend_widget import LegendEditorWidget
 from model.legend import VCSLegend
-from axis_editor import AxisEditorWidget
-from model.vcsaxis import VCSAxis
+from .graphics_method_editor import GraphicsMethodEditorWidget
 
 
-class BoxfillEditor(QtGui.QWidget):
+class BoxfillEditor(GraphicsMethodEditorWidget):
     """Configures a boxfill graphics method."""
-
-    graphicsMethodUpdated = QtCore.Signal(object)
 
     def __init__(self, parent=None):
         """Initialize the object."""
         super(BoxfillEditor, self).__init__(parent=parent)
-        self._gm = None
-        self.var = None
-        self.tmpl = None
 
-        layout = QtGui.QVBoxLayout()
-        self.setLayout(layout)
+        legend_button = QtGui.QPushButton("Edit Legend")
+        legend_button.clicked.connect(self.editLegend)
 
         self.boxfill_types = OrderedDict(
             Linear="linear",
@@ -37,84 +31,20 @@ class BoxfillEditor(QtGui.QWidget):
             button_layout.addWidget(radiobutton)
             self.type_group.addButton(radiobutton)
 
-        layout.addLayout(button_layout)
-
-        levels_button = QtGui.QPushButton("Edit Levels")
-        levels_button.clicked.connect(self.editLevels)
-        legend_button = QtGui.QPushButton("Edit Legend")
-        legend_button.clicked.connect(self.editLegend)
-
-        left_axis = QtGui.QPushButton("Edit Left Ticks")
-        left_axis.clicked.connect(self.editLeft)
-        right_axis = QtGui.QPushButton("Edit Right Ticks")
-        right_axis.clicked.connect(self.editRight)
-        bottom_axis = QtGui.QPushButton("Edit Bottom Ticks")
-        bottom_axis.clicked.connect(self.editBottom)
-        top_axis = QtGui.QPushButton("Edit Top Ticks")
-        top_axis.clicked.connect(self.editTop)
-
-        layout.addWidget(levels_button)
-        layout.addWidget(legend_button)
-        layout.addWidget(left_axis)
-        layout.addWidget(right_axis)
-        layout.addWidget(top_axis)
-        layout.addWidget(bottom_axis)
-
-        self.level_editor = None
-        self.legend_editor = None
-        self.axis_editor = None
         self.type_group.buttonClicked.connect(self.setBoxfillType)
 
-    def editAxis(self, axis):
-        if self.axis_editor is None:
-            self.axis_editor = AxisEditorWidget(axis[0])
-            self.axis_editor.okPressed.connect(self.updated)
-        axis = VCSAxis(self._gm, self.tmpl, axis, self.var)
-        self.axis_editor.setAxisObject(axis)
-        self.axis_editor.show()
-        self.axis_editor.raise_()
-
-    def editLeft(self):
-        self.editAxis("y1")
-
-    def editRight(self):
-        self.editAxis("y2")
-
-    def editBottom(self):
-        self.editAxis("x1")
-
-    def editTop(self):
-        self.editAxis("x2")
-
-    def editLevels(self):
-        """Edit the levels of this GM."""
-        if self.level_editor is None:
-            self.level_editor = LevelEditor()
-            self.level_editor.levelsUpdated.connect(self.updated)
-        self.level_editor.gm = self.gm
-        self.level_editor.var = self.var.var
-        self.level_editor.show()
-        self.level_editor.raise_()
+        self.button_layout.insertLayout(0, button_layout)
+        self.button_layout.insertWidget(2, legend_button)
 
     def editLegend(self):
         if self.legend_editor is None:
+            print "launching boxfill legend editor"
             self.legend_editor = LegendEditorWidget()
             self.legend_editor.okPressed.connect(self.updated)
         legend = VCSLegend(self.gm, self.var.var)
         self.legend_editor.setObject(legend)
         self.legend_editor.show()
         self.legend_editor.raise_()
-
-    def updated(self):
-        if self.legend_editor is not None:
-            self.legend_editor = None
-        if self.axis_editor is not None:
-            self.axis_editor = None
-        if self.level_editor is not None:
-            self.level_editor = None
-        print "Emitting updated"
-        self.graphicsMethodUpdated.emit(self._gm)
-        print "Updated"
 
     @property
     def gm(self):
@@ -123,7 +53,6 @@ class BoxfillEditor(QtGui.QWidget):
 
     @gm.setter
     def gm(self, value):
-        """GM setter."""
         self._gm = value
         type_real_vals = self.boxfill_types.values()
         index = type_real_vals.index(value.boxfill_type)

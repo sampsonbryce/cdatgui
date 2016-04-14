@@ -286,10 +286,14 @@ class LegendEditorWidget(BaseOkWindowWidget):
         start_color_layout.addWidget(start_color_label)
         start_color_layout.addWidget(self.start_color_spin)
         start_color_layout.addWidget(self.start_color_button)
+        self.start_color_widget = QtGui.QWidget()
+        self.start_color_widget.setLayout(start_color_layout)
 
         end_color_layout.addWidget(end_color_label)
         end_color_layout.addWidget(self.end_color_spin)
         end_color_layout.addWidget(self.end_color_button)
+        self.end_color_widget = QtGui.QWidget()
+        self.end_color_widget.setLayout(end_color_layout)
 
         extend_layout.addWidget(extend_left_check)
         extend_layout.addWidget(extend_left_label)
@@ -307,8 +311,8 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
         # Insert layouts
         self.vertical_layout.insertLayout(1, colormap_layout)
-        self.vertical_layout.insertLayout(2, start_color_layout)
-        self.vertical_layout.insertLayout(3, end_color_layout)
+        self.vertical_layout.insertWidget(2, self.start_color_widget)
+        self.vertical_layout.insertWidget(3, self.end_color_widget)
         self.vertical_layout.insertLayout(4, extend_layout)
         self.vertical_layout.insertLayout(5, custom_fill_layout)
         self.vertical_layout.insertLayout(6, labels_layout)
@@ -316,13 +320,19 @@ class LegendEditorWidget(BaseOkWindowWidget):
     def setObject(self, legend):
         self.object = legend
 
-        self.start_color_spin.setValue(self.object.color_1)
-        self.updateButtonColor(self.start_color_button, self.object.color_1)
-        self.start_color_button.setFixedSize(100, 25)
+        try:
+            self.start_color_spin.setValue(self.object.color_1)
+            self.updateButtonColor(self.start_color_button, self.object.color_1)
+            self.start_color_button.setFixedSize(100, 25)
+        except TypeError:
+            self.start_color_widget.setEnabled(False)
 
-        self.end_color_spin.setValue(self.object.color_2)
-        self.updateButtonColor(self.end_color_button, self.object.color_2)
-        self.end_color_button.setFixedSize(100, 25)
+        try:
+            self.end_color_spin.setValue(self.object.color_2)
+            self.updateButtonColor(self.end_color_button, self.object.color_2)
+            self.end_color_button.setFixedSize(100, 25)
+        except TypeError:
+            self.end_color_widget.setEnabled(False)
 
         self.preview.setLegendObject(legend)
         self.preview.update()

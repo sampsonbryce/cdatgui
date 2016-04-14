@@ -6,7 +6,7 @@ from cdatgui.graphics import get_gms
 from cdatgui.templates import get_templates
 from cdatgui.variables.edit_variable_widget import EditVariableDialog
 from cdatgui.templates.dialog import TemplateEditorDialog
-from cdatgui.graphics.dialog import BoxfillDialog
+from cdatgui.graphics.dialog import GraphcisMethodDialog
 import vcs
 
 
@@ -168,7 +168,7 @@ class InspectorWidget(StaticDockWidget):
         self.editVariable(var)
 
     def editGraphicsMethod(self, gm):
-        get_gms().replace(get_gms().indexOf("boxfill", gm), gm)
+        get_gms().replace(get_gms().indexOf(vcs.graphicsmethodtype(gm), gm), gm)
         self.current_plot.graphics_method = gm
 
     def makeGraphicsMethod(self, gm):
@@ -184,7 +184,7 @@ class InspectorWidget(StaticDockWidget):
         if self.gm_editor:
             self.gm_editor.reject()
             self.gm_editor.deleteLater()
-        self.gm_editor = BoxfillDialog(gm, self.var_combos[0].currentObj(), self.template_combo.currentObj())
+        self.gm_editor = GraphcisMethodDialog(gm, self.var_combos[0].currentObj(), self.template_combo.currentObj())
         self.gm_editor.createdGM.connect(self.makeGraphicsMethod)
         self.gm_editor.editedGM.connect(self.editGraphicsMethod)
         self.gm_editor.show()
@@ -220,6 +220,7 @@ class InspectorWidget(StaticDockWidget):
         self.current_plot.template = template
 
     def updateGM(self, index):
+        self.edit_gm_button.setEnabled(True)
         gm_type = self.gm_type_combo.currentText()
         gm_name = self.gm_instance_combo.currentText()
 
@@ -261,7 +262,7 @@ class InspectorWidget(StaticDockWidget):
             block = self.template_combo.blockSignals(True)
             self.template_combo.setCurrentIndex(self.template_combo.findText(plot.template.name))
             self.template_combo.blockSignals(block)
-            if self.gm_type_combo.currentText() == "boxfill":
+            if self.gm_type_combo.currentText() == "boxfill" and self.gm_instance_combo.currentText() != '':
                 self.edit_gm_button.setEnabled(True)
             else:
                 self.edit_gm_button.setEnabled(False)
@@ -275,7 +276,6 @@ class InspectorWidget(StaticDockWidget):
                 v.setEnabled(False)
 
     def selection_change(self, selected):
-        plots = []
         self.cells = []
         self.plots.clear()
         for cell in selected:
