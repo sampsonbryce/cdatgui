@@ -50,11 +50,17 @@ class LevelEditor(QtGui.QWidget):
     def update_levels(self, levs, clear=False):
         self.histo.bins = levs
         if clear:
+            print "Clearing"
             self.canvas.clear()
+            print "Cleared, now plotting"
             self.canvas.plot(self._var, self.histo)
+            print "Plotted"
         else:
+            print "Updating"
             self.canvas.update()
+            print "Updated"
         self._gm.levels = levs
+        print 'Updated levels'
 
     @property
     def var(self):
@@ -66,9 +72,7 @@ class LevelEditor(QtGui.QWidget):
         flat = self._var.flatten()
         var_min, var_max = vcs.minmax(flat)
         # Check if we're using auto levels
-        print "HAS GM LEVELS?", self.has_set_gm_levels()
         if self._gm is None or not self.has_set_gm_levels():
-            print "MAKING SCALE"
             # Update the automatic levels with this variable
             levs = vcs.utils.mkscale(var_min, var_max)
         else:
@@ -96,10 +100,14 @@ class LevelEditor(QtGui.QWidget):
             self.update_levels(levs, clear=True)
 
     def has_set_gm_levels(self):
-        print "checking gm levels", len(self._gm.levels) != 2, not numpy.allclose(self._gm.levels, [1e+20] * 2)
+        # print "Levels:", self._gm.levels
+        # print "checking gm levels", len(self._gm.levels) != 2, not numpy.allclose(self._gm.levels, [1e+20] * 2)
         # print self._gm.levels, [1e+20] * 2
         try:
             length = len(self._gm.levels[0])
         except:
             length = len(self._gm.levels)
-        return length != 2 or not numpy.allclose(self._gm.levels, [1e+20] * 2)
+        try:
+            return length != 2 or not numpy.allclose(self._gm.levels, [1e+20] * 2)
+        except ValueError:
+            return True

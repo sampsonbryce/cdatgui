@@ -1,4 +1,7 @@
 from PySide import QtGui, QtCore
+
+from cdatgui.editors.model.legend import VCSLegend
+from cdatgui.editors.widgets.legend_widget import LegendEditorWidget
 from level_editor import LevelEditor
 from axis_editor import AxisEditorWidget
 from model.vcsaxis import VCSAxis
@@ -19,9 +22,13 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
         self.button_layout = QtGui.QVBoxLayout()
         self.setLayout(self.button_layout)
 
-        levels_button = QtGui.QPushButton("Edit Levels")
-        levels_button.clicked.connect(self.editLevels)
-
+        self.levels_button = QtGui.QPushButton("Edit Levels")
+        self.levels_button.clicked.connect(self.editLevels)
+        self.levels_button.setDefault(False)
+        self.levels_button.setAutoDefault(False)
+        legend_button = QtGui.QPushButton("Edit Legend")
+        legend_button.clicked.connect(self.editLegend)
+        legend_button.setAutoDefault(False)
         left_axis = QtGui.QPushButton("Edit Left Ticks")
         left_axis.clicked.connect(self.editLeft)
         right_axis = QtGui.QPushButton("Edit Right Ticks")
@@ -31,7 +38,8 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
         top_axis = QtGui.QPushButton("Edit Top Ticks")
         top_axis.clicked.connect(self.editTop)
 
-        self.button_layout.addWidget(levels_button)
+        self.button_layout.addWidget(self.levels_button)
+        self.button_layout.addWidget(legend_button)
         self.button_layout.addWidget(left_axis)
         self.button_layout.addWidget(right_axis)
         self.button_layout.addWidget(top_axis)
@@ -78,6 +86,7 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
         if self.axis_editor is not None:
             self.axis_editor = None
         if self.level_editor is not None:
+            self.level_editor.deleteLater()
             self.level_editor = None
         print "Emitting updated"
         self.graphicsMethodUpdated.emit(self._gm)
@@ -93,4 +102,13 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
     def gm(self, value):
         """GM setter."""
         self._gm = value
+
+    def editLegend(self):
+        if self.legend_editor is None:
+            self.legend_editor = LegendEditorWidget()
+            self.legend_editor.okPressed.connect(self.updated)
+        legend = VCSLegend(self.gm, self.var.var)
+        self.legend_editor.setObject(legend)
+        self.legend_editor.show()
+        self.legend_editor
 

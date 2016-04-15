@@ -37,8 +37,7 @@ class VCSLegend(object):
     def vcs_colors(self):
         """Used internally, don't worry about it."""
         levs = self.levels
-        if self._gm.fillareacolors:
-            print "fill area colors", self._gm.fillareacolors
+        if self._gm.fillareacolors and self._gm.fillareacolors != [1]:
             colors = self._gm.fillareacolors
             return colors
         else:
@@ -47,12 +46,10 @@ class VCSLegend(object):
                 levs = levs[1:]
             if self.ext_right:
                 levs = levs[:-1]
-            if self.color_1 and self.color_2:
-                print "getting colors from color1 and color2"
-                colors = vcs.getcolors(levs, colors=range(self.color_1, self.color_2))
+            if self.color_1 is None and self.color_2 is None:
+                colors = vcs.getcolors(levs, split=0)
             else:
-                print "COLOR1, COLOR2 None", self.levels
-                # colors = vcs.getcolors(levs, colors=range(min(self.levels), max(self.levels)))
+                colors = vcs.getcolors(levs, colors=range(self.color_1, self.color_2))
             levs = real_levs
             if len(colors) < len(levs):
                 # Pad out colors to the right number of buckets
@@ -205,7 +202,7 @@ class VCSLegend(object):
         return self.vcs_colors[i]
 
     def set_level_color(self, i, v):
-        if self._gm.fillareacolors is None:
+        if self._gm.fillareacolors is None or self._gm.fillareacolors == [1]:
             self._gm.fillareacolors = self.vcs_colors
         if len(self._gm.fillareacolors) < len(self.levels):
             self._gm.fillareacolors += (len(self.levels) - len(self._gm.fillareacolors)) * self._gm.fillareacolors[-1:]

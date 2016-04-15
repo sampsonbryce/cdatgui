@@ -34,7 +34,7 @@ class AdjustValues(QWidget):
             self.send_values()
 
     def update(self, minval, maxval, values):
-        print "UPDATING:", minval, maxval, values
+        block = self.blockSignals(True)
         if minval >= maxval:
             raise ValueError("Minimum value %d >= maximum value %d" % (minval, maxval))
         self.min_val = minval
@@ -47,6 +47,7 @@ class AdjustValues(QWidget):
             self.insert_line()
             self.slides[ind].setValue(value)
         self.clearing = False
+        self.blockSignals(False)
 
     def adjust_slides(self, slide, cur_val):
         cur_index = self.slides.index(slide)
@@ -101,7 +102,7 @@ class AdjustValues(QWidget):
         row.addWidget(slide)
 
         # set slide attributes
-        slide.setRange(self.min_val, self.max_val)
+        slide.setRange(float(self.min_val), float(self.max_val))
         slide.setValue(self.max_val)
         slide.setTickPosition(QSlider.TicksAbove)
         slide.valueChanged.connect(partial(self.change_label, lab, slide))

@@ -326,6 +326,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
             self.start_color_button.setFixedSize(100, 25)
         except TypeError:
             self.start_color_widget.setEnabled(False)
+            self.start_color_widget.hide()
 
         try:
             self.end_color_spin.setValue(self.object.color_2)
@@ -333,6 +334,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
             self.end_color_button.setFixedSize(100, 25)
         except TypeError:
             self.end_color_widget.setEnabled(False)
+            self.end_color_widget.hide()
 
         self.preview.setLegendObject(legend)
         self.preview.update()

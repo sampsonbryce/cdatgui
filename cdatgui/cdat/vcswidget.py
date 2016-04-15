@@ -31,6 +31,7 @@ class QVCSWidget(QtGui.QFrame):
 
         self.visibilityChanged.connect(self.manageCanvas)
         self.displays = []
+        self.timer = None
         self.to_plot = []
 
     def plot(self, *args, **kwargs):
@@ -58,6 +59,8 @@ class QVCSWidget(QtGui.QFrame):
             self.canvas.update()
 
     def manageCanvas(self, showing):
+        self.timer.deleteLater()
+        self.timer = None
         """Make sure that the canvas isn't opened till we're really ready."""
         if showing and self.canvas is None:
             self.canvas = vcs.init(backend=self.mRenWin)
@@ -75,15 +78,25 @@ class QVCSWidget(QtGui.QFrame):
             self.canvas.onClosing((0, 0))
             self.canvas = None
 
+    def doTimer(self, func):
+        if self.timer is not None:
+            self.timer.stop()
+            self.timer.deleteLater()
+            self.timer = None
+        self.timer = QtCore.QTimer(parent=self)
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(func)
+        self.timer.start(0)
+
     def showEvent(self, e):
         "Handle twitchy VTK resources appropriately."
         super(QVCSWidget, self).showEvent(e)
-        QtCore.QTimer.singleShot(0, self.becameVisible)
+        self.doTimer(self.becameVisible)
 
     def hideEvent(self, e):
         "Handle twitchy VTK resources appropriately."
         super(QVCSWidget, self).hideEvent(e)
-        QtCore.QTimer.singleShot(0, self.becameHidden)
+        self.doTimer(self.becameHidden)
 
     def deleteLater(self):
         """
@@ -93,6 +106,8 @@ class QVCSWidget(QtGui.QFrame):
         deallocating. Overriding PyQt deleteLater to free up
         resources
         """
+        if self.timer is not None:
+            self.timer.stop()
         if self.canvas:
             self.canvas.onClosing((0, 0))
         self.canvas = None

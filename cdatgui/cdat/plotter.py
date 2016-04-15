@@ -167,6 +167,7 @@ class PlotManager(QtCore.QObject):
         self._gm = gm
         if self.can_plot():
             self.plot()
+        self.source.gm_label.setText(self._gm.name)
 
     graphics_method = property(gm, set_gm)
 
@@ -192,6 +193,16 @@ class PlotManager(QtCore.QObject):
         if self.can_plot():
             self.plot()
 
+        valid_vars = []
+        for v in self._vars:
+            try:
+                if v.all():
+                    valid_vars.append(v)
+            except AttributeError:
+                continue
+
+        self.source.variableSync(valid_vars)
+
     variables = property(get_vars, set_vars)
 
     def templ(self):
@@ -202,6 +213,8 @@ class PlotManager(QtCore.QObject):
         self._template = template
         if self.can_plot():
             self.plot()
+
+        self.source.tmpl_label.setText(self.template.name)
 
     template = property(templ, set_templ)
 

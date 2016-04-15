@@ -13,9 +13,6 @@ class BoxfillEditor(GraphicsMethodEditorWidget):
         """Initialize the object."""
         super(BoxfillEditor, self).__init__(parent=parent)
 
-        legend_button = QtGui.QPushButton("Edit Legend")
-        legend_button.clicked.connect(self.editLegend)
-
         self.boxfill_types = OrderedDict(
             Linear="linear",
             Logarithmic="log10",
@@ -34,17 +31,7 @@ class BoxfillEditor(GraphicsMethodEditorWidget):
         self.type_group.buttonClicked.connect(self.setBoxfillType)
 
         self.button_layout.insertLayout(0, button_layout)
-        self.button_layout.insertWidget(2, legend_button)
-
-    def editLegend(self):
-        if self.legend_editor is None:
-            print "launching boxfill legend editor"
-            self.legend_editor = LegendEditorWidget()
-            self.legend_editor.okPressed.connect(self.updated)
-        legend = VCSLegend(self.gm, self.var.var)
-        self.legend_editor.setObject(legend)
-        self.legend_editor.show()
-        self.legend_editor.raise_()
+        self.levels_button.setEnabled(False)
 
     @property
     def gm(self):
@@ -60,6 +47,10 @@ class BoxfillEditor(GraphicsMethodEditorWidget):
 
     def setBoxfillType(self, radio):
         """Take in a radio button and set the GM boxfill_type."""
+        if radio.text() == 'Custom':
+            self.levels_button.setEnabled(True)
+        else:
+            self.levels_button.setEnabled(False)
         box_type = self.boxfill_types[radio.text()]
         self._gm.boxfill_type = box_type
         self.graphicsMethodUpdated.emit(self._gm)

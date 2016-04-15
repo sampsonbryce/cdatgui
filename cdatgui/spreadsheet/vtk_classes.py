@@ -126,6 +126,7 @@ class QCDATWidget(QtGui.QFrame):
         self.iren.show()
         self.dragTarget.hide()
         self.plotAdded.emit()
+        self.emitAllPlots.emit()
 
     def dragEnterEvent(self, event):
         accepted = set([cdms_mime, vcs_gm_mime, vcs_template_mime])

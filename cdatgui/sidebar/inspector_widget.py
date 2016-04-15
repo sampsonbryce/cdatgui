@@ -59,12 +59,13 @@ class ComboButton(QtGui.QWidget):
 
 
 class InspectorWidget(StaticDockWidget):
-    plotters_updated = QtCore.Signal(list)
+    plotters_updated = QtCore.Signal()
 
     def __init__(self, spreadsheet, parent=None):
         super(InspectorWidget, self).__init__("Inspector", parent=parent)
         self.allowed_sides = [QtCore.Qt.DockWidgetArea.RightDockWidgetArea]
         spreadsheet.selectionChanged.connect(self.selection_change)
+        self.plotters_updated.connect(spreadsheet.tabController.currentWidget().totalPlotsChanged)
         self.cells = []
         self.current_plot = None
         self.plots = PlotterListModel()
@@ -218,6 +219,7 @@ class InspectorWidget(StaticDockWidget):
 
     def setTemplate(self, template):
         self.current_plot.template = template
+        self.plotters_updated.emit()
 
     def updateGM(self, index):
         self.edit_gm_button.setEnabled(True)
@@ -226,12 +228,15 @@ class InspectorWidget(StaticDockWidget):
 
         gm = vcs.getgraphicsmethod(gm_type, gm_name)
         self.current_plot.graphics_method = gm
+        self.plotters_updated.emit()
 
     def setFirstVar(self, var):
         self.current_plot.variables = [var, self.current_plot.variables[1]]
+        self.plotters_updated.emit()
 
     def setSecondVar(self, var):
         self.current_plot.variables = [self.current_plot.variables[0], var]
+        self.plotters_updated.emit()
 
     def selectPlot(self, plot):
         plotIndex = self.plot_combo.currentIndex()
@@ -262,7 +267,7 @@ class InspectorWidget(StaticDockWidget):
             block = self.template_combo.blockSignals(True)
             self.template_combo.setCurrentIndex(self.template_combo.findText(plot.template.name))
             self.template_combo.blockSignals(block)
-            if self.gm_type_combo.currentText() == "boxfill" and self.gm_instance_combo.currentText() != '':
+            if self.gm_instance_combo.currentText() != '':
                 self.edit_gm_button.setEnabled(True)
             else:
                 self.edit_gm_button.setEnabled(False)

@@ -1,5 +1,6 @@
 from PySide import QtCore, QtGui
 
+
 class BaseSaveWindowWidget(QtGui.QWidget):
     savePressed = QtCore.Signal(str)
 
