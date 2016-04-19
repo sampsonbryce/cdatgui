@@ -25,9 +25,6 @@ class BoxfillEditor(GraphicsMethodEditorWidget):
         self.type_group = QtGui.QButtonGroup()
         for label in self.boxfill_types:
             radiobutton = QtGui.QRadioButton(label)
-            if label == "Linear":
-                print "SETTING CHECKED"
-                radiobutton.setChecked(True)
             button_layout.addWidget(radiobutton)
             self.type_group.addButton(radiobutton)
 
@@ -46,7 +43,9 @@ class BoxfillEditor(GraphicsMethodEditorWidget):
         self._gm = value
         type_real_vals = self.boxfill_types.values()
         index = type_real_vals.index(value.boxfill_type)
-        self.type_group.buttons()[index].setChecked(True)
+        button = self.type_group.buttons()[index]
+        button.setChecked(True)
+        self.setBoxfillType(button)
 
     def setBoxfillType(self, radio):
         """Take in a radio button and set the GM boxfill_type."""
