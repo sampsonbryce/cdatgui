@@ -20,7 +20,6 @@ class GraphcisMethodDialog(QtGui.QDialog):
         self.gmtype = vcs.graphicsmethodtype(gm)
         if self.gmtype == "boxfill":
             self.editor = BoxfillEditor()
-            self.editor.type_group.checkedButton().clicked.emit()
             self.create = vcs.createboxfill
         elif self.gmtype == "isofill":
             self.editor = IsofillEditor()
