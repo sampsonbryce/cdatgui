@@ -1,4 +1,4 @@
-from PySide import QtGui
+from PySide import QtGui, QtCore
 from .graphics_method_editor import GraphicsMethodEditorWidget
 from .secondary.editor.marker import MarkerEditorWidget
 from .secondary.editor.line import LineEditorWidget
@@ -14,6 +14,14 @@ class Cdat1dEditor(GraphicsMethodEditorWidget):
         self.button_layout.takeAt(0).widget().deleteLater()
         self.button_layout.takeAt(0).widget().deleteLater()
 
+        self.flip_check = QtGui.QCheckBox()
+        self.flip_check.stateChanged.connect(self.flipGraph)
+
+        flip_layout = QtGui.QHBoxLayout()
+        flip_layout.addWidget(QtGui.QLabel("Flip"))
+        flip_layout.addWidget(self.flip_check)
+        flip_layout.addStretch(1)
+
         marker_button = QtGui.QPushButton("Edit Marker")
         marker_button.clicked.connect(self.editMarker)
 
@@ -22,6 +30,7 @@ class Cdat1dEditor(GraphicsMethodEditorWidget):
 
         self.button_layout.insertWidget(0, line_button)
         self.button_layout.insertWidget(0, marker_button)
+        self.button_layout.insertLayout(0, flip_layout)
 
         self.marker_editor = None
         self.line_editor = None
@@ -40,6 +49,8 @@ class Cdat1dEditor(GraphicsMethodEditorWidget):
         if not self.line_editor:
             self.line_editor = LineEditorWidget()
             self.line_editor.savePressed.connect(self.updateLine)
+        if self.gm.linewidth < 1:
+            self.gm.linewidth = 1
         line_obj = vcs.createline(ltype=self.gm.line, color=self.gm.linecolor, width=self.gm.linewidth)
         self.line_editor.setLineObject(line_obj)
         self.line_editor.raise_()
@@ -53,5 +64,22 @@ class Cdat1dEditor(GraphicsMethodEditorWidget):
     def updateLine(self, name):
         self.gm.line = self.line_editor.object.type[0]
         self.gm.linecolor = self.line_editor.object.color[0]
-        self.gm.line = self.line_editor.object.width[0]
+        self.gm.linewidth = self.line_editor.object.width[0]
 
+    def flipGraph(self, state):
+        if state == QtCore.Qt.Checked:
+            self.gm.flip = True
+        elif state == QtCore.Qt.Unchecked:
+            self.gm.flip = False
+
+    @property
+    def gm(self):
+        """GM property."""
+        return self._gm
+
+    @gm.setter
+    def gm(self, value):
+        """GM setter."""
+        self._gm = value
+        print value.flip
+        self.flip_check.setChecked(value.flip)

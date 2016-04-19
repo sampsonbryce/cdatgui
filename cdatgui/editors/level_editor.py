@@ -44,7 +44,7 @@ class LevelEditor(QtGui.QWidget):
 
     def reset_levels(self):
         self.gm.levels = self.orig_levs
-        self.update_levels(self.gm.levels)
+        #self.update_levels(self.gm.levels)
         self.levelsUpdated.emit()
 
     def update_levels(self, levs, clear=False):
@@ -60,6 +60,7 @@ class LevelEditor(QtGui.QWidget):
             self.canvas.update()
             print "Updated"
         self._gm.levels = levs
+        print levs
         print 'Updated levels'
 
     @property
@@ -69,19 +70,31 @@ class LevelEditor(QtGui.QWidget):
     @var.setter
     def var(self, value):
         self._var = value
-        flat = self._var.flatten()
+        flat = self._var.data
+        flat = sorted(numpy.unique(flat.flatten()))
+        '''
+        if flat[0] == -1e20:
+            flat = flat[1:]
+        if flat[-1] == 1e20:
+            flat = flat[:-1]
+        '''
         var_min, var_max = vcs.minmax(flat)
+        print "MIN MAX", var_min, var_max
         # Check if we're using auto levels
         if self._gm is None or not self.has_set_gm_levels():
             # Update the automatic levels with this variable
             levs = vcs.utils.mkscale(var_min, var_max)
+            print "GENERATED LEVELS", levs
         else:
             # Otherwise, just use what the levels are
             levs = self._gm.levels
 
+        step = (levs[-1] - levs[0])/1000
+        values = list(numpy.arange(levs[0], levs[-1]+step, step))
+
         self.canvas.clear()
-        print "updating value slider. min->{0} max->{1}".format(var_min, var_max)
-        self.value_sliders.update(var_min, var_max, levs)
+        print "VALUES:", values, len(values)
+        self.value_sliders.update(values, levs)
         self.update_levels(levs, clear=True)
 
     @property
@@ -96,13 +109,10 @@ class LevelEditor(QtGui.QWidget):
             levs = self._gm.levels
             flat = self._var.flatten()
             var_min, var_max = vcs.minmax(flat)
-            self.value_sliders.update(var_min, var_max, levs)
+            self.value_sliders.update(flat, levs)
             self.update_levels(levs, clear=True)
 
     def has_set_gm_levels(self):
-        # print "Levels:", self._gm.levels
-        # print "checking gm levels", len(self._gm.levels) != 2, not numpy.allclose(self._gm.levels, [1e+20] * 2)
-        # print self._gm.levels, [1e+20] * 2
         try:
             length = len(self._gm.levels[0])
         except:

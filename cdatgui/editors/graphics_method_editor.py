@@ -1,4 +1,5 @@
 from PySide import QtGui, QtCore
+import vcs
 
 from cdatgui.editors.model.legend import VCSLegend
 from cdatgui.editors.widgets.legend_widget import LegendEditorWidget
@@ -88,10 +89,7 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
         if self.level_editor is not None:
             self.level_editor.deleteLater()
             self.level_editor = None
-        print "Emitting updated"
-        self.graphicsMethodUpdated.emit(self._gm)
-        print "Updated"
-        # pdb.set_trace()
+        # self.graphicsMethodUpdated.emit(self._gm)
 
     @property
     def gm(self):

@@ -8,6 +8,7 @@ class LinePreviewWidget(vcswidget.QVCSWidget):
         self.lineobj = None
 
     def setLineObject(self, lineobject):
+        print 'LINE OBJECT', lineobject
         self.lineobj = lineobject
         tmpobj = vcs.createline(source=self.lineobj)
         tmpobj.x = [.25, .75]

@@ -175,7 +175,7 @@ class StartEndSpin(QtGui.QSpinBox):
 
 
 class LegendEditorWidget(BaseOkWindowWidget):
-    def __init__(self, parent=None):
+    def __init__(self, custom=True, parent=None):
         super(LegendEditorWidget, self).__init__()
 
         # Variables
@@ -190,7 +190,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         end_color_label = QtGui.QLabel("End Color:")
         extend_left_label = QtGui.QLabel("Extend Left")
         extend_right_label = QtGui.QLabel("Extend Right")
-        custom_fill_label = QtGui.QLabel("Custom Fill")
+        self.custom_fill_label = QtGui.QLabel("Custom Fill")
         labels_label = QtGui.QLabel("Labels:")
 
         # Timers
@@ -240,6 +240,8 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.custom_fill_icon = QtGui.QToolButton()
         self.custom_fill_icon.setArrowType(QtCore.Qt.RightArrow)
         self.custom_fill_icon.clicked.connect(self.updateArrowType)
+        if not custom:
+            self.disableCustom()
 
         # Create custom fill section
         self.custom_vertical_layout = QtGui.QVBoxLayout()
@@ -302,7 +304,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         extend_layout.insertStretch(2, 1)
 
         custom_fill_layout.addWidget(self.custom_fill_icon)
-        custom_fill_layout.addWidget(custom_fill_label)
+        custom_fill_layout.addWidget(self.custom_fill_label)
 
         # Add preview
         self.setPreview(LegendPreviewWidget())
@@ -546,6 +548,15 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.end_color_button.setStyleSheet(
             self.end_color_button.styleSheet() + "border: 1px solid red;")
 
+    def enableCustom(self):
+        self.custom_fill_icon.setEnabled(True)
+        self.custom_fill_icon.show()
+        self.custom_fill_label.show()
+
+    def disableCustom(self):
+        self.custom_fill_icon.setEnabled(False)
+        self.custom_fill_icon.hide()
+        self.custom_fill_label.hide()
 
 if __name__ == "__main__":
     import cdms2, vcs

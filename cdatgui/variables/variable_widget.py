@@ -34,6 +34,7 @@ class VariableWidget(StaticDockWidget):
 
     def add_variable(self):
         new_variables = self.add_dialog.selected_variables()
+        print "ADDING VARIABLES", new_variables
         for var in new_variables:
             self.variable_widget.add_variable(var)
 

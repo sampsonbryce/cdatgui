@@ -12,7 +12,7 @@ class BoxfillEditor(GraphicsMethodEditorWidget):
     def __init__(self, parent=None):
         """Initialize the object."""
         super(BoxfillEditor, self).__init__(parent=parent)
-
+        print "CREATING BOXFILL EDITOR"
         self.boxfill_types = OrderedDict(
             Linear="linear",
             Logarithmic="log10",
@@ -25,6 +25,9 @@ class BoxfillEditor(GraphicsMethodEditorWidget):
         self.type_group = QtGui.QButtonGroup()
         for label in self.boxfill_types:
             radiobutton = QtGui.QRadioButton(label)
+            if label == "Linear":
+                print "SETTING CHECKED"
+                radiobutton.setChecked(True)
             button_layout.addWidget(radiobutton)
             self.type_group.addButton(radiobutton)
 
@@ -53,4 +56,19 @@ class BoxfillEditor(GraphicsMethodEditorWidget):
             self.levels_button.setEnabled(False)
         box_type = self.boxfill_types[radio.text()]
         self._gm.boxfill_type = box_type
-        self.graphicsMethodUpdated.emit(self._gm)
+
+    def editLegend(self):
+        if self.legend_editor is None:
+            if self.type_group.checkedButton().text() == 'Custom':
+                self.legend_editor = LegendEditorWidget()
+            else:
+                self.legend_editor = LegendEditorWidget(False)
+            self.legend_editor.okPressed.connect(self.updated)
+        elif self.type_group.checkedButton().text() == 'Custom':
+            self.legend_editor.enableCustom()
+        else:
+            self.legend_editor.disableCustom()
+        legend = VCSLegend(self.gm, self.var.var)
+        self.legend_editor.setObject(legend)
+        self.legend_editor.show()
+        self.legend_editor.raise_()

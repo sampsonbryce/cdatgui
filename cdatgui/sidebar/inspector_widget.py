@@ -235,7 +235,13 @@ class InspectorWidget(StaticDockWidget):
         self.plotters_updated.emit()
 
     def setSecondVar(self, var):
-        self.current_plot.variables = [self.current_plot.variables[0], var]
+        old_vars = self.current_plot.variables
+        try:
+            self.current_plot.variables = [self.current_plot.variables[0], var]
+        except ValueError:
+            print "SETTING TO OLD VARS"
+            self.current_plot.variables = old_vars
+
         self.plotters_updated.emit()
 
     def selectPlot(self, plot):

@@ -1,6 +1,8 @@
+import numpy
 from PySide.QtCore import *
 from PySide.QtGui import *
 from functools import partial
+from cdatgui.bases.value_slider import ValueSlider
 
 
 class AdjustValues(QWidget):
@@ -9,9 +11,9 @@ class AdjustValues(QWidget):
     def __init__(self, parent=None):
 
         super(AdjustValues, self).__init__(parent=parent)
-
         self.min_val = 0
         self.max_val = 1
+        self.values = None
         self.slides = []
         # Insert Sliders
         self.wrap = QVBoxLayout()
@@ -29,23 +31,23 @@ class AdjustValues(QWidget):
         self.setLayout(self.wrap)
 
     def add_level(self):
-        self.insert_line()
+        new_slide = self.insert_line()
+        new_slide.setRealValue(new_slide.values[-1])
+
         if self.clearing is False:
             self.send_values()
 
-    def update(self, minval, maxval, values):
+    def update(self, values, levs):
         block = self.blockSignals(True)
-        if minval >= maxval:
-            raise ValueError("Minimum value %d >= maximum value %d" % (minval, maxval))
-        self.min_val = minval
-        self.max_val = maxval
+        self.values = values
         self.clearing = True
         for ind in range(len(self.rows)):
             self.remove_level(self.rows[0])
-
-        for ind, value in enumerate(values):
-            self.insert_line()
-            self.slides[ind].setValue(value)
+        print "UPDATING LEVS", levs, len(levs)
+        for ind, value in enumerate(levs):
+            cur_slide = self.insert_line()
+            print "SETTING SLIDE VALUE", value, ind
+            cur_slide.setRealValue(value)
         self.clearing = False
         self.blockSignals(False)
 
@@ -65,11 +67,11 @@ class AdjustValues(QWidget):
         positions = []
 
         for slide in self.slides:
-            positions.append(slide.sliderPosition())
+            positions.append(slide.realValue())
         self.valuesChanged.emit(positions)
 
     def change_label(self, lab, slide, cur_val):
-        lab.setText(str(slide.sliderPosition()))
+        lab.setText(str(slide.realValue()))
 
     def remove_level(self, row):
         child = row.takeAt(0)
@@ -89,7 +91,9 @@ class AdjustValues(QWidget):
     def insert_line(self):
         row = QHBoxLayout()
         lab = QLabel(str(self.max_val))
-        slide = QSlider(Qt.Horizontal)
+        lab.setMinimumWidth(50)
+        slide = ValueSlider(self.values)
+        slide.setOrientation(Qt.Horizontal)
 
         # remove button
         rem_button = QPushButton()
@@ -102,8 +106,10 @@ class AdjustValues(QWidget):
         row.addWidget(slide)
 
         # set slide attributes
-        slide.setRange(float(self.min_val), float(self.max_val))
-        slide.setValue(self.max_val)
+        # slide.setRange(self.min_val, self.max_val)
+
+        # slide.setValue(self.max_val)
+        slide.setTickInterval(len(self.values) / 20)
         slide.setTickPosition(QSlider.TicksAbove)
         slide.valueChanged.connect(partial(self.change_label, lab, slide))
         slide.valueChanged.connect(partial(self.adjust_slides, slide))
@@ -115,3 +121,5 @@ class AdjustValues(QWidget):
         # add to list
         self.slides.append(slide)
         self.rows.append(row)
+
+        return slide

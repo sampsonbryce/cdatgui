@@ -17,8 +17,8 @@ class MarkerEditorWidget(BaseSaveWindowWidget):
         row = QtGui.QHBoxLayout()
 
         # create type combo box
-        type_box = QtGui.QComboBox()
-        type_box.addItems(["dot", "plus", "star", "circle", "cross", "diamond", "triangle_up", "triangle_down",
+        self.type_box = QtGui.QComboBox()
+        self.type_box.addItems(["dot", "plus", "star", "circle", "cross", "diamond", "triangle_up", "triangle_down",
                            "triangle_left", "triangle_right", "square", "diamond_fill", "triangle_up_fill",
                            "triangle_down_fill", "triangle_left_fill", "triangle_right_fill", "square_fill",'hurricane',
                            'w00', 'w01', 'w02', 'w03', 'w04', 'w05', 'w06', 'w07', 'w08', 'w09', 'w10', 'w11', 'w12',
@@ -29,41 +29,44 @@ class MarkerEditorWidget(BaseSaveWindowWidget):
                            'w65', 'w66', 'w67', 'w68', 'w69', 'w70', 'w71', 'w72', 'w73', 'w74', 'w75', 'w76', 'w77',
                            'w78', 'w79', 'w80', 'w81', 'w82', 'w83', 'w84', 'w85', 'w86', 'w87', 'w88', 'w89', 'w90',
                            'w91', 'w92', 'w93', 'w94', 'w95', 'w96', 'w97', 'w98', 'w99', 'w100', 'w101', 'w102'])
-        type_box.currentIndexChanged[str].connect(self.updateType)
+        self.type_box.currentIndexChanged[str].connect(self.updateType)
 
         # create color spin box
-        color_box = QtGui.QSpinBox()
-        color_box.setRange(0, 255)
-        color_box.valueChanged.connect(self.updateColor)
+        self.color_box = QtGui.QSpinBox()
+        self.color_box.setRange(0, 255)
+        self.color_box.valueChanged.connect(self.updateColor)
 
         # create size spin box
-        size_box = QtGui.QSpinBox()
-        size_box.setRange(1, 300)
-        size_box.valueChanged.connect(self.updateSize)
+        self.size_box = QtGui.QSpinBox()
+        self.size_box.setRange(1, 300)
+        self.size_box.valueChanged.connect(self.updateSize)
 
         row.addWidget(type_label)
-        row.addWidget(type_box)
+        row.addWidget(self.type_box)
 
         row.addWidget(color_label)
-        row.addWidget(color_box)
+        row.addWidget(self.color_box)
 
         row.addWidget(size_label)
-        row.addWidget(size_box)
+        row.addWidget(self.size_box)
 
         self.vertical_layout.insertLayout(1, row)
 
     def setMarkerObject(self, mark_obj):
         self.object = mark_obj
         self.preview.setMarkerObject(self.object)
+        self.type_box.setCurrentIndex(self.type_box.findText(self.object.type[0]))
+        self.color_box.setValue(self.object.color[0])
+        self.size_box.setValue(self.object.size[0])
 
     def updateType(self, cur_item):
-        self.object.type = str(cur_item)
+        self.object.type = [str(cur_item)]
         self.preview.update()
 
     def updateColor(self, color):
-        self.object.color = color
+        self.object.color = [color]
         self.preview.update()
 
     def updateSize(self, size):
-        self.object.size = size
+        self.object.size = [size]
         self.preview.update()

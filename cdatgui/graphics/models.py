@@ -73,7 +73,7 @@ class VCSGraphicsMethodModel(QtCore.QAbstractItemModel):
 
         parent_name = self.data(parent)
         self.beginInsertRows(parent, row, row + count)
-        self.gms = self.gms[parent_name][:row] + gms + self.gms[parent_name][row:]
+        self.gms[parent_name] = self.gms[parent_name][:row] + gms + self.gms[parent_name][row:]
         self.endInsertRows()
 
     def rowCount(self, modelIndex=QtCore.QModelIndex()):
