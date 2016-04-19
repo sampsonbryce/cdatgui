@@ -156,7 +156,6 @@ class PlotManager(QtCore.QObject):
 
     @property
     def canvas(self):
-        # print "MANAGER CANVAS:", self.source.canvas
         return self.source.canvas
 
     def gm(self):
@@ -177,6 +176,7 @@ class PlotManager(QtCore.QObject):
     def set_vars(self, v):
         try:
             self._vars = (v[0], v[1])
+            self.graphics_method = vcs.createvector()
         except TypeError:
             self._vars = (v, None)
         except IndexError:

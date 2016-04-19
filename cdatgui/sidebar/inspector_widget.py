@@ -225,6 +225,19 @@ class InspectorWidget(StaticDockWidget):
         self.edit_gm_button.setEnabled(True)
         gm_type = self.gm_type_combo.currentText()
         gm_name = self.gm_instance_combo.currentText()
+        if gm_type in ['vector', '3d_vector']:
+            self.var_combos[1].setEnabled(True)
+            enabled = True
+        else:
+            block = self.var_combos[1].blockSignals(True)
+            self.var_combos[1].setCurrentIndex(-1)
+            self.var_combos[1].blockSignals(block)
+            self.var_combos[1].setEnabled(False)
+            enabled = False
+            self.current_plot._vars = (self.current_plot.variables[0], None)
+
+        if enabled and self.var_combos[1].currentIndex() == -1:
+            return
 
         gm = vcs.getgraphicsmethod(gm_type, gm_name)
         self.current_plot.graphics_method = gm
@@ -237,9 +250,9 @@ class InspectorWidget(StaticDockWidget):
     def setSecondVar(self, var):
         old_vars = self.current_plot.variables
         try:
-            self.current_plot.variables = [self.current_plot.variables[0], var]
+            self.current_plot.variables = [self.current_plot.variables[0], var.var]
         except ValueError:
-            print "SETTING TO OLD VARS"
+            print "SETTING TO OLD VARS", old_vars
             self.current_plot.variables = old_vars
 
         self.plotters_updated.emit()
