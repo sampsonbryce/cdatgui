@@ -49,7 +49,7 @@ class DynamicGridLayout(QtGui.QGridLayout):
                 return
 
         # clearing
-        self.clearWidget()
+        self.clearWidgets()
 
         # calculate
         full_columns = possible_columns - 1
@@ -77,7 +77,7 @@ class DynamicGridLayout(QtGui.QGridLayout):
 
         self.cur_col_count = possible_columns
 
-    def clearWidget(self):
+    def clearWidgets(self):
         """clears widgets from the grid layout. Does not delete widgets"""
         for col, row_count in enumerate(self.counts):
             if row_count:

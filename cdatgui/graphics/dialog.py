@@ -63,7 +63,6 @@ class GraphcisMethodDialog(QtGui.QDialog):
 
         self.setLayout(layout)
 
-        print "GM NAME", gm.name
         if gm.name == 'default':
             self.gm = self.create('new', gm)
             save.setEnabled(False)

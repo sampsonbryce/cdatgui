@@ -170,6 +170,9 @@ class InspectorWidget(StaticDockWidget):
 
     def editGraphicsMethod(self, gm):
         get_gms().replace(get_gms().indexOf(vcs.graphicsmethodtype(gm), gm), gm)
+        print "SETTING GM", gm.list()
+        for line in gm.line:
+            vcs.getline(line).list()
         self.current_plot.graphics_method = gm
 
     def makeGraphicsMethod(self, gm):
@@ -237,10 +240,12 @@ class InspectorWidget(StaticDockWidget):
             self.current_plot._vars = (self.current_plot.variables[0], None)
 
         if enabled and self.var_combos[1].currentIndex() == -1:
-            return
-
-        gm = vcs.getgraphicsmethod(gm_type, gm_name)
-        self.current_plot.graphics_method = gm
+            gm = vcs.getgraphicsmethod(gm_type, gm_name)
+            self.current_plot.graphics_method = (gm, False)
+        else:
+            gm = vcs.getgraphicsmethod(gm_type, gm_name)
+            self.current_plot.graphics_method = gm
+            
         self.plotters_updated.emit()
 
     def setFirstVar(self, var):

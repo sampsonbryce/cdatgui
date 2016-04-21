@@ -213,7 +213,7 @@ class DictEditorWidget(QWidget):
         return dict(zip(keys, values))
 
     def clear(self):
-        self.grid.clearWidget()
+        self.grid.clearWidgets()
         self.clearing = True
 
         while self.key_value_rows:

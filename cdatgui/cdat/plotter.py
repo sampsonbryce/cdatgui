@@ -161,11 +161,16 @@ class PlotManager(QtCore.QObject):
     def gm(self):
         return self._gm
 
-    def set_gm(self, gm):
+    def set_gm(self, args):
+        """If args is a tuple, assume they are passing in False. Tuple used to designate do not plot"""
         # check gm vs vars
-        self._gm = gm
-        if self.can_plot():
-            self.plot()
+        if isinstance(args, tuple):
+            self._gm = args[0]
+        else:
+            self._gm = args
+            if self.can_plot():
+                print "PLOTTING"
+                self.plot()
         self.source.gm_label.setText(self._gm.name)
 
     graphics_method = property(gm, set_gm)
@@ -176,7 +181,7 @@ class PlotManager(QtCore.QObject):
     def set_vars(self, v):
         try:
             self._vars = (v[0], v[1])
-            self.graphics_method = vcs.createvector()
+            # self.graphics_method = vcs.createvector()
         except TypeError:
             self._vars = (v, None)
         except IndexError:
