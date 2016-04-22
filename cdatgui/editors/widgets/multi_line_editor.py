@@ -9,6 +9,21 @@ from cdatgui.vcsmodel import get_lines
 from cdatgui.bases.input_dialog import ValidatingInputDialog
 
 
+class LineNameDialog(ValidatingInputDialog):
+    def save(self):
+        print "SAVING"
+        if self.textValue() in vcs.elements['line']:
+            check = QtGui.QMessageBox.question(self, "Overwrite line?",
+                                               "Line {0} already exists. Overwrite?".format(self.textValue()),
+                                               buttons=QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
+            if check == QtGui.QDialogButtonBox.FirstButton:
+                self.close()
+                self.accepted.emit()
+        else:
+            self.close()
+            self.accepted.emit()
+
+
 class LineTextValidator(QtGui.QValidator):
     invalidInput = QtCore.Signal()
     validInput = QtCore.Signal()
@@ -31,6 +46,7 @@ class MultiLineEditor(BaseOkWindowWidget):
         self.line_combos = []
         self.dynamic_grid = DynamicGridLayout(400)
         self.vertical_layout.insertLayout(0, self.dynamic_grid)
+        self.setWindowTitle("Edit Lines")
 
     def setObject(self, object):
         self.isoline_model = object
@@ -75,7 +91,7 @@ class MultiLineEditor(BaseOkWindowWidget):
             self.line_editor.close()
             self.line_editor.deleteLater()
         self.line_editor = LineEditorWidget()
-        dialog = ValidatingInputDialog()
+        dialog = LineNameDialog()
         dialog.setValidator(LineTextValidator())
         self.line_editor.setSaveDialog(dialog)
 
@@ -83,7 +99,7 @@ class MultiLineEditor(BaseOkWindowWidget):
         line_obj = vcs.getline(line)
 
         self.line_editor.setLineObject(line_obj)
-        self.line_editor.savePressed.connect(partial(self.update, index))
+        self.line_editor.saved.connect(partial(self.update, index))
 
         self.line_editor.show()
         self.line_editor.raise_()
@@ -91,8 +107,9 @@ class MultiLineEditor(BaseOkWindowWidget):
     def changeLine(self, row_index, combo_index):
         self.isoline_model.line[row_index] = get_lines().elements[combo_index]
 
-    def update(self, index, name):  # TODO: restructure name so that it saves a line not pass the name back
+    def update(self, index, name):
         self.isoline_model.line[index] = str(name)
+        print "SETTING COMBO", name
         self.line_combos[index].setCurrentIndex(self.line_combos[index].findText(name))
 
     def okClicked(self):

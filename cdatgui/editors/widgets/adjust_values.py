@@ -43,13 +43,11 @@ class AdjustValues(QWidget):
         self.clearing = True
         for ind in range(len(self.rows)):
             self.remove_level(self.rows[0])
-        print "UPDATING LEVS", levs, len(levs)
         for ind, value in enumerate(levs):
             cur_slide = self.insert_line()
-            print "SETTING SLIDE VALUE", value, ind
             cur_slide.setRealValue(value)
         self.clearing = False
-        self.blockSignals(False)
+        self.blockSignals(block)
 
     def adjust_slides(self, slide, cur_val):
         cur_index = self.slides.index(slide)
@@ -106,9 +104,6 @@ class AdjustValues(QWidget):
         row.addWidget(slide)
 
         # set slide attributes
-        # slide.setRange(self.min_val, self.max_val)
-
-        # slide.setValue(self.max_val)
         slide.setTickInterval(len(self.values) / 20)
         slide.setTickPosition(QSlider.TicksAbove)
         slide.valueChanged.connect(partial(self.change_label, lab, slide))

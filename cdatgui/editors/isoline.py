@@ -62,7 +62,6 @@ class IsolineEditor(GraphicsMethodEditorWidget):
             self.edit_label_button.setEnabled(True)
 
     def update(self):
-        # self._gm.list()
         pass
 
     @property

@@ -170,9 +170,6 @@ class InspectorWidget(StaticDockWidget):
 
     def editGraphicsMethod(self, gm):
         get_gms().replace(get_gms().indexOf(vcs.graphicsmethodtype(gm), gm), gm)
-        print "SETTING GM", gm.list()
-        for line in gm.line:
-            vcs.getline(line).list()
         self.current_plot.graphics_method = gm
 
     def makeGraphicsMethod(self, gm):
@@ -219,6 +216,7 @@ class InspectorWidget(StaticDockWidget):
 
     def setGMRoot(self, index):
         self.gm_instance_combo.setRootModelIndex(get_gms().index(index, 0))
+        self.edit_gm_button.setEnabled(False)
 
     def setTemplate(self, template):
         self.current_plot.template = template

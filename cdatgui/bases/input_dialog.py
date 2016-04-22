@@ -8,6 +8,10 @@ class ValidatingInputDialog(QtGui.QWidget):
     def __init__(self):
         super(ValidatingInputDialog, self).__init__()
 
+        self.setWindowModality(QtCore.Qt.ApplicationModal)
+        shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Escape), self)
+        shortcut.activated.connect(self.cancel)
+
         vertical_layout = QtGui.QVBoxLayout()
 
         self.label = QtGui.QLabel()
@@ -18,7 +22,7 @@ class ValidatingInputDialog(QtGui.QWidget):
         self.save_button.setEnabled(False)
         self.save_button.setDefault(True)
         cancel_button = QtGui.QPushButton('Cancel')
-        cancel_button.clicked.connect(self.rejected.emit)
+        cancel_button.clicked.connect(self.cancel)
 
         self.edit.returnPressed.connect(self.save_button.click)
 
@@ -36,6 +40,10 @@ class ValidatingInputDialog(QtGui.QWidget):
         self.setLayout(vertical_layout)
 
         self.setMaximumSize(300, 100)
+
+    def cancel(self):
+        self.close()
+        self.rejected.emit()
 
     def save(self):
         self.close()

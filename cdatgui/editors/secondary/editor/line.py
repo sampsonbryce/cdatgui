@@ -6,11 +6,13 @@ from cdatgui.vcsmodel import get_lines
 
 
 class LineEditorWidget(BaseSaveWindowWidget):
+    saved = QtCore.Signal(str)
+
     def __init__(self):
         super(LineEditorWidget, self).__init__()
         self.setPreview(LinePreviewWidget())
-
         self.savePressed.connect(self.saveNewLine)
+        self.orig_name = None
 
         # create labels
         type_label = QtGui.QLabel("Type:")
@@ -46,9 +48,16 @@ class LineEditorWidget(BaseSaveWindowWidget):
         self.vertical_layout.insertLayout(1, row)
 
     def setLineObject(self, line_obj):
+        self.setWindowTitle('Edit {0} line'.format(line_obj.name))
+        self.orig_name = line_obj.name
+
         if line_obj.name == 'default':
-            line_obj = vcs.createline('new', line_obj.name)
             self.save_button.setEnabled(False)
+
+        if 'new' in vcs.elements['line']:
+            del vcs.elements['line']['new']
+
+        line_obj = vcs.createline('new', line_obj.name)
 
         self.object = line_obj
         self.preview.setLineObject(self.object)
@@ -70,16 +79,38 @@ class LineEditorWidget(BaseSaveWindowWidget):
         self.preview.update()
 
     def saveNewLine(self, name):
-        if name not in vcs.elements['line']:
+        name = str(name)
+        print "NAME", name
+        print "ORIG NAME", self.orig_name
+
+        if name == "new":
+            if self.orig_name in vcs.elements['line']:
+                del vcs.elements['line'][self.orig_name]
+
+            vcs.createline(self.orig_name, source=name)
+            # vcs.elements['line'][self.orig_name] = self.object
+            get_lines().updated(self.orig_name)
+            self.saved.emit(self.orig_name)
+        else:
+            if name in vcs.elements['line']:
+                del vcs.elements['line'][name]
+            vcs.createline(name, source='new')
+            get_lines().updated(name)
+            self.saved.emit(name)
+
+
+        '''
+        # if name not in vcs.elements['line']:
             print "NAME:", name
 
-            vcs.createline(name, source=self.object.name)
+            vcs.createline(self.orig_name, source=self.object.name)
 
             # if the name was default, delete the new line that was created to allow editing
-            if self.object.name == 'new':
+            # if self.object.name == 'new':
                 del vcs.elements['line']['new']
         elif name != 'default':
             vcs.elements['line'][name] = self.object
 
         # add/update line with given name
         get_lines().updated(str(name))
+        '''
