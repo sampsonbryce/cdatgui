@@ -9,6 +9,7 @@ class BaseSaveWindowWidget(QtGui.QWidget):
 
         self.object = None
         self.preview = None
+        self.dialog = QtGui.QInputDialog()
 
         # Layout to add new elements
         self.vertical_layout = QtGui.QVBoxLayout()
@@ -22,14 +23,14 @@ class BaseSaveWindowWidget(QtGui.QWidget):
         saveas_button.setText("Save As")
         saveas_button.clicked.connect(self.saveAs)
 
-        save_button = QtGui.QPushButton()
-        save_button.setText("Save")
-        save_button.clicked.connect(self.save)
+        self.save_button = QtGui.QPushButton()
+        self.save_button.setText("Save")
+        self.save_button.clicked.connect(self.save)
 
         save_cancel_row = QtGui.QHBoxLayout()
         save_cancel_row.addWidget(cancel_button)
         save_cancel_row.addWidget(saveas_button)
-        save_cancel_row.addWidget(save_button)
+        save_cancel_row.addWidget(self.save_button)
         save_cancel_row.insertStretch(1, 1)
 
         # Set up vertical_layout
@@ -47,7 +48,7 @@ class BaseSaveWindowWidget(QtGui.QWidget):
 
     def saveAs(self):
 
-        self.win = QtGui.QInputDialog()
+        self.win = self.dialog
 
         self.win.setLabelText("Enter New Name:")
         self.win.accepted.connect(self.save)
@@ -67,6 +68,8 @@ class BaseSaveWindowWidget(QtGui.QWidget):
         self.savePressed.emit(name)
         self.close()
 
+    def setSaveDialog(self, dialog):
+        self.dialog = dialog
 
 class BaseOkWindowWidget(QtGui.QWidget):
     okPressed = QtCore.Signal()

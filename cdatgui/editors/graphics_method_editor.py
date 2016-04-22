@@ -89,7 +89,6 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
         if self.level_editor is not None:
             self.level_editor.deleteLater()
             self.level_editor = None
-        # self.graphicsMethodUpdated.emit(self._gm)
 
     @property
     def gm(self):

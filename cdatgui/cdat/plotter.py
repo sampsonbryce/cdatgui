@@ -169,7 +169,6 @@ class PlotManager(QtCore.QObject):
         else:
             self._gm = args
             if self.can_plot():
-                print "PLOTTING"
                 self.plot()
         self.source.gm_label.setText(self._gm.name)
 

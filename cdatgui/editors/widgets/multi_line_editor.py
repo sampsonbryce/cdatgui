@@ -6,10 +6,24 @@ from cdatgui.bases.window_widget import BaseOkWindowWidget
 from cdatgui.bases.dynamic_grid_layout import DynamicGridLayout
 import vcs
 from cdatgui.vcsmodel import get_lines
+from cdatgui.bases.input_dialog import ValidatingInputDialog
+
+
+class LineTextValidator(QtGui.QValidator):
+    invalidInput = QtCore.Signal()
+    validInput = QtCore.Signal()
+
+    def validate(self, inp, pos):
+        inp = inp.strip()
+        if not inp or inp == 'default':
+            self.invalidInput.emit()
+            return QtGui.QValidator.Intermediate
+
+        self.validInput.emit()
+        return QtGui.QValidator.Acceptable
 
 
 class MultiLineEditor(BaseOkWindowWidget):
-
     def __init__(self):
         super(MultiLineEditor, self).__init__()
         self.isoline_model = None
@@ -61,6 +75,9 @@ class MultiLineEditor(BaseOkWindowWidget):
             self.line_editor.close()
             self.line_editor.deleteLater()
         self.line_editor = LineEditorWidget()
+        dialog = ValidatingInputDialog()
+        dialog.setValidator(LineTextValidator())
+        self.line_editor.setSaveDialog(dialog)
 
         line = self.isoline_model.line[index]
         line_obj = vcs.getline(line)
@@ -77,7 +94,6 @@ class MultiLineEditor(BaseOkWindowWidget):
     def update(self, index, name):  # TODO: restructure name so that it saves a line not pass the name back
         self.isoline_model.line[index] = str(name)
         self.line_combos[index].setCurrentIndex(self.line_combos[index].findText(name))
-        print self.isoline_model._gm.list()
 
     def okClicked(self):
         self.updateGM()

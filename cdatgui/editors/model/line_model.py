@@ -12,7 +12,6 @@ class LineModel(LevelsBaseModel):
 
     @property
     def line(self):
-        print "LINELIST", self._gm.line
         while len(self._gm.line) < len(self._gm.levels):
             while True:
                 try:
