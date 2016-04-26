@@ -8,6 +8,7 @@ from cdms_file_chooser import CDMSFileChooser
 from cdms_file_tree import CDMSFileTree
 from manager import manager
 from . import get_variables
+from cdatgui.bases.input_dialog import ValidatingInputDialog
 
 
 class dummyVar(object):
@@ -15,10 +16,31 @@ class dummyVar(object):
         self.id = id
 
 
+class FileNameValidator(QtGui.QValidator):
+    invalidInput = QtCore.Signal()
+    validInput = QtCore.Signal()
+
+    def __init__(self):
+        super(FileNameValidator, self).__init__()
+        self.reserved_words = ['and', 'del', 'from', 'not', 'while', 'as', 'elif', 'global', 'or', 'with',
+                               'assert', 'else', 'if', 'pass', 'yield', 'break', 'except', 'import', 'print', 'class',
+                               'exec', 'in', 'raise', 'continue', 'finally', 'is', 'return', 'def', 'for', 'lambda',
+                               'try']
+
+    def validate(self, name, pos):
+        if name in self.reserved_words or not re.search("^[a-zA-Z_]", name) or name == '' \
+                or re.search(' +', name) or re.search("[^a-zA-Z0-9_]+", name) \
+                or get_variables().variable_exists(dummyVar(name)):
+            self.invalidInput.emit()
+            return QtGui.QValidator.Intermediate
+        self.validInput.emit()
+        return QtGui.QValidator.Acceptable
+
+
 class AddDialog(QtGui.QDialog):
     def __init__(self, parent=None, f=0):
         super(AddDialog, self).__init__(parent=parent, f=f)
-        self.renameVar = None
+        self.renameVar = []
         self.dialog = None
         self.reserved_words = ['and', 'del', 'from', 'not', 'while', 'as', 'elif', 'global', 'or', 'with',
                                'assert', 'else', 'if', 'pass', 'yield', 'break', 'except', 'import', 'print', 'class',
@@ -73,9 +95,9 @@ class AddDialog(QtGui.QDialog):
 
     def selected_variables(self):
         if self.renameVar:
-            var = self.renameVar
-            self.renameVar = None
-            return [var]
+            var_list = self.renameVar
+            self.renameVar = []
+            return var_list
         else:
             return self.tree.get_selected()
 
@@ -97,21 +119,19 @@ class AddDialog(QtGui.QDialog):
             return
         var = var[0]
 
-        while True:
-            name = QtGui.QInputDialog.getText(self, u"Import As", u"Enter new variable name")
-            if not name[1] or (name[1] and self.isValidName(name[0])):
-                break
+        self.dialog = ValidatingInputDialog()
+        self.dialog.setValidator(FileNameValidator())
+        self.dialog.accepted.connect(partial(self.setRenameVar, var))
+        self.dialog.setWindowTitle("Import As")
+        self.dialog.setLabelText("Enter New Name:")
 
-            QtGui.QMessageBox.warning(self, "Error", "Invalid name")
+        self.dialog.show()
+        self.dialog.raise_()
 
-        str_name = name[0]
-        var.id = str_name
-        self.renameVar = var
-        if name[1]:
-            self.buttons.accepted.emit()
-        else:
-            self.buttons.rejected.emit()
-        self.close()
+    def setRenameVar(self, var):
+        self.renameVar.append(var)
+        self.renameVar[-1].id = self.dialog.textValue()
+        self.dialog.close()
 
     def isValidName(self, name):
         if name in self.reserved_words or not re.search("^[a-zA-Z_]", name) or name == '' \

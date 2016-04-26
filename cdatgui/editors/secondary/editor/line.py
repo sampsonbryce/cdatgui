@@ -97,20 +97,3 @@ class LineEditorWidget(BaseSaveWindowWidget):
             vcs.createline(name, source='new')
             get_lines().updated(name)
             self.saved.emit(name)
-
-
-        '''
-        # if name not in vcs.elements['line']:
-            print "NAME:", name
-
-            vcs.createline(self.orig_name, source=self.object.name)
-
-            # if the name was default, delete the new line that was created to allow editing
-            # if self.object.name == 'new':
-                del vcs.elements['line']['new']
-        elif name != 'default':
-            vcs.elements['line'][name] = self.object
-
-        # add/update line with given name
-        get_lines().updated(str(name))
-        '''

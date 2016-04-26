@@ -80,9 +80,13 @@ class LevelEditor(QtGui.QWidget):
 
         if isinstance(levs[0], list):
             levs = [item[0] for item in levs]
+        try:
+            step = (levs[-1] - levs[0])/1000
+            values = list(numpy.arange(levs[0], levs[-1]+step, step))
+        except:
+            step = (levs[-1][0] - levs[0][0])/1000
+            values = list(numpy.arange(levs[0][0], levs[-1][0]+step, step))
 
-        step = (levs[-1] - levs[0])/1000
-        values = list(numpy.arange(levs[0], levs[-1]+step, step))
         for lev in levs:
             if lev not in values:
                 values.insert(bisect_left(values, lev), lev)

@@ -48,7 +48,8 @@ class MultiLineEditor(BaseOkWindowWidget):
         self.vertical_layout.insertLayout(0, self.dynamic_grid)
         self.setWindowTitle("Edit Lines")
 
-    def setObject(self, object):
+    def setObject(self, object, *args):
+        print "SETTING OBJECT"
         self.isoline_model = object
         widgets = []
 
@@ -58,6 +59,7 @@ class MultiLineEditor(BaseOkWindowWidget):
 
         for widget in grid_widgets:
             self.dynamic_grid.removeWidget(widget)
+            widget.deleteLater()
 
         # repopulate
         for ind, lev in enumerate(self.isoline_model.levels):
@@ -66,12 +68,20 @@ class MultiLineEditor(BaseOkWindowWidget):
 
             line_combo = QtGui.QComboBox()
             line_combo.setModel(get_lines())
-            line_combo.currentIndexChanged.connect(partial(self.changeLine, ind))
-            line_combo.setCurrentIndex(get_lines().elements.index(self.isoline_model.line[ind]))
+            # must call to adjust values for length of levels before indexing into levels
+            lines = self.isoline_model.line
+            item = self.isoline_model.line[ind]
+
+            print "LINES", lines
+            print "ITEM:", item
+            print "ELEMENTS:", get_lines().elements
+            line_combo.setCurrentIndex(get_lines().elements.index(item))
             self.line_combos.append(line_combo)
 
             edit_line = QtGui.QPushButton('Edit Line')
             edit_line.clicked.connect(partial(self.editLine, ind))
+
+            line_combo.currentIndexChanged.connect(partial(self.changeLine, ind))
 
             # add everything to layout
             row.addWidget(line_label)
@@ -81,8 +91,6 @@ class MultiLineEditor(BaseOkWindowWidget):
             row_widget = QtGui.QWidget()
             row_widget.setLayout(row)
             widgets.append(row_widget)
-
-        print object._gm.linecolors
 
         self.dynamic_grid.addNewWidgets(widgets)
 
@@ -105,11 +113,12 @@ class MultiLineEditor(BaseOkWindowWidget):
         self.line_editor.raise_()
 
     def changeLine(self, row_index, combo_index):
+        print "ChangeLine, row_i, combo_i", row_index, combo_index
         self.isoline_model.line[row_index] = get_lines().elements[combo_index]
 
     def update(self, index, name):
+        print "UPDATING:", index, name
         self.isoline_model.line[index] = str(name)
-        print "SETTING COMBO", name
         self.line_combos[index].setCurrentIndex(self.line_combos[index].findText(name))
 
     def okClicked(self):
