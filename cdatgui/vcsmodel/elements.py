@@ -53,6 +53,7 @@ class VCSElementsModel(QtCore.QAbstractListModel):
             if insert_ind == -1:
                 new_els.append(el_name)
                 insert_ind = len(self.elements)
-            self.beginInsertRows(QtCore.QModelIndex(), insert_ind, 1)
+            self.beginInsertRows(QtCore.QModelIndex(), insert_ind, insert_ind)
+            print "NEW ELEMENTS:", new_els
             self.elements = new_els
             self.endInsertRows()

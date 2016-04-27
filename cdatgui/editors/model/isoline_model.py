@@ -1,11 +1,11 @@
 from .levels_base import LevelsBaseModel
-from cdatgui.vcsmodel import get_lines
+from cdatgui.vcsmodel import get_textstyles
 import vcs
 
 
-class LineModel(LevelsBaseModel):
+class IsolineModel(LevelsBaseModel):
     def __init__(self, gm, var, canvas=None):
-        print "CREATING LINE MODEL"
+        print "CREATING ISOLINE MODEL"
         self._gm = gm
         self._var = var
         self._canvas = canvas
@@ -28,3 +28,16 @@ class LineModel(LevelsBaseModel):
     def linewidths(self):
         return self._gm.linewidths
 
+    @property
+    def text(self):
+        if not self._gm.text:
+            self._gm.text = ['default']
+        while len(self._gm.text) < len(self._gm.levels):
+            self._gm.text.append(self._gm.text[-1])
+        while len(self._gm.text) > len(self._gm.levels):
+            self._gm.text.remove(self._gm.text[-1])
+        return self._gm.text
+
+    @property
+    def textcolors(self):
+        return self._gm.textcolors

@@ -131,6 +131,7 @@ class AddDialog(QtGui.QDialog):
     def setRenameVar(self, var):
         self.renameVar.append(var)
         self.renameVar[-1].id = self.dialog.textValue()
+        self.accepted.emit()
         self.dialog.close()
 
     def isValidName(self, name):

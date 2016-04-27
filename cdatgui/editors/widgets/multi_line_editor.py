@@ -47,6 +47,7 @@ class MultiLineEditor(BaseOkWindowWidget):
         self.dynamic_grid = DynamicGridLayout(400)
         self.vertical_layout.insertLayout(0, self.dynamic_grid)
         self.setWindowTitle("Edit Lines")
+        self.resize(300, self.height())
 
     def setObject(self, object, *args):
         print "SETTING OBJECT"
@@ -68,13 +69,9 @@ class MultiLineEditor(BaseOkWindowWidget):
 
             line_combo = QtGui.QComboBox()
             line_combo.setModel(get_lines())
-            # must call to adjust values for length of levels before indexing into levels
-            lines = self.isoline_model.line
-            item = self.isoline_model.line[ind]
 
-            print "LINES", lines
-            print "ITEM:", item
-            print "ELEMENTS:", get_lines().elements
+            # set to current line
+            item = self.isoline_model.line[ind]
             line_combo.setCurrentIndex(get_lines().elements.index(item))
             self.line_combos.append(line_combo)
 

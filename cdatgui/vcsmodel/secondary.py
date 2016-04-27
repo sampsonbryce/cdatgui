@@ -33,9 +33,11 @@ class TextElementsModel(VCSElementsModel):
             tc = vcs.gettextcombined(tc)
             if tc.To_name == name and tc.Tt_name == name:
                 return tc
+
         tc = vcs.createtextcombined()
         tc.Tt = tt
         tc.To = to
+
         return tc
 
     def isa(self, obj):

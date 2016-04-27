@@ -9,7 +9,7 @@ class TextStylePreviewWidget(vcswidget.QVCSWidget):
 
     def setTextObject(self, textobject):
         self.textobj = textobject
-        tmpobj = vcs.createtext(Tt_source=self.textobj.Tt, To_source=self.textobj.To)
+        tmpobj = vcs.createtext(Tt_source=self.textobj.Tt_name, To_source=self.textobj.To_name)
         tmpobj.string = ["%s Preview" % self.textobj.name]
         tmpobj.x = [.5]
         tmpobj.y = [.5]
