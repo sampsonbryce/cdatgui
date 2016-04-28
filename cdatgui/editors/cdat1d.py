@@ -36,19 +36,22 @@ class Cdat1dEditor(GraphicsMethodEditorWidget):
         self.line_editor = None
 
     def editMarker(self):
-        if not self.marker_editor:
-            self.marker_editor = MarkerEditorWidget()
-            self.marker_editor.savePressed.connect(self.updateMarker)
-
+        if self.marker_editor:
+            self.marker_editor.close()
+            self.marker_editor.deleteLater()
+        self.marker_editor = MarkerEditorWidget()
+        self.marker_editor.savePressed.connect(self.updateMarker)
         mark_obj = vcs.createmarker(mtype=self.gm.marker, color=self.gm.markercolor, size=self.gm.markersize)
         self.marker_editor.setMarkerObject(mark_obj)
         self.marker_editor.raise_()
         self.marker_editor.show()
 
     def editLine(self):
-        if not self.line_editor:
-            self.line_editor = LineEditorWidget()
-            self.line_editor.savePressed.connect(self.updateLine)
+        if self.line_editor:
+            self.line_editor.close()
+            self.line_editor.deleteLater()
+        self.line_editor = LineEditorWidget()
+        self.line_editor.savePressed.connect(self.updateLine)
         if self.gm.linewidth < 1:
             self.gm.linewidth = 1
         line_obj = vcs.createline(ltype=self.gm.line, color=self.gm.linecolor, width=self.gm.linewidth)

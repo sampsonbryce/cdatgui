@@ -39,7 +39,6 @@ class GraphcisMethodDialog(QtGui.QDialog):
             self.create = vcs.createvector
         else:
             raise NotImplementedError("No editor exists for type %s" % self.gmtype)
-        print "Var", var
         self.editor.var = var
         self.editor.tmpl = tmpl
         layout.addWidget(self.editor)

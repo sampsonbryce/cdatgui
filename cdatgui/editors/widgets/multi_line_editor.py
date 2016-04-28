@@ -11,7 +11,6 @@ from cdatgui.bases.input_dialog import ValidatingInputDialog
 
 class LineNameDialog(ValidatingInputDialog):
     def save(self):
-        print "SAVING"
         if self.textValue() in vcs.elements['line']:
             check = QtGui.QMessageBox.question(self, "Overwrite line?",
                                                "Line {0} already exists. Overwrite?".format(self.textValue()),
@@ -109,11 +108,11 @@ class MultiLineEditor(BaseOkWindowWidget):
         self.line_editor.raise_()
 
     def changeLine(self, row_index, combo_index):
-        print "ChangeLine, row_i, combo_i", row_index, combo_index
+        """Changed line to an already existing line in the line model"""
         self.isoline_model.line[row_index] = get_lines().elements[combo_index]
 
     def update(self, index, name):
-        print "UPDATING:", index, name
+        """Updated line from line editor"""
         self.isoline_model.line[index] = str(name)
         self.line_combos[index].setCurrentIndex(self.line_combos[index].findText(name))
 
