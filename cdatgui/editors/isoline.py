@@ -38,11 +38,13 @@ class IsolineEditor(GraphicsMethodEditorWidget):
         self.line_edit_widget = None
 
     def editText(self):
-        if not self.text_edit_widget:
-            self.text_edit_widget = MultiTextEditor()
-            self.text_edit_widget.setObject(IsolineModel(self._gm, self._var))
-            self.text_edit_widget.show()
-            self.text_edit_widget.raise_()
+        if self.text_edit_widget:
+            self.text_edit_widget.close()
+            self.text_edit_widget.deleteLater()
+        self.text_edit_widget = MultiTextEditor()
+        self.text_edit_widget.setObject(IsolineModel(self._gm, self._var))
+        self.text_edit_widget.show()
+        self.text_edit_widget.raise_()
 
     def editLines(self):
         if self.line_edit_widget:

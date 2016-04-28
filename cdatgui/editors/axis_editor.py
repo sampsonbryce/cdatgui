@@ -56,7 +56,6 @@ class AxisEditorWidget(BaseOkWindowWidget):
         self.tickmark_button_group.buttonClicked.connect(self.updateTickmark)
 
         # create preset combo box
-        # This in only being tracked for debugging
         preset_box = QtGui.QComboBox()
         preset_box.addItem("default")
         preset_box.addItems(vcs.listelements("list"))

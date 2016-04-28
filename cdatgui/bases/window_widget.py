@@ -10,6 +10,7 @@ class BaseSaveWindowWidget(QtGui.QWidget):
         self.object = None
         self.preview = None
         self.dialog = QtGui.QInputDialog()
+        self.setWindowModality(QtCore.Qt.ApplicationModal)
 
         # Layout to add new elements
         self.vertical_layout = QtGui.QVBoxLayout()
@@ -71,6 +72,7 @@ class BaseSaveWindowWidget(QtGui.QWidget):
     def setSaveDialog(self, dialog):
         self.dialog = dialog
 
+
 class BaseOkWindowWidget(QtGui.QWidget):
     okPressed = QtCore.Signal()
 
@@ -79,6 +81,7 @@ class BaseOkWindowWidget(QtGui.QWidget):
 
         self.object = None
         self.preview = None
+        self.setWindowModality(QtCore.Qt.ApplicationModal)
 
         # Layout to add new elements
         self.vertical_layout = QtGui.QVBoxLayout()

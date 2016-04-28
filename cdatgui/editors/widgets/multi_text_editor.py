@@ -49,7 +49,6 @@ class MultiTextEditor(BaseOkWindowWidget):
         self.resize(300, self.height())
 
     def setObject(self, object):
-        print "SETTING OBJECT"
         self.isoline_model = object
         widgets = []
 
@@ -64,7 +63,7 @@ class MultiTextEditor(BaseOkWindowWidget):
         # repopulate
         for ind, lev in enumerate(self.isoline_model.levels):
             row = QtGui.QHBoxLayout()
-            text_label = QtGui.QLabel("Text:")
+            text_label = QtGui.QLabel(str(lev))
 
             text_combo = QtGui.QComboBox()
             text_combo.setModel(get_textstyles())

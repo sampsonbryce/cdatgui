@@ -5,7 +5,6 @@ import vcs
 
 class IsolineModel(LevelsBaseModel):
     def __init__(self, gm, var, canvas=None):
-        print "CREATING ISOLINE MODEL"
         self._gm = gm
         self._var = var
         self._canvas = canvas
@@ -17,7 +16,6 @@ class IsolineModel(LevelsBaseModel):
             self._gm.line.append(self._gm.line[-1])
         while len(self._gm.line) > len(self._gm.levels):
             self._gm.line.remove(self._gm.line[-1])
-        print "RETURNING:", self._gm.line
         return self._gm.line
 
     @property

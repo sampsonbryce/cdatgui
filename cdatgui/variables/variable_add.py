@@ -40,6 +40,7 @@ class FileNameValidator(QtGui.QValidator):
 class AddDialog(QtGui.QDialog):
     def __init__(self, parent=None, f=0):
         super(AddDialog, self).__init__(parent=parent, f=f)
+        self.setWindowModality(QtCore.Qt.ApplicationModal)
         self.renameVar = []
         self.dialog = None
         self.reserved_words = ['and', 'del', 'from', 'not', 'while', 'as', 'elif', 'global', 'or', 'with',
@@ -114,7 +115,7 @@ class AddDialog(QtGui.QDialog):
 
     def rename_file(self):
         var = self.tree.get_selected()
-        if len(var) > 1:
+        if len(var) > 1 or len(var) < 1:
             QtGui.QMessageBox.warning(self, "Error", "Please select one variable to import as")
             return
         var = var[0]
@@ -133,6 +134,7 @@ class AddDialog(QtGui.QDialog):
         self.renameVar[-1].id = self.dialog.textValue()
         self.accepted.emit()
         self.dialog.close()
+        self.tree.clearSelection()
 
     def isValidName(self, name):
         if name in self.reserved_words or not re.search("^[a-zA-Z_]", name) or name == '' \

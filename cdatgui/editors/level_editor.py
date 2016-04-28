@@ -20,6 +20,8 @@ class LevelEditor(QtGui.QWidget):
         self._var = None
         self._gm = None
 
+        self.setWindowModality(QtCore.Qt.ApplicationModal)
+
         self.canvas = QVCSWidget()
         self.value_sliders = AdjustValues()
         self.value_sliders.valuesChanged.connect(self.update_levels)
@@ -90,7 +92,7 @@ class LevelEditor(QtGui.QWidget):
         for lev in levs:
             if lev not in values:
                 values.insert(bisect_left(values, lev), lev)
-
+        print "LEVS:", levs
         self.canvas.clear()
         self.value_sliders.update(values, levs)
         self.update_levels(levs, clear=True)

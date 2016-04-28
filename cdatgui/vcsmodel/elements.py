@@ -34,12 +34,10 @@ class VCSElementsModel(QtCore.QAbstractListModel):
 
     def updated(self, el_name):
         try:
-            print "Updating element", el_name
             ind = self.elements.index(el_name)
             model_ind = self.index(ind)
             self.dataChanged.emit(model_ind, model_ind)
         except ValueError:
-            print "Inserting Element", el_name
             new_els = []
             insert_ind = -1
             insert_me = el_name
@@ -54,6 +52,5 @@ class VCSElementsModel(QtCore.QAbstractListModel):
                 new_els.append(el_name)
                 insert_ind = len(self.elements)
             self.beginInsertRows(QtCore.QModelIndex(), insert_ind, insert_ind)
-            print "NEW ELEMENTS:", new_els
             self.elements = new_els
             self.endInsertRows()

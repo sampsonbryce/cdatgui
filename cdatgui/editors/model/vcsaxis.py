@@ -1,5 +1,6 @@
 import vcs
 
+
 class VCSAxis(object):
     def __init__(self, gm, tmpl, axis, var):
         self.gm = gm
@@ -120,7 +121,8 @@ class VCSAxis(object):
             ticks = vcs.elements["list"][ticks]
         ticks = sorted(ticks)
         left, right = vcs.minmax(self.axis)
-        return (right - left) / len(ticks)
+        print "STEP", right, left, len(ticks)
+        return (right - left) / (len(ticks) - 1)  # pretty sure this need to be -
 
     @step.setter
     def step(self, value):
@@ -142,6 +144,7 @@ class VCSAxis(object):
             cur_val += value
 
         self.ticks = {i: i for i in tick_vals}
+        print "SET TICKS", self.ticks
 
     @property
     def show_miniticks(self):

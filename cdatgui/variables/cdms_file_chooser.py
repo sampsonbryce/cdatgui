@@ -7,7 +7,7 @@ class CDMSFileChooser(QtGui.QDialog):
 
     def __init__(self, parent=None, f=0):
         super(CDMSFileChooser, self).__init__(parent=parent, f=f)
-
+        self.setWindowModality(QtCore.Qt.ApplicationModal)
         self.tabs = VerticalTabWidget()
 
         layout = QtGui.QVBoxLayout()

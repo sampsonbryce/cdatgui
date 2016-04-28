@@ -50,7 +50,6 @@ class MultiLineEditor(BaseOkWindowWidget):
         self.resize(300, self.height())
 
     def setObject(self, object, *args):
-        print "SETTING OBJECT"
         self.isoline_model = object
         widgets = []
 
@@ -65,7 +64,7 @@ class MultiLineEditor(BaseOkWindowWidget):
         # repopulate
         for ind, lev in enumerate(self.isoline_model.levels):
             row = QtGui.QHBoxLayout()
-            line_label = QtGui.QLabel("Line:")
+            line_label = QtGui.QLabel(str(lev))
 
             line_combo = QtGui.QComboBox()
             line_combo.setModel(get_lines())

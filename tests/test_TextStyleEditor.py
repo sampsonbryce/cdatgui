@@ -1,26 +1,33 @@
 import pytest
+import re
 import vcs
 from PySide import QtCore, QtGui
 from cdatgui.editors.secondary.editor.text import TextStyleEditorWidget
+from cdatgui.vcsmodel import get_textstyles
 
 
 @pytest.fixture
 def editors():
+    for name in ['header', 'header2', 'header3']:
+        try:
+            del vcs.elements['textcombined']['{0}:::{1}'.format(name, name)]
+            del vcs.elements['texttable'][name]
+            del vcs.elements['textorientation'][name]
+        except:
+            print "didnt delete all"
+
     edit1 = TextStyleEditorWidget()
-    t = vcs.createtext()
-    t.name = "header"
+    t = vcs.createtext('header')
     edit1.setTextObject(t)
 
     edit2 = TextStyleEditorWidget()
-    t = vcs.createtext()
-    t.name = "header"
+    t = vcs.createtext('header2')
     t.valign = 0
     t.halign = 1
     edit2.setTextObject(t)
 
     edit3 = TextStyleEditorWidget()
-    t = vcs.createtext()
-    t.name = "header"
+    t = vcs.createtext('header3')
     t.valign = 4
     t.halign = 2
     edit3.setTextObject(t)
@@ -29,13 +36,14 @@ def editors():
 
 
 def save_check(name):
-    assert name == "header"
+    # assert name in vcs.listelements('textcombined')
+    assert re.match("header[0-9]*", name)
 
 
 def test_save(qtbot, editors):
     for editor in editors:
 
-        editor.savePressed.connect(save_check)
+        editor.saved.connect(save_check)
         editor.save()
 
 
@@ -43,52 +51,52 @@ def test_alignment(editors):
     for editor in editors:
         # test valign
         editor.updateButton(editor.va_group.buttons()[0])
-        assert editor.textObject.valign == 0
+        assert editor.object.valign == 0
 
         editor.updateButton(editor.va_group.buttons()[2])
-        assert editor.textObject.valign == 4
+        assert editor.object.valign == 4
 
         editor.updateButton(editor.va_group.buttons()[1])
-        assert editor.textObject.valign == 2
+        assert editor.object.valign == 2
 
         # test halign
         editor.updateButton(editor.ha_group.buttons()[2])
-        assert editor.textObject.halign == 2
+        assert editor.object.halign == 2
 
         editor.updateButton(editor.ha_group.buttons()[1])
-        assert editor.textObject.halign == 1
+        assert editor.object.halign == 1
 
         editor.updateButton(editor.ha_group.buttons()[0])
-        assert editor.textObject.halign == 0
+        assert editor.object.halign == 0
 
 
 def test_angle(editors):
     for editor in editors:
 
-        assert editor.textObject.angle == 0
+        assert editor.object.angle == 0
 
         editor.updateAngle(50)
-        assert editor.textObject.angle == 50
+        assert editor.object.angle == 50
 
         editor.updateAngle(440)
-        assert editor.textObject.angle == 80
+        assert editor.object.angle == 80
 
 
 def test_font(editors):
     for editor in editors:
         editor.updateFont("Helvetica")
-        assert editor.textObject.font == 4
+        assert editor.object.font == 4
 
         editor.updateFont("Chinese")
-        assert editor.textObject.font == 8
+        assert editor.object.font == 8
 
 
 def test_size(editors):
     for editor in editors:
-        assert editor.textObject.height == 14
+        assert editor.object.height == 14
 
         editor.updateSize(50)
-        assert editor.textObject.height == 50
+        assert editor.object.height == 50
 
 
 def saveas_check(name):
@@ -98,7 +106,7 @@ def saveas_check(name):
 def test_saveas(qtbot, editors):
     for editor in editors:
 
-        editor.savePressed.connect(saveas_check)
+        editor.saved.connect(saveas_check)
         editor.saveAs()
 
         try:
@@ -109,3 +117,7 @@ def test_saveas(qtbot, editors):
 
         editor.win.setTextValue("test.txt")
         qtbot.keyPress(editor.win, QtCore.Qt.Key_Enter)
+        assert "test.txt" in vcs.listelements('texttable')
+        assert "test.txt" in vcs.listelements('textorientation')
+        assert "test.txt" in get_textstyles().elements
+    assert False

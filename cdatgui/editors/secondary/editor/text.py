@@ -167,7 +167,12 @@ class TextStyleEditorWidget(BaseSaveWindowWidget):
         name = str(name)
 
         if name != 'new:::new':
+            # for el in vcs.listelements('textorientation'):
+            # for el in vcs.listelements('textcombined'):
+                # print el
+            # print vcs.elements['textcombined']
             # getting object
+            # import traceback;traceback.print_stack()
             to = vcs.elements['textorientation']['new']
             tt = vcs.elements['texttable']['new']
 

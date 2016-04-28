@@ -14,6 +14,7 @@ class GraphcisMethodDialog(QtGui.QDialog):
 
     def __init__(self, gm, var, tmpl, parent=None):
         super(GraphcisMethodDialog, self).__init__(parent=parent)
+        self.setWindowModality(QtCore.Qt.ApplicationModal)
 
         layout = QtGui.QVBoxLayout()
 
@@ -38,7 +39,7 @@ class GraphcisMethodDialog(QtGui.QDialog):
             self.create = vcs.createvector
         else:
             raise NotImplementedError("No editor exists for type %s" % self.gmtype)
-
+        print "Var", var
         self.editor.var = var
         self.editor.tmpl = tmpl
         layout.addWidget(self.editor)

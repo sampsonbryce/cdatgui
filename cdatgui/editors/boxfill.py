@@ -12,7 +12,6 @@ class BoxfillEditor(GraphicsMethodEditorWidget):
     def __init__(self, parent=None):
         """Initialize the object."""
         super(BoxfillEditor, self).__init__(parent=parent)
-        print "CREATING BOXFILL EDITOR"
         self.boxfill_types = OrderedDict(
             Linear="linear",
             Logarithmic="log10",

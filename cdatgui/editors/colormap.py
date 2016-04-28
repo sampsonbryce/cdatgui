@@ -12,6 +12,7 @@ class QColormapEditor(QtGui.QColorDialog):
 
     def __init__(self, mode=COLORMAP_MODE, parent=None):
         QtGui.QColorDialog.__init__(self, parent)
+        self.setWindowModality(QtCore.Qt.ApplicationModal)
         self.parent = parent
         self.setOption(QtGui.QColorDialog.DontUseNativeDialog, True)
         self.setOption(QtGui.QColorDialog.NoButtons)

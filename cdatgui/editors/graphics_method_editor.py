@@ -51,9 +51,11 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
         self.axis_editor = None
 
     def editAxis(self, axis):
-        if self.axis_editor is None:
-            self.axis_editor = AxisEditorWidget(axis[0])
-            self.axis_editor.okPressed.connect(self.updated)
+        if self.axis_editor:
+            self.axis_editor.close()
+            self.axis_editor.deleteLater()
+        self.axis_editor = AxisEditorWidget(axis[0])
+        self.axis_editor.okPressed.connect(self.updated)
         axis = VCSAxis(self._gm, self.tmpl, axis, self.var)
         self.axis_editor.setAxisObject(axis)
         self.axis_editor.show()
@@ -107,5 +109,4 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
         legend = VCSLegend(self.gm, self.var.var)
         self.legend_editor.setObject(legend)
         self.legend_editor.show()
-        self.legend_editor
-
+        self.legend_editor.raise_()

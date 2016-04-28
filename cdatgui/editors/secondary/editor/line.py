@@ -80,15 +80,12 @@ class LineEditorWidget(BaseSaveWindowWidget):
 
     def saveNewLine(self, name):
         name = str(name)
-        print "NAME", name
-        print "ORIG NAME", self.orig_name
 
         if name == "new":
             if self.orig_name in vcs.elements['line']:
                 del vcs.elements['line'][self.orig_name]
 
             vcs.createline(self.orig_name, source=name)
-            # vcs.elements['line'][self.orig_name] = self.object
             get_lines().updated(self.orig_name)
             self.saved.emit(self.orig_name)
         else:
