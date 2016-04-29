@@ -71,9 +71,6 @@ class GraphcisMethodDialog(QtGui.QDialog):
 
         self.editor.gm = self.gm
 
-    def updateGM(self, gm):
-        self.gm = gm
-
     def customName(self):
         name = QtGui.QInputDialog.getText(self, u"Save As", u"Name for {0}:".format(unicode(self.gmtype)))
         if name[1]:
@@ -89,5 +86,8 @@ class GraphcisMethodDialog(QtGui.QDialog):
 
     def reject(self):
         super(GraphcisMethodDialog, self).reject()
+        if isinstance(self.editor, BoxfillEditor):
+            self.gm.boxfill_type = self.editor.orig_type
+
         if 'new' in vcs.elements[vcs.graphicsmethodtype(self.gm)].keys():
             del vcs.elements[vcs.graphicsmethodtype(self.gm)]['new']

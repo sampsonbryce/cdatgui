@@ -12,6 +12,8 @@ class BoxfillEditor(GraphicsMethodEditorWidget):
     def __init__(self, parent=None):
         """Initialize the object."""
         super(BoxfillEditor, self).__init__(parent=parent)
+
+        self.orig_type = None
         self.boxfill_types = OrderedDict(
             Linear="linear",
             Logarithmic="log10",
@@ -43,7 +45,7 @@ class BoxfillEditor(GraphicsMethodEditorWidget):
         type_real_vals = self.boxfill_types.values()
         index = type_real_vals.index(value.boxfill_type)
         button = self.type_group.buttons()[index]
-        button.setChecked(True)
+        button.click()
         self.setBoxfillType(button)
 
     def setBoxfillType(self, radio):
@@ -53,20 +55,8 @@ class BoxfillEditor(GraphicsMethodEditorWidget):
         else:
             self.levels_button.setEnabled(False)
         box_type = self.boxfill_types[radio.text()]
+
+        if not self.orig_type:
+            self.orig_type = box_type
         self._gm.boxfill_type = box_type
 
-    def editLegend(self):
-        if self.legend_editor is None:
-            if self.type_group.checkedButton().text() == 'Custom':
-                self.legend_editor = LegendEditorWidget()
-            else:
-                self.legend_editor = LegendEditorWidget(False)
-            self.legend_editor.okPressed.connect(self.updated)
-        elif self.type_group.checkedButton().text() == 'Custom':
-            self.legend_editor.enableCustom()
-        else:
-            self.legend_editor.disableCustom()
-        legend = VCSLegend(self.gm, self.var.var)
-        self.legend_editor.setObject(legend)
-        self.legend_editor.show()
-        self.legend_editor.raise_()

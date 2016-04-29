@@ -176,7 +176,7 @@ class StartEndSpin(QtGui.QSpinBox):
 
 
 class LegendEditorWidget(BaseOkWindowWidget):
-    def __init__(self, custom=True, parent=None):
+    def __init__(self, parent=None):
         super(LegendEditorWidget, self).__init__()
 
         # Variables
@@ -241,8 +241,6 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.custom_fill_icon = QtGui.QToolButton()
         self.custom_fill_icon.setArrowType(QtCore.Qt.RightArrow)
         self.custom_fill_icon.clicked.connect(self.updateArrowType)
-        if not custom:
-            self.disableCustom()
 
         # Create custom fill section
         self.custom_vertical_layout = QtGui.QVBoxLayout()
@@ -341,18 +339,17 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
         self.extend_left_check.setChecked(self.object.ext_left)
         self.extend_right_check.setChecked(self.object.ext_right)
-        print "IS BOXFILL?", vcs.isboxfill(self.object)
+
         if vcs.isboxfill(self.object._gm):
-            if self.object._gm.boxfill_type == 'custom' and self.custom_fill_icon.arrowType() == QtCore.Qt.RightArrow:
-                self.updateArrowType()
+            if self.object._gm.boxfill_type == 'custom':
+                self.enableCustom(self.object._gm.fillareastyle != 'solid')
+            else:
+                self.disableCustom()
+
+        elif self.object.fill_style:
+            self.enableCustom(self.object.fill_style != 'solid')
         else:
-            print "NOPE"
-            try:
-                if self.object.fill_style != 'solid' and self.custom_fill_icon.arrowType() == QtCore.Qt.RightArrow:
-                    print "UPDATING"
-                    self.updateArrowType()
-            except AttributeError as e:
-                print "ERROR", e
+            self.disableCustom()
 
         self.preview.setLegendObject(legend)
         self.preview.update()
@@ -565,10 +562,12 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.end_color_button.setStyleSheet(
             self.end_color_button.styleSheet() + "border: 1px solid red;")
 
-    def enableCustom(self):
+    def enableCustom(self, show=False):
         self.custom_fill_icon.setEnabled(True)
         self.custom_fill_icon.show()
         self.custom_fill_label.show()
+        if show and self.custom_fill_icon.arrowType() == QtCore.Qt.RightArrow:
+            self.updateArrowType()
 
     def disableCustom(self):
         self.custom_fill_icon.setEnabled(False)

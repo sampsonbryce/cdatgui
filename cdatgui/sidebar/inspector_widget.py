@@ -183,7 +183,7 @@ class InspectorWidget(StaticDockWidget):
 
         gm = vcs.getgraphicsmethod(gm_type, gm_name)
         if self.gm_editor:
-            self.gm_editor.reject()
+            self.gm_editor.close()
             self.gm_editor.deleteLater()
         self.gm_editor = GraphcisMethodDialog(gm, self.var_combos[0].currentObj(), self.template_combo.currentObj())
         self.gm_editor.createdGM.connect(self.makeGraphicsMethod)
@@ -255,7 +255,6 @@ class InspectorWidget(StaticDockWidget):
         try:
             self.current_plot.variables = [self.current_plot.variables[0], var.var]
         except ValueError:
-            print "SETTING TO OLD VARS", old_vars
             self.current_plot.variables = old_vars
 
         self.plotters_updated.emit()

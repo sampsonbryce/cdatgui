@@ -67,11 +67,25 @@ class VCSLegend(LevelsBaseModel):
     @property
     def fill_style(self):
         """Use for custom fill's radio buttons."""
-        return self._gm.fillareastyle
+        if hasattr(self._gm, 'fillareastyle'):
+            return self._gm.fillareastyle
+        return None
 
     @fill_style.setter
     def fill_style(self, style):
         self._gm.fillareastyle = style.lower()
+        self._gm.fillareacolors = self.vcs_colors
+        self.adjust_to_level_length(self._gm.fillareaindices)
+        # this should just be temporary until merge of missing level branch
+        self.adjust_to_level_length(self._gm.fillareaopacity)
+        self.adjust_to_level_length(self._gm.fillareacolors)
+
+    def adjust_to_level_length(self, lst):
+        # +1 for invisible level
+        while len(lst) < len(self.levels)+1:
+            lst.append(lst[-1])
+        while len(lst) > len(self.levels)+1:
+            lst.pop()
 
     @property
     def color_1(self):

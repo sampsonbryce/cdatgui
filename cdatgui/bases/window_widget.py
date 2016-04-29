@@ -10,7 +10,10 @@ class BaseSaveWindowWidget(QtGui.QWidget):
         self.object = None
         self.preview = None
         self.dialog = QtGui.QInputDialog()
+        self.dialog.setModal(QtCore.Qt.ApplicationModal)
         self.setWindowModality(QtCore.Qt.ApplicationModal)
+        shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Escape), self)
+        shortcut.activated.connect(self.close)
 
         # Layout to add new elements
         self.vertical_layout = QtGui.QVBoxLayout()
@@ -18,7 +21,7 @@ class BaseSaveWindowWidget(QtGui.QWidget):
         # Save and Cancel Buttons
         cancel_button = QtGui.QPushButton()
         cancel_button.setText("Cancel")
-        cancel_button.clicked.connect(lambda: self.close())
+        cancel_button.clicked.connect(self.close)
 
         saveas_button = QtGui.QPushButton()
         saveas_button.setText("Save As")
@@ -82,6 +85,8 @@ class BaseOkWindowWidget(QtGui.QWidget):
         self.object = None
         self.preview = None
         self.setWindowModality(QtCore.Qt.ApplicationModal)
+        shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Escape), self)
+        shortcut.activated.connect(self.close)
 
         # Layout to add new elements
         self.vertical_layout = QtGui.QVBoxLayout()

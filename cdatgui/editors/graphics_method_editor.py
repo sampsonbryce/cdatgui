@@ -3,6 +3,7 @@ import vcs
 
 from cdatgui.editors.model.legend import VCSLegend
 from cdatgui.editors.widgets.legend_widget import LegendEditorWidget
+from cdatgui.editors.projection_editor import ProjectionEditor
 from level_editor import LevelEditor
 from axis_editor import AxisEditorWidget
 from model.vcsaxis import VCSAxis
@@ -38,6 +39,8 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
         bottom_axis.clicked.connect(self.editBottom)
         top_axis = QtGui.QPushButton("Edit Top Ticks")
         top_axis.clicked.connect(self.editTop)
+        projection = QtGui.QPushButton('Edit Projection')
+        projection.clicked.connect(self.editProjection)
 
         self.button_layout.addWidget(self.levels_button)
         self.button_layout.addWidget(legend_button)
@@ -45,10 +48,12 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
         self.button_layout.addWidget(right_axis)
         self.button_layout.addWidget(top_axis)
         self.button_layout.addWidget(bottom_axis)
+        self.button_layout.addWidget(projection)
 
         self.level_editor = None
         self.legend_editor = None
         self.axis_editor = None
+        self.projection_editor = None
 
     def editAxis(self, axis):
         if self.axis_editor:
@@ -56,7 +61,7 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
             self.axis_editor.deleteLater()
         self.axis_editor = AxisEditorWidget(axis[0])
         self.axis_editor.okPressed.connect(self.updated)
-        axis = VCSAxis(self._gm, self.tmpl, axis, self.var)
+        axis = VCSAxis(self.gm, self.tmpl, axis, self.var)
         self.axis_editor.setAxisObject(axis)
         self.axis_editor.show()
         self.axis_editor.raise_()
@@ -85,6 +90,7 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
 
     def updated(self):
         if self.legend_editor is not None:
+            print self.legend_editor.object._gm.list()
             self.legend_editor = None
         if self.axis_editor is not None:
             self.axis_editor = None
@@ -110,3 +116,14 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
         self.legend_editor.setObject(legend)
         self.legend_editor.show()
         self.legend_editor.raise_()
+
+    def editProjection(self):
+        if self.projection_editor:
+            self.projection_editor.close()
+            self.projection_editor.deleteLater()
+        self.projection_editor = ProjectionEditor()
+        self.projection_editor.setProjectionObject(vcs.getprojection(self.gm.projection))
+        self.projection_editor.gm = self.gm
+        self.projection_editor.show()
+        self.projection_editor.raise_()
+
