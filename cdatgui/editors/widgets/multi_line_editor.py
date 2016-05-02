@@ -6,35 +6,7 @@ from cdatgui.bases.window_widget import BaseOkWindowWidget
 from cdatgui.bases.dynamic_grid_layout import DynamicGridLayout
 import vcs
 from cdatgui.vcsmodel import get_lines
-from cdatgui.bases.input_dialog import ValidatingInputDialog
-
-
-class LineNameDialog(ValidatingInputDialog):
-    def save(self):
-        if self.textValue() in vcs.elements['line']:
-            check = QtGui.QMessageBox.question(self, "Overwrite line?",
-                                               "Line {0} already exists. Overwrite?".format(self.textValue()),
-                                               buttons=QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
-            if check == QtGui.QDialogButtonBox.FirstButton:
-                self.close()
-                self.accepted.emit()
-        else:
-            self.close()
-            self.accepted.emit()
-
-
-class LineTextValidator(QtGui.QValidator):
-    invalidInput = QtCore.Signal()
-    validInput = QtCore.Signal()
-
-    def validate(self, inp, pos):
-        inp = inp.strip()
-        if not inp or inp == 'default':
-            self.invalidInput.emit()
-            return QtGui.QValidator.Intermediate
-
-        self.validInput.emit()
-        return QtGui.QValidator.Acceptable
+from cdatgui.bases.vcs_elements_dialog import VcsElementsDialog, VcsElementsValidator
 
 
 class MultiLineEditor(BaseOkWindowWidget):
@@ -94,8 +66,8 @@ class MultiLineEditor(BaseOkWindowWidget):
             self.line_editor.close()
             self.line_editor.deleteLater()
         self.line_editor = LineEditorWidget()
-        dialog = LineNameDialog()
-        dialog.setValidator(LineTextValidator())
+        dialog = VcsElementsDialog('line')
+        dialog.setValidator(VcsElementsValidator())
         self.line_editor.setSaveDialog(dialog)
 
         line = self.isoline_model.line[index]

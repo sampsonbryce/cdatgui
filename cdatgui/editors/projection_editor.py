@@ -3,11 +3,15 @@ import vcs, sys
 from cdatgui.bases.window_widget import BaseSaveWindowWidget
 from cStringIO import StringIO
 from cdatgui.utils import label
+from cdatgui.bases.vcs_elements_dialog import VcsElementsDialog, VcsElementsValidator
 
 
 class ProjectionEditor(BaseSaveWindowWidget):
     def __init__(self):
         super(ProjectionEditor, self).__init__()
+        dialog = VcsElementsDialog('projection')
+        dialog.setValidator(VcsElementsValidator())
+        self.setSaveDialog(dialog)
         self.orig_projection = None
         self.cur_projection_name = None
         self.gm = None
@@ -91,10 +95,11 @@ class ProjectionEditor(BaseSaveWindowWidget):
         self.vertical_layout.insertLayout(1, type_row)
 
     def setProjectionObject(self, obj):
+        if obj.name == 'default':
+            self.save_button.setEnabled(False)
         self.orig_projection = obj
         self.cur_projection_name = obj.name
         self.object = vcs.createprojection('new', obj)
-        # self.object = obj
         self.updateAttributes()
 
     def updateAttributes(self):
@@ -142,20 +147,20 @@ class ProjectionEditor(BaseSaveWindowWidget):
     def updateCurrentProjection(self, proj):
         proj = str(proj)
         self.cur_projection_name = proj
-        self.object = vcs.getprojection(proj)
+        if 'new' in vcs.listelements('projection'):
+            del vcs.elements['projection']['new']
+        vcs.getprojection(proj).list()
+        self.object = vcs.createprojection('new', vcs.getprojection(proj))
         self.updateAttributes()
 
     def updateProjectionType(self, type):
-        type = str(type)
-        self.object.type = type
+        self.object.type = str(type)
         self.updateAttributes()
 
     def savingNewProjection(self, name):
         if name == 'new':
-
             vcs.elements['projection'].pop(self.cur_projection_name)
             vcs.createprojection(self.cur_projection_name, self.object)
-            # del vcs.elements['projection'][self.cur_projection_name]
             name = self.cur_projection_name
         else:
             vcs.createprojection(name, vcs.elements['projection']['new'])
@@ -164,30 +169,9 @@ class ProjectionEditor(BaseSaveWindowWidget):
         del new
 
         self.gm.projection = name
-    '''
-    def updateGM(self, name):
-        if name not in vcs.elements['projection']:
-            projection = vcs.createprojection(name, vcs.elements['projection'][self.cur_projection_name])
-        else:
-            projection = vcs.elements['projection'][self.cur_projection_name]
 
-        for editor, attr in self.editors:
-            if isinstance(editor, QtGui.QComboBox):
-                text = editor.currentText()
-            else:
-                text = editor.text()
-
-            try:
-                text = float(text)
-            except ValueError:
-                pass
-
-            setattr(projection, attr, text)
-        self.gm.projection = projection.name
-    '''
     def close(self):
         if 'new' in vcs.elements['projection']:
-            
             new = vcs.elements['projection'].pop('new')
             del new
         super(ProjectionEditor, self).close()

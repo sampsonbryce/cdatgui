@@ -5,36 +5,8 @@ from cdatgui.editors.secondary.editor.text import TextStyleEditorWidget
 from cdatgui.bases.window_widget import BaseOkWindowWidget
 from cdatgui.bases.dynamic_grid_layout import DynamicGridLayout
 import vcs
-from cdatgui.bases.input_dialog import ValidatingInputDialog
 from cdatgui.vcsmodel import get_textstyles
-
-
-class TextNameDialog(ValidatingInputDialog):
-    def save(self):
-        if self.textValue() in vcs.elements['texttable'] or self.textValue() in vcs.elements['textorientation']:
-            check = QtGui.QMessageBox.question(self, "Overwrite text?",
-                                               "Text {0} already exists. Overwrite?".format(self.textValue()),
-                                               buttons=QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
-            if check == QtGui.QDialogButtonBox.FirstButton:
-                self.close()
-                self.accepted.emit()
-        else:
-            self.close()
-            self.accepted.emit()
-
-
-class TextNameValidator(QtGui.QValidator):
-    invalidInput = QtCore.Signal()
-    validInput = QtCore.Signal()
-
-    def validate(self, inp, pos):
-        inp = inp.strip()
-        if not inp or inp == 'default':
-            self.invalidInput.emit()
-            return QtGui.QValidator.Intermediate
-
-        self.validInput.emit()
-        return QtGui.QValidator.Acceptable
+from cdatgui.bases.vcs_elements_dialog import VcsElementsDialog, VcsElementsValidator
 
 
 class MultiTextEditor(BaseOkWindowWidget):
@@ -94,8 +66,8 @@ class MultiTextEditor(BaseOkWindowWidget):
             self.text_editor.close()
             self.text_editor.deleteLater()
         self.text_editor = TextStyleEditorWidget()
-        dialog = TextNameDialog()
-        dialog.setValidator(TextNameValidator())
+        dialog = VcsElementsDialog('texttable')
+        dialog.setValidator(VcsElementsValidator())
         self.text_editor.setSaveDialog(dialog)
 
         text = self.isoline_model.text[index]

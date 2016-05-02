@@ -64,3 +64,6 @@ class ValidatingInputDialog(QtGui.QWidget):
 
     def textValue(self):
         return self.edit.text().strip()
+
+    def setTextValue(self, text):
+        self.edit.setText(text)
