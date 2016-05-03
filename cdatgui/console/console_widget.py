@@ -8,7 +8,7 @@ from qtconsole.inprocess import QtInProcessKernelManager
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
 
 from cdatgui.cdat.metadata import FileMetadataWrapper, VariableMetadataWrapper
-from cdatgui.variables import get_variables
+from cdatgui.variables import get_variables, reserved_words
 
 
 def is_cdms_var(v):
@@ -37,10 +37,6 @@ class ConsoleWidget(QtGui.QWidget):
         self.shell_vars = {}
         self.gm_count = {}
         self.letters = list(string.ascii_uppercase)
-        self.reserved_words = ['and', 'del', 'from', 'not', 'while', 'as', 'elif', 'global', 'or', 'with',
-                               'assert', 'else', 'if', 'pass', 'yield', 'break', 'except', 'import', 'print', 'class',
-                               'exec', 'in', 'raise', 'continue', 'finally', 'is', 'return', 'def', 'for', 'lambda',
-                               'try']
 
         # Create ipython widget
         self.kernel_manager = QtInProcessKernelManager()
@@ -183,7 +179,7 @@ class ConsoleWidget(QtGui.QWidget):
     def fixInvalidVariables(self, var):
         var = re.sub(' +', '_', var)
         var = re.sub("[^a-zA-Z0-9_]+", '', var)
-        if var in self.reserved_words or not re.match("^[a-zA-Z_]", var):
+        if var in reserved_words() or not re.match("^[a-zA-Z_]", var):
             var = 'cdat_' + var
         return var
 

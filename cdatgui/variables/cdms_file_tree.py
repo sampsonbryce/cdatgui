@@ -11,7 +11,7 @@ label_icon = None
 
 class CDMSFileItem(QtGui.QTreeWidgetItem):
 
-    def __init__(self, text, parent=None):
+    def __init__(self, text, uri, parent=None):
         global label_font, label_icon_size, label_icon
 
         if label_font is None:
@@ -21,6 +21,8 @@ class CDMSFileItem(QtGui.QTreeWidgetItem):
             label_icon = icon("bluefile.png")
 
         super(CDMSFileItem, self).__init__(parent=parent)
+
+        self.uri = uri
         self.setSizeHint(0, label_icon_size)
         self.setIcon(0, label_icon)
         self.setText(1, text)
@@ -52,7 +54,7 @@ class CDMSFileTree(QtGui.QTreeWidget):
 
         file_name = os.path.basename(parsed.path)
 
-        file_item = CDMSFileItem(file_name)
+        file_item = CDMSFileItem(file_name, cdmsfile.uri)
 
         for var in cdmsfile.variables:
             var_item = QtGui.QTreeWidgetItem()

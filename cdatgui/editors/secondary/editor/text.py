@@ -100,14 +100,6 @@ class TextStyleEditorWidget(BaseSaveWindowWidget):
         if text_object.Tt_name == 'default' and text_object.To_name == 'default':
             self.save_button.setEnabled(False)
 
-        if 'new:::new' in vcs.elements['textcombined']:
-            del vcs.elements['textcombined']['new:::new']
-            try:
-                del vcs.elements['textorientation']['new']
-                del vcs.elements['texttable']['new']
-            except KeyError:
-                pass
-
         text_object = vcs.createtextcombined('new', text_object.Tt_name, 'new', text_object.To_name)
 
         self.object = text_object
@@ -167,12 +159,6 @@ class TextStyleEditorWidget(BaseSaveWindowWidget):
         name = str(name)
 
         if name != 'new:::new':
-            # for el in vcs.listelements('textorientation'):
-            # for el in vcs.listelements('textcombined'):
-                # print el
-            # print vcs.elements['textcombined']
-            # getting object
-            # import traceback;traceback.print_stack()
             to = vcs.elements['textorientation']['new']
             tt = vcs.elements['texttable']['new']
 
@@ -232,3 +218,12 @@ class TextStyleEditorWidget(BaseSaveWindowWidget):
 
             # adding to list
             self.saved.emit(old_tt_name)
+
+    def close(self):
+        if 'new:::new' in vcs.elements['textcombined']:
+            del vcs.elements['textcombined']['new:::new']
+            if 'new' in vcs.listelements('textorientation'):
+                del vcs.elements['textorientation']['new']
+            if 'new' in vcs.listelements('texttable'):
+                del vcs.elements['texttable']['new']
+        super(TextStyleEditorWidget, self).close()

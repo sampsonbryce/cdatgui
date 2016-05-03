@@ -7,7 +7,7 @@ from cdatgui.toolbars import AddEditRemoveToolbar
 from cdms_file_chooser import CDMSFileChooser
 from cdms_file_tree import CDMSFileTree
 from manager import manager
-from . import get_variables
+from . import get_variables, reserved_words
 from cdatgui.bases.input_dialog import ValidatingInputDialog
 
 
@@ -22,13 +22,9 @@ class FileNameValidator(QtGui.QValidator):
 
     def __init__(self):
         super(FileNameValidator, self).__init__()
-        self.reserved_words = ['and', 'del', 'from', 'not', 'while', 'as', 'elif', 'global', 'or', 'with',
-                               'assert', 'else', 'if', 'pass', 'yield', 'break', 'except', 'import', 'print', 'class',
-                               'exec', 'in', 'raise', 'continue', 'finally', 'is', 'return', 'def', 'for', 'lambda',
-                               'try']
 
     def validate(self, name, pos):
-        if name in self.reserved_words or not re.search("^[a-zA-Z_]", name) or name == '' \
+        if name in reserved_words() or not re.search("^[a-zA-Z_]", name) or name == '' \
                 or re.search(' +', name) or re.search("[^a-zA-Z0-9_]+", name) \
                 or get_variables().variable_exists(dummyVar(name)):
             self.invalidInput.emit()
@@ -43,10 +39,6 @@ class AddDialog(QtGui.QDialog):
         self.setWindowModality(QtCore.Qt.ApplicationModal)
         self.renameVar = []
         self.dialog = None
-        self.reserved_words = ['and', 'del', 'from', 'not', 'while', 'as', 'elif', 'global', 'or', 'with',
-                               'assert', 'else', 'if', 'pass', 'yield', 'break', 'except', 'import', 'print', 'class',
-                               'exec', 'in', 'raise', 'continue', 'finally', 'is', 'return', 'def', 'for', 'lambda',
-                               'try']
 
         wrap = QtGui.QVBoxLayout()
 
@@ -111,7 +103,21 @@ class AddDialog(QtGui.QDialog):
             self.tree.add_file(cdmsfile)
 
     def remove_file(self):
-        pass  # pragma: no cover
+        sel = self.tree.selectedItems()
+        for item in sel:
+            i = item.parent().takeChild(item.parent().indexOfChild(item))
+            del i
+
+        file_count = self.tree.topLevelItemCount()
+        i = 0
+        while i < file_count:
+            if not self.tree.topLevelItem(i).childCount():
+                file = self.tree.takeTopLevelItem(i)
+                manager().remove_file(file)
+                del file
+                file_count -= 1
+            else:
+                i += 1
 
     def rename_file(self):
         var = self.tree.get_selected()
@@ -137,7 +143,7 @@ class AddDialog(QtGui.QDialog):
         self.tree.clearSelection()
 
     def isValidName(self, name):
-        if name in self.reserved_words or not re.search("^[a-zA-Z_]", name) or name == '' \
+        if name in reserved_words() or not re.search("^[a-zA-Z_]", name) or name == '' \
                 or re.search(' +', name) or re.search("[^a-zA-Z0-9_]+", name) \
                 or get_variables().variable_exists(dummyVar(name)):
             return False

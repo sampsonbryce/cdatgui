@@ -46,6 +46,8 @@ def test_MultiLineEditor(qtbot, line_editor):
         assert combo.currentIndex() != -1
 
     editor.line_combos[2].setCurrentIndex(10)
+    print editor.line_combos[2].model().elements
+    print editor.isoline_model.line
     assert editor.isoline_model.line[2] == 'pink'
 
     editor.editLine(6)

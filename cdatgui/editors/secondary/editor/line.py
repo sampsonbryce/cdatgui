@@ -54,9 +54,6 @@ class LineEditorWidget(BaseSaveWindowWidget):
         if line_obj.name == 'default':
             self.save_button.setEnabled(False)
 
-        if 'new' in vcs.elements['line']:
-            del vcs.elements['line']['new']
-
         line_obj = vcs.createline('new', line_obj.name)
 
         self.object = line_obj
@@ -94,3 +91,8 @@ class LineEditorWidget(BaseSaveWindowWidget):
             vcs.createline(name, source='new')
             get_lines().updated(name)
             self.saved.emit(name)
+
+    def close(self):
+        if 'new' in vcs.elements['line']:
+            del vcs.elements['line']['new']
+        super(LineEditorWidget, self).close()

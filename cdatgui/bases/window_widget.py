@@ -6,7 +6,7 @@ class BaseSaveWindowWidget(QtGui.QWidget):
 
     def __init__(self):
         super(BaseSaveWindowWidget, self).__init__()
-
+        self.auto_close = True
         self.object = None
         self.preview = None
         self.dialog = QtGui.QInputDialog()
@@ -69,7 +69,8 @@ class BaseSaveWindowWidget(QtGui.QWidget):
             name = self.object.name
 
         self.savePressed.emit(name)
-        self.close()
+        if self.auto_close:
+            self.close()
 
     def setSaveDialog(self, dialog):
         self.dialog = dialog

@@ -50,3 +50,8 @@ class Manager(QtCore.QObject):
         self.usedFile.emit(fmw)
 
         return fmw
+
+    def remove_file(self, file):
+        if file.uri not in self.files:
+            raise Exception("File not in manager.")
+        del self.files[file.uri]

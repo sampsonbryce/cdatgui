@@ -54,3 +54,25 @@ class VCSElementsModel(QtCore.QAbstractListModel):
             self.beginInsertRows(QtCore.QModelIndex(), insert_ind, insert_ind)
             self.elements = new_els
             self.endInsertRows()
+
+    def remove(self, el_name):
+        print "in remove"
+        new_els = []
+        remove_ind = -1
+        remove_me = el_name
+        for ind, name in enumerate(self.elements):
+            if remove_me is not None and name == remove_me:
+                remove_ind = ind
+                remove_me = None
+            else:
+                new_els.append(name)
+
+        if remove_ind == -1:
+            print "returning"
+            return
+
+        self.beginRemoveRows(QtCore.QModelIndex(), remove_ind, remove_ind)
+        print "REMOVING"
+        self.elements = new_els
+        self.endRemoveRows()
+

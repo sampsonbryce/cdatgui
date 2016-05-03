@@ -17,6 +17,7 @@ class ProjectionEditor(BaseSaveWindowWidget):
         self.gm = None
         self.savePressed.connect(self.savingNewProjection)
         self.editors = []
+        self.auto_close = False
 
         self.proj_combo = QtGui.QComboBox()
         self.proj_combo.addItems(vcs.listelements('projection'))
@@ -95,8 +96,6 @@ class ProjectionEditor(BaseSaveWindowWidget):
         self.vertical_layout.insertLayout(1, type_row)
 
     def setProjectionObject(self, obj):
-        if obj.name == 'default':
-            self.save_button.setEnabled(False)
         self.orig_projection = obj
         self.cur_projection_name = obj.name
         self.object = vcs.createprojection('new', obj)
@@ -104,6 +103,10 @@ class ProjectionEditor(BaseSaveWindowWidget):
 
     def updateAttributes(self):
         obj = self.object
+        if self.cur_projection_name == 'default':
+            self.save_button.setEnabled(False)
+        else:
+            self.save_button.setEnabled(True)
 
         for i in range(2, self.vertical_layout.count() - 1):
             row = self.vertical_layout.takeAt(2).layout()
@@ -117,7 +120,7 @@ class ProjectionEditor(BaseSaveWindowWidget):
         obj.list()
         sys.stdout = orig_out
         lst = myout.getvalue().split('\n')
-        print 'LIST', lst
+        # print 'LIST', lst
         for item in lst[2:-1]:
             left, right = item.split('=')
             left = left.strip()
@@ -157,18 +160,43 @@ class ProjectionEditor(BaseSaveWindowWidget):
         self.object.type = str(type)
         self.updateAttributes()
 
+    def updateGM(self):
+
+        for editor, attr in self.editors:
+            if isinstance(editor, QtGui.QComboBox):
+                text = editor.currentText()
+            else:
+                text = editor.text()
+            try:
+                text = float(text)
+            except ValueError:
+                QtGui.QMessageBox.critical(self, "Invalid Type",
+                                           "Value '{0}' for {1} is not valid.".format(text, attr.capitalize()))
+                return False
+
+            setattr(self.object, attr, text)
+        return True
+
     def savingNewProjection(self, name):
+        if not self.updateGM():
+            print "invalid, returning not closing"
+            return
+
         if name == 'new':
+            print "name is new", self.object.list()
             vcs.elements['projection'].pop(self.cur_projection_name)
             vcs.createprojection(self.cur_projection_name, self.object)
             name = self.cur_projection_name
+            c_obj = vcs.elements['projection'][name]
+            print "CREATED OBJECT", c_obj.list()
+            print "SMAJOR", c_obj._getsmajor()
         else:
+            if name in vcs.listelements('projection'):
+                del vcs.elements['projection'][name]
             vcs.createprojection(name, vcs.elements['projection']['new'])
 
-        new = vcs.elements['projection'].pop('new')
-        del new
-
         self.gm.projection = name
+        self.close()
 
     def close(self):
         if 'new' in vcs.elements['projection']:
