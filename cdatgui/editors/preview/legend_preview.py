@@ -7,6 +7,7 @@ class LegendPreviewWidget(QVCSWidget):
         super(LegendPreviewWidget, self).__init__(parent=parent)
         self.legend = None
         self.visibilityChanged.connect(self.visibility_toggled)
+        self.template_name = None
 
     def visibility_toggled(self, showing):
         if showing:
@@ -16,7 +17,10 @@ class LegendPreviewWidget(QVCSWidget):
         if self.canvas is None:
             return
         self.canvas.clear(render=False)
+        if self.template_name:
+            del vcs.elements['template'][self.template_name]
         template = vcs.createtemplate()
+        self.template_name = template.name
         template.blank()
 
         template.legend.priority = 1

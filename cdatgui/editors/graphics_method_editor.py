@@ -90,7 +90,6 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
 
     def updated(self):
         if self.legend_editor is not None:
-            print self.legend_editor.object._gm.list()
             self.legend_editor = None
         if self.axis_editor is not None:
             self.axis_editor = None

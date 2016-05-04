@@ -158,7 +158,7 @@ def test_add_dialog(qtbot, var_manager):
 
 
 def test_variable_widget(qtbot):
-    w = cdatgui.variables.VariableWidget()
+    w = cdatgui.variables.variable_widget.VariableWidget()
     qtbot.addWidget(w)
 
     w.add_dialog = mocks.VariableAddDialog

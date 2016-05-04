@@ -8,13 +8,14 @@ from cdatgui.editors.vector import VectorEditor
 import vcs
 
 
-class GraphcisMethodDialog(QtGui.QDialog):
+class GraphicsMethodDialog(QtGui.QDialog):
     editedGM = QtCore.Signal(object)
     createdGM = QtCore.Signal(object)
 
     def __init__(self, gm, var, tmpl, parent=None):
-        super(GraphcisMethodDialog, self).__init__(parent=parent)
+        super(GraphicsMethodDialog, self).__init__(parent=parent)
         self.setWindowModality(QtCore.Qt.ApplicationModal)
+        self.newgm_name = None
 
         layout = QtGui.QVBoxLayout()
 
@@ -41,30 +42,49 @@ class GraphcisMethodDialog(QtGui.QDialog):
             raise NotImplementedError("No editor exists for type %s" % self.gmtype)
         self.editor.var = var
         self.editor.tmpl = tmpl
+        self.gm = gm
+        self.editor.gm = gm
+
         layout.addWidget(self.editor)
 
-        buttons = QtGui.QHBoxLayout()
+        self.buttons = QtGui.QHBoxLayout()
         cancel = QtGui.QPushButton("Cancel")
         cancel.setAutoDefault(True)
         cancel.clicked.connect(self.reject)
+
+        self.buttons.addWidget(cancel)
+        self.buttons.addStretch()
+
+        layout.addLayout(self.buttons)
+
+        self.setLayout(layout)
+
+    def reject(self):
+        super(GraphicsMethodDialog, self).reject()
+        if isinstance(self.editor, BoxfillEditor):
+            self.gm.boxfill_type = self.editor.orig_type
+
+        if self.newgm_name in vcs.elements[vcs.graphicsmethodtype(self.gm)].keys():
+            del vcs.elements[vcs.graphicsmethodtype(self.gm)][self.newgm_name]
+
+
+class GraphicsMethodSaveDialog(GraphicsMethodDialog):
+    def __init__(self, gm, var, tmpl, parent=None):
+        super(GraphicsMethodSaveDialog, self).__init__(gm, var, tmpl, parent)
+
         save_as = QtGui.QPushButton("Save As")
         save_as.clicked.connect(self.customName)
         save = QtGui.QPushButton("Save")
         save.setDefault(True)
         save.clicked.connect(self.accept)
 
+        self.buttons.addWidget(save_as)
+        self.buttons.addWidget(save)
+
         self.accepted.connect(self.save)
-
-        buttons.addWidget(cancel)
-        buttons.addStretch()
-        buttons.addWidget(save_as)
-        buttons.addWidget(save)
-        layout.addLayout(buttons)
-
-        self.setLayout(layout)
-
         if gm.name == 'default':
-            self.gm = self.create('new', gm)
+            self.gm = self.create(source=gm)
+            self.newgm_name = self.gm.name
             save.setEnabled(False)
         else:
             self.gm = gm
@@ -81,13 +101,16 @@ class GraphcisMethodDialog(QtGui.QDialog):
             self.editedGM.emit(self.gm)
         else:
             gm = self.create(name[0], self.gm)
-            self.close()
             self.createdGM.emit(gm)
 
-    def reject(self):
-        super(GraphcisMethodDialog, self).reject()
-        if isinstance(self.editor, BoxfillEditor):
-            self.gm.boxfill_type = self.editor.orig_type
+        self.close()
 
-        if 'new' in vcs.elements[vcs.graphicsmethodtype(self.gm)].keys():
-            del vcs.elements[vcs.graphicsmethodtype(self.gm)]['new']
+
+class GraphicsMethodOkDialog(GraphicsMethodDialog):
+    def __init__(self, gm, var, tmpl, parent=None):
+        super(GraphicsMethodOkDialog, self).__init__(gm, var, tmpl, parent)
+
+        ok_button = QtGui.QPushButton('OK')
+        ok_button.clicked.connect(self.accept)
+        self.buttons.addWidget(ok_button)
+

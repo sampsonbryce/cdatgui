@@ -28,7 +28,7 @@ class CDMSFileItem(QtGui.QTreeWidgetItem):
         self.setText(1, text)
         self.setFont(1, label_font)
         self.setExpanded(True)
-        self.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+        self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
 
 
 class CDMSFileTree(QtGui.QTreeWidget):

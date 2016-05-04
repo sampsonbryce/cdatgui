@@ -33,10 +33,10 @@ def test_changingNameAndType(qtbot, editor):
 
     assert vcs.elements['projection']['orthographic'] != orig_ortho
     assert vcs.elements['projection']['orthographic'].type == 'hotin oblique merc'
-    assert 'new' not in vcs.listelements('projection')
+    assert editor.newprojection_name not in vcs.listelements('projection')
 
 
-def test_savAs(qtbot, editor):
+def test_saveAs(qtbot, editor):
     orig_poly = vcs.elements['projection']['polyconic']
     assert editor.vertical_layout.count() == 3
     assert editor.proj_combo.currentText() == 'linear'
@@ -54,11 +54,11 @@ def test_savAs(qtbot, editor):
 
     assert vcs.elements['projection']['polyconic'] == orig_poly
     assert 'test' in vcs.listelements('projection')
-    assert 'new' not in vcs.listelements('projection')
+    assert editor.newprojection_name not in vcs.listelements('projection')
 
 
 def test_close(qtbot, editor):
-    assert 'new' in vcs.listelements('projection')
+    assert editor.newprojection_name in vcs.listelements('projection')
     assert editor.cur_projection_name == 'linear'
     assert editor.object.type == 'linear'
 
@@ -67,6 +67,24 @@ def test_close(qtbot, editor):
     assert editor.object.type == 'mollweide'
     editor.close()
 
-    assert 'new' not in vcs.listelements('projection')
+    assert editor.newprojection_name not in vcs.listelements('projection')
     assert vcs.getprojection('linear').name == 'linear'
     assert vcs.getprojection('linear').type == 'linear'
+
+
+def test_settingAttributes(qtbot, editor):
+    old_proj_name = editor.gm.projection
+    editor.type_combo.setCurrentIndex(editor.type_combo.findText('robinson'))
+    editor.editors[0][0].setText('12')
+
+    editor.save()
+
+    old_proj = vcs.getprojection(old_proj_name)
+    assert old_proj.type == 'robinson'
+    assert old_proj.sphere == 12.0
+
+    new_editor = ProjectionEditor()
+    new_editor.setProjectionObject(old_proj)
+    new_editor.gm = editor.gm
+    assert new_editor.editors[0][0].text() == '12.0'
+    assert new_editor.editors[0][1] == 'sphere'

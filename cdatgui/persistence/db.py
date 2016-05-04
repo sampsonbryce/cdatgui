@@ -39,6 +39,7 @@ def db_version(filename):
 def connect():
     global __dbconn__
     if __dbconn__ is None:
+        # TODO: Use vcs.getdotdir() or whatever it is
         dotdir = os.path.expanduser("~/.uvcdat")
         path = os.path.expanduser(os.path.join(dotdir, "cdatgui_%s.db" %
                                   cdatgui.info.version))
@@ -89,3 +90,11 @@ def add_data_source(uri):
         matching.last_accessed = datetime.date.today()
         matching.times_used += 1
     db.commit()
+
+def remove_data_source(uri):
+    db = connect()
+
+    matching = db.query(DataSource).filter_by(uri=uri).first()
+    if matching is not None:
+        db.delete(matching)
+        db.commit()

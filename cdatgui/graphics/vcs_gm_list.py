@@ -12,18 +12,11 @@ class GraphicsMethodList(QtGui.QTreeView):
         self.setIndentation(10)
 
     def get_selected(self):
-        items = self.selectedItems()
-        sel = None
+        items = self.selectedIndexes()
 
         for selected in items:
-            if selected.parent() is None:
-                continue
+            if not selected.parent().isValid():
+                return [selected.data()]
 
-            p = selected.parent()
-
-            t = self.types[p.text(0)]
-            gm = t[selected.text(0)]
-            sel = gm
-            break
-
-        return sel
+            return [selected.parent().data(), selected.data()]
+        return None

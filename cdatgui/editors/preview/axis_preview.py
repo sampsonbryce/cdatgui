@@ -7,6 +7,7 @@ class AxisPreviewWidget(QVCSWidget):
         super(AxisPreviewWidget, self).__init__(parent=parent)
         self.axis = None
         self.visibilityChanged.connect(self.visibility_toggled)
+        self.template_name = None
 
     def visibility_toggled(self, showing):
         if showing:
@@ -17,7 +18,10 @@ class AxisPreviewWidget(QVCSWidget):
         if self.canvas is None:
             return
         self.canvas.clear(render=False)
+        if self.template_name:
+            del vcs.elements['template'][self.template_name]
         template = vcs.createtemplate(source=self.axis.tmpl)
+        self.template_name = template.name
         template.blank()
 
         axis_orientation = self.axis._axis[0]

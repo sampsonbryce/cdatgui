@@ -6,7 +6,7 @@ from cdatgui.graphics import get_gms
 from cdatgui.templates import get_templates
 from cdatgui.variables.edit_variable_widget import EditVariableDialog
 from cdatgui.templates.dialog import TemplateEditorDialog
-from cdatgui.graphics.dialog import GraphcisMethodDialog
+from cdatgui.graphics.dialog import GraphicsMethodSaveDialog
 import vcs
 
 
@@ -185,7 +185,7 @@ class InspectorWidget(StaticDockWidget):
         if self.gm_editor:
             self.gm_editor.close()
             self.gm_editor.deleteLater()
-        self.gm_editor = GraphcisMethodDialog(gm, self.var_combos[0].currentObj(), self.template_combo.currentObj())
+        self.gm_editor = GraphicsMethodSaveDialog(gm, self.var_combos[0].currentObj(), self.template_combo.currentObj())
         self.gm_editor.createdGM.connect(self.makeGraphicsMethod)
         self.gm_editor.editedGM.connect(self.editGraphicsMethod)
         self.gm_editor.show()

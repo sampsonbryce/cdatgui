@@ -1,6 +1,6 @@
 import pytest  # noqa
 from cdatgui.cdat.importer import import_script
-from cdatgui.cdat.plotter import PlotManager
+from cdatgui.cdat.plotter import PlotManager, PlotInfo
 from cdatgui.cdat.exporter import diff, export_script
 from cdatgui.cdat.metadata import VariableMetadataWrapper, FileMetadataWrapper
 import mocks
@@ -28,14 +28,16 @@ def test_load_script(canvas):
     assert len(script.templates) == 3
 
 
-def test_save_and_load_script(tmpdir):
+def test_save_and_load_script(tmpdir, qtbot):
     save_file = tmpdir.join("simple_vis.py")
 
     # File shouldn't exist
     assert save_file.exists() is False
 
     path = str(save_file.realpath())
-    pm = PlotManager(mocks.PlotInfo)
+    pi = PlotInfo(vcs.init(), 0, 0)
+    qtbot.addWidget(pi)
+    pm = PlotManager(pi)
     pm.graphics_method = vcs.getboxfill("default")
     pm.template = vcs.gettemplate('default')
 
@@ -44,7 +46,7 @@ def test_save_and_load_script(tmpdir):
     clt = fmw["clt"]
 
     pm.variables = [clt.var, None]
-    mocks.PlotInfo.canvas.close()
+    pi.canvas.close()
 
     export_script(path, [clt], [[pm]])
 
@@ -68,7 +70,7 @@ def test_save_and_load_script(tmpdir):
     assert len(obj.templates) == 1
 
 
-def test_save_loaded_script(tmpdir):
+def test_save_loaded_script(tmpdir, qtbot):
     _ = vcs.init()
     dirpath = os.path.dirname(__file__)
     load_file = os.path.join(dirpath, "data", "clt_u_v_iso.py")
@@ -85,7 +87,9 @@ def test_save_loaded_script(tmpdir):
     for display_group in canvas_displays:
         pm_group = []
         for display in display_group:
-            pm = PlotManager(mocks.PlotInfo)
+            pi = PlotInfo(vcs.init(), 0, 0)
+            qtbot.addWidget(pi)
+            pm = PlotManager(pi)
             # Determine which of the graphics methods created in loaded
             gm = vcs.getgraphicsmethod(display.g_type, display.g_name)
             pm.graphics_method = closest(gm, loaded.graphics_methods)
@@ -93,7 +97,6 @@ def test_save_loaded_script(tmpdir):
             pm.variables = display.array
             pm_group.append(pm)
         plot_managers.append(pm_group)
-    mocks.PlotInfo.canvas.close()
 
     export_script(str(save_file), loaded.variables.values(), plot_managers)
 

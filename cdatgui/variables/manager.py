@@ -1,5 +1,5 @@
 import cdms2
-from cdatgui.persistence.db import get_data_sources, add_data_source
+from cdatgui.persistence.db import get_data_sources, add_data_source, remove_data_source
 import cdatgui.cdat.metadata
 from PySide import QtCore
 
@@ -55,3 +55,4 @@ class Manager(QtCore.QObject):
         if file.uri not in self.files:
             raise Exception("File not in manager.")
         del self.files[file.uri]
+        remove_data_source(file.uri)

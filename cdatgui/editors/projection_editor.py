@@ -18,6 +18,7 @@ class ProjectionEditor(BaseSaveWindowWidget):
         self.savePressed.connect(self.savingNewProjection)
         self.editors = []
         self.auto_close = False
+        self.newprojection_name = None
 
         self.proj_combo = QtGui.QComboBox()
         self.proj_combo.addItems(vcs.listelements('projection'))
@@ -98,11 +99,13 @@ class ProjectionEditor(BaseSaveWindowWidget):
     def setProjectionObject(self, obj):
         self.orig_projection = obj
         self.cur_projection_name = obj.name
-        self.object = vcs.createprojection('new', obj)
+        self.object = vcs.createprojection(source=obj)
+        self.newprojection_name = self.object.name
+
         self.updateAttributes()
 
     def updateAttributes(self):
-        obj = self.object
+
         if self.cur_projection_name == 'default':
             self.save_button.setEnabled(False)
         else:
@@ -115,34 +118,25 @@ class ProjectionEditor(BaseSaveWindowWidget):
             row.deleteLater()
         self.editors = []
 
-        orig_out = sys.stdout
-        sys.stdout = myout = StringIO()
-        obj.list()
-        sys.stdout = orig_out
-        lst = myout.getvalue().split('\n')
-        # print 'LIST', lst
-        for item in lst[2:-1]:
-            left, right = item.split('=')
-            left = left.strip()
-            right = right.strip()
+        # set name
+        block = self.proj_combo.blockSignals(True)
+        self.proj_combo.setCurrentIndex(self.proj_combo.findText(self.cur_projection_name))
+        self.proj_combo.blockSignals(block)
 
-            if left == 'name':
-                block = self.proj_combo.blockSignals(True)
-                self.proj_combo.setCurrentIndex(self.proj_combo.findText(self.cur_projection_name))
-                self.proj_combo.blockSignals(block)
-                continue
-            if left == 'type':
-                block = self.type_combo.blockSignals(True)
-                self.type_combo.setCurrentIndex(self.type_combo.findText(right))
-                self.type_combo.blockSignals(block)
-                continue
+        # set type
+        block = self.type_combo.blockSignals(True)
+        self.type_combo.setCurrentIndex(self.type_combo.findText(self.object.type))
+        self.type_combo.blockSignals(block)
+
+        for name in self.object.attributes:
+            value = getattr(self.object, name)
 
             edit_attr = QtGui.QLineEdit()
-            edit_attr.setText(right)
-            self.editors.append((edit_attr, left))
+            edit_attr.setText(str(value))
+            self.editors.append((edit_attr, name))
 
             row = QtGui.QHBoxLayout()
-            row.addWidget(label(left.capitalize() + ":"))
+            row.addWidget(label(name.capitalize() + ":"))
             row.addWidget(edit_attr)
 
             self.vertical_layout.insertLayout(self.vertical_layout.count() - 1, row)
@@ -150,18 +144,18 @@ class ProjectionEditor(BaseSaveWindowWidget):
     def updateCurrentProjection(self, proj):
         proj = str(proj)
         self.cur_projection_name = proj
-        if 'new' in vcs.listelements('projection'):
-            del vcs.elements['projection']['new']
+        if self.newprojection_name in vcs.listelements('projection'):
+            del vcs.elements['projection'][self.newprojection_name]
         vcs.getprojection(proj).list()
-        self.object = vcs.createprojection('new', vcs.getprojection(proj))
+        self.object = vcs.createprojection(source=vcs.getprojection(proj))
+        self.newprojection_name = self.object.name
         self.updateAttributes()
 
     def updateProjectionType(self, type):
         self.object.type = str(type)
         self.updateAttributes()
 
-    def updateGM(self):
-
+    def updateProjection(self):
         for editor, attr in self.editors:
             if isinstance(editor, QtGui.QComboBox):
                 text = editor.currentText()
@@ -178,28 +172,23 @@ class ProjectionEditor(BaseSaveWindowWidget):
         return True
 
     def savingNewProjection(self, name):
-        if not self.updateGM():
-            print "invalid, returning not closing"
+        if not self.updateProjection():
             return
 
-        if name == 'new':
-            print "name is new", self.object.list()
+        if name == self.newprojection_name:
             vcs.elements['projection'].pop(self.cur_projection_name)
             vcs.createprojection(self.cur_projection_name, self.object)
             name = self.cur_projection_name
             c_obj = vcs.elements['projection'][name]
-            print "CREATED OBJECT", c_obj.list()
-            print "SMAJOR", c_obj._getsmajor()
         else:
             if name in vcs.listelements('projection'):
                 del vcs.elements['projection'][name]
-            vcs.createprojection(name, vcs.elements['projection']['new'])
+            vcs.createprojection(name, vcs.elements['projection'][self.newprojection_name])
 
         self.gm.projection = name
         self.close()
 
     def close(self):
-        if 'new' in vcs.elements['projection']:
-            new = vcs.elements['projection'].pop('new')
-            del new
+        if self.newprojection_name in vcs.elements['projection']:
+            del vcs.elements['projection'][self.newprojection_name]
         super(ProjectionEditor, self).close()

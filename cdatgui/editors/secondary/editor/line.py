@@ -13,6 +13,7 @@ class LineEditorWidget(BaseSaveWindowWidget):
         self.setPreview(LinePreviewWidget())
         self.savePressed.connect(self.saveNewLine)
         self.orig_name = None
+        self.newline_name = None
 
         # create labels
         type_label = QtGui.QLabel("Type:")
@@ -54,7 +55,8 @@ class LineEditorWidget(BaseSaveWindowWidget):
         if line_obj.name == 'default':
             self.save_button.setEnabled(False)
 
-        line_obj = vcs.createline('new', line_obj.name)
+        line_obj = vcs.createline(source=line_obj.name)
+        self.newline_name = line_obj.name
 
         self.object = line_obj
         self.preview.setLineObject(self.object)
@@ -78,7 +80,7 @@ class LineEditorWidget(BaseSaveWindowWidget):
     def saveNewLine(self, name):
         name = str(name)
 
-        if name == "new":
+        if name == self.newline_name:
             if self.orig_name in vcs.elements['line']:
                 del vcs.elements['line'][self.orig_name]
 
@@ -88,11 +90,11 @@ class LineEditorWidget(BaseSaveWindowWidget):
         else:
             if name in vcs.elements['line']:
                 del vcs.elements['line'][name]
-            vcs.createline(name, source='new')
+            vcs.createline(name, source=self.newline_name)
             get_lines().updated(name)
             self.saved.emit(name)
 
     def close(self):
-        if 'new' in vcs.elements['line']:
-            del vcs.elements['line']['new']
+        if self.newline_name in vcs.elements['line']:
+            del vcs.elements['line'][self.newline_name]
         super(LineEditorWidget, self).close()

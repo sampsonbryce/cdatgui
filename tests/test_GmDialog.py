@@ -1,5 +1,5 @@
 import pytest, vcs, cdms2, os
-from cdatgui.graphics.dialog import GraphcisMethodDialog
+from cdatgui.graphics.dialog import GraphicsMethodDialog
 from cdatgui.cdat.metadata import FileMetadataWrapper
 from cdatgui.editors import boxfill, isoline, cdat1d
 from PySide import QtCore, QtGui
@@ -8,7 +8,7 @@ from PySide import QtCore, QtGui
 @pytest.fixture
 def boxfill_dialog():
     s = get_var()
-    d = GraphcisMethodDialog(vcs.getboxfill('default'), s, vcs.createtemplate())
+    d = GraphicsMethodDialog(vcs.getboxfill('default'), s, vcs.createtemplate())
     d.createdGM.connect(saveAs)
     return d
 
@@ -16,14 +16,14 @@ def boxfill_dialog():
 @pytest.fixture
 def isoline_dialog():
     s = get_var()
-    d = GraphcisMethodDialog(vcs.getisoline('default'), s, vcs.createtemplate())
+    d = GraphicsMethodDialog(vcs.getisoline('default'), s, vcs.createtemplate())
     return d
 
 
 @pytest.fixture
 def oned_dialog():
     s = get_var()
-    d = GraphcisMethodDialog(vcs.get1d('default'), s, vcs.createtemplate())
+    d = GraphicsMethodDialog(vcs.get1d('default'), s, vcs.createtemplate())
     return d
 
 

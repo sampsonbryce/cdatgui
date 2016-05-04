@@ -64,6 +64,7 @@ class LevelEditor(QtGui.QWidget):
 
     @var.setter
     def var(self, value):
+        print "VAR", value, type(value)
         self._var = value
         flat = self._var.data
         flat = sorted(numpy.unique(flat.flatten()))

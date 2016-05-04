@@ -13,6 +13,7 @@ class TextStyleEditorWidget(BaseSaveWindowWidget):
         self.setPreview(TextStylePreviewWidget())
         self.savePressed.connect(self.saveNewText)
         self.orig_names = []
+        self.newtextcombined_name = None
 
         # Set up vertical align
         self.va_group = QtGui.QButtonGroup()
@@ -100,7 +101,8 @@ class TextStyleEditorWidget(BaseSaveWindowWidget):
         if text_object.Tt_name == 'default' and text_object.To_name == 'default':
             self.save_button.setEnabled(False)
 
-        text_object = vcs.createtextcombined('new', text_object.Tt_name, 'new', text_object.To_name)
+        text_object = vcs.createtextcombined(Tt_source=text_object.Tt_name, To_source=text_object.To_name)
+        self.newtextcombined_name = text_object.name
 
         self.object = text_object
         self.preview.setTextObject(self.object)
@@ -157,10 +159,11 @@ class TextStyleEditorWidget(BaseSaveWindowWidget):
 
     def saveNewText(self, name):
         name = str(name)
+        tt_name, to_name = self.newtextcombined_name.split(':::')
 
-        if name != 'new:::new':
-            to = vcs.elements['textorientation']['new']
-            tt = vcs.elements['texttable']['new']
+        if name != self.newtextcombined_name:
+            to = vcs.elements['textorientation'][to_name]
+            tt = vcs.elements['texttable'][tt_name]
 
             # deleting if already exists. This will only happen if they want to overwrite
             if name in vcs.elements['texttable']:
@@ -175,8 +178,8 @@ class TextStyleEditorWidget(BaseSaveWindowWidget):
             vcs.elements['texttable'][name] = new_tt
 
             # removing old object from key
-            vcs.elements['textorientation'].pop('new')
-            vcs.elements['texttable'].pop('new')
+            vcs.elements['textorientation'].pop(to_name)
+            vcs.elements['texttable'].pop(tt_name)
 
             tc = vcs.createtextcombined()
             tc.Tt = new_tt
@@ -194,8 +197,8 @@ class TextStyleEditorWidget(BaseSaveWindowWidget):
             old_to = vcs.elements['textorientation'][self.orig_names[2]]
 
             # get new info
-            new_tt = vcs.elements['texttable']['new']
-            new_to = vcs.elements['textorientation']['new']
+            new_tt = vcs.elements['texttable'][tt_name]
+            new_to = vcs.elements['textorientation'][to_name]
 
             # delete old tt and to
             old_tt_name = old_tt.name
@@ -220,10 +223,11 @@ class TextStyleEditorWidget(BaseSaveWindowWidget):
             self.saved.emit(old_tt_name)
 
     def close(self):
-        if 'new:::new' in vcs.elements['textcombined']:
-            del vcs.elements['textcombined']['new:::new']
-            if 'new' in vcs.listelements('textorientation'):
-                del vcs.elements['textorientation']['new']
-            if 'new' in vcs.listelements('texttable'):
-                del vcs.elements['texttable']['new']
+        tt_name, to_name = self.newtextcombined_name.split(':::')
+        if self.newtextcombined_name in vcs.elements['textcombined']:
+            del vcs.elements['textcombined'][self.newtextcombined_name]
+            if to_name in vcs.listelements('textorientation'):
+                del vcs.elements['textorientation'][to_name]
+            if tt_name in vcs.listelements('texttable'):
+                del vcs.elements['texttable'][tt_name]
         super(TextStyleEditorWidget, self).close()
