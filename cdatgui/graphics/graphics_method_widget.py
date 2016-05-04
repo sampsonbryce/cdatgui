@@ -30,13 +30,39 @@ class NameValidator(QtGui.QValidator):
             return QtGui.QValidator.Acceptable
 
 
+class EditGmDialog(GraphicsMethodOkDialog):
+    def __init__(self, gtype, ginstance):
+        self.gtype = gtype
+        self.ginstance = ginstance
+        f = cdms2.open(os.path.join(vcs.sample_data, 'clt.nc'))
+        f = FileMetadataWrapper(f)
+        var = f('clt')
+
+        gm = vcs.creategraphicsmethod(str(gtype), str(ginstance))
+        tmpl = vcs.createtemplate()
+
+        self.edit_tmpl_name = tmpl.name
+        self.edit_gm_name = gm.name
+        super(EditGmDialog, self).__init__(gm, var, tmpl)
+
+        self.rejected.connect(self.resetGM)
+
+    def resetGM(self):
+        if self.edit_gm_name:
+            del vcs.elements[self.gtype][self.edit_gm_name]
+        self.edit_gm_name = None
+
+    def resetTmpl(self):
+        if self.edit_tmpl_name:
+            del vcs.elements['template'][self.edit_tmpl_name]
+        self.edit_tmpl_name = None
+
+
 class CreateGM(ValidatingInputDialog):
     def __init__(self, currently_selected, parent=None):
         super(CreateGM, self).__init__()
 
-        self.edit_gm_name = None
         self.edit_dialog = None
-        self.edit_tmpl_name = None
 
         validator = NameValidator()
         self.setValidator(validator)
@@ -84,10 +110,10 @@ class CreateGM(ValidatingInputDialog):
         self.edit.validator().validate(self.edit.text(), 0)
 
     def createGM(self):
-        if self.edit_gm_name:
+        if self.edit_dialog and self.edit_dialog.edit_gm_name:
             get_gms().add_gm(
                 vcs.creategraphicsmethod(str(self.gm_type_combo.currentText()),
-                                         self.edit_gm_name,
+                                         self.edit_dialog.edit_gm_name,
                                          str(self.textValue())
                                          ))
             del vcs.elements[self.gm_type_combo.currentText()][self.edit_gm_name]
@@ -100,50 +126,20 @@ class CreateGM(ValidatingInputDialog):
                                          ))
 
     def editGM(self):
-        f = cdms2.open(os.path.join(vcs.sample_data, 'clt.nc'))
-        f = FileMetadataWrapper(f)
-        s = f('clt')
-
-        gm = vcs.creategraphicsmethod(str(self.gm_type_combo.currentText()), str(self.gm_instance_combo.currentText()))
-        tmpl = vcs.createtemplate()
-
-        self.edit_tmpl_name = tmpl.name
-        self.edit_gm_name = gm.name
-        self.edit_dialog = GraphicsMethodOkDialog(gm, s, tmpl)
-
-        # replace saveas and save with ok button
-        '''
-        dialog_layout = self.edit_dialog.layout()
-        button_layout = dialog_layout.itemAt(dialog_layout.count() - 1).layout()
-        button_layout.takeAt(button_layout.count() - 1).widget().deleteLater()
-        button_layout.takeAt(button_layout.count() - 1).widget().deleteLater()
-        ok_button = QtGui.QPushButton('OK')
-        ok_button.clicked.connect(self.edit_dialog.accept)
-        button_layout.addWidget(ok_button)
-        '''
-
-        self.edit_dialog.rejected.connect(self.resetGM)
+        self.edit_dialog = EditGmDialog(self.gm_type_combo.currentText(), self.gm_instance_combo.currentText())
 
         self.edit_dialog.show()
         self.edit_dialog.raise_()
 
-    def resetGM(self):
-        if self.edit_gm_name:
-            del vcs.elements[self.gm_type_combo.currentText()][self.edit_gm_name]
-        self.edit_gm_name = None
-
-    def resetTmpl(self):
-        if self.edit_tmpl_name:
-            del vcs.elements['template'][self.edit_tmpl_name]
-        self.edit_tmpl_name = None
-        
     def save(self):
-        self.resetTmpl()
+        if self.edit_dialog:
+            self.edit_dialog.resetTmpl()
         super(CreateGM, self).save()
 
     def cancel(self):
-        self.resetTmpl()
-        self.resetGM()
+        if self.edit_dialog:
+            self.edit_dialog.resetTmpl()
+            self.edit_dialog.resetGM()
         super(CreateGM, self).cancel()
 
 
@@ -156,15 +152,36 @@ class GraphicsMethodWidget(StaticDockWidget):
                                                     self.add_gm,
                                                     self.edit_gm,
                                                     self.remove_gm))
+
+        self.titleBarWidget().edit.setEnabled(False)
         self.list = GraphicsMethodList()
+        self.list.changedSelection.connect(self.selection_change)
         self.setWidget(self.list)
         self.add_gm_widget = None
+        self.edit_dialog = None
+        self.ginstance = None
+        self.gtype = None
 
     def selection_change(self):
         selected = self.list.get_selected()
         if selected is None:
             return
-        self.selectedGraphicsMethod.emit(selected)
+        if selected:
+            self.gtype = selected[0]
+            if len(selected) > 1:
+                self.ginstance = selected[1]
+                self.titleBarWidget().edit.setEnabled(True)
+        else:
+            self.titleBarWidget().edit.setEnabled(False)
+            return
+        if self.ginstance == 'default':
+            self.titleBarWidget().edit.setEnabled(False)
+            return
+        elif not self.ginstance:
+            self.titleBarWidget().edit.setEnabled(False)
+            return
+
+        # self.selectedGraphicsMethod.emit(selected)
 
     def add_gm(self):
         self.add_gm_widget = CreateGM(self.list.get_selected())
@@ -172,7 +189,10 @@ class GraphicsMethodWidget(StaticDockWidget):
         self.add_gm_widget.raise_()
 
     def edit_gm(self):
-        pass
+        self.edit_dialog = EditGmDialog(self.gtype, self.ginstance)
+
+        self.edit_dialog.show()
+        self.edit_dialog.raise_()
 
     def remove_gm(self):
         pass

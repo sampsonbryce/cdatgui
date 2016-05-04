@@ -45,6 +45,8 @@ class GraphicsMethodDialog(QtGui.QDialog):
         self.gm = gm
         self.editor.gm = gm
 
+        self.setWindowTitle('Editing ' + self.gm.name)
+
         layout.addWidget(self.editor)
 
         self.buttons = QtGui.QHBoxLayout()

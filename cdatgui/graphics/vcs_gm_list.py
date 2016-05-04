@@ -4,6 +4,8 @@ from cdatgui.graphics import get_gms
 
 
 class GraphicsMethodList(QtGui.QTreeView):
+    changedSelection = QtCore.Signal()
+
     def __init__(self, parent=None):
         super(GraphicsMethodList, self).__init__(parent=parent)
         self.setModel(get_gms())
@@ -20,3 +22,7 @@ class GraphicsMethodList(QtGui.QTreeView):
 
             return [selected.parent().data(), selected.data()]
         return None
+
+    def selectionChanged(self, selected, deselected):
+        super(GraphicsMethodList, self).selectionChanged(selected, deselected)
+        self.changedSelection.emit()
