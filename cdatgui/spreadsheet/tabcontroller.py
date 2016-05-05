@@ -82,11 +82,10 @@ class StandardWidgetTabController(QtGui.QTabWidget):
         self.tabBar().tabTextChanged.connect(self.changeTabText)
         self.addAction(self.showNextTabAction())
         self.addAction(self.showPrevTabAction())
-        self.executedPipelines = [[],{},{}]
+        self.executedPipelines = [[], {}, {}]
         self.monitoredPipelines = {}
         self.spreadsheetFileName = None
         self.tabCloseRequested.connect(self.delete_sheet_by_index)
-
 
     def create_first_sheet(self):
         self.addTabWidget(StandardWidgetSheetTab(self), 'Sheet 1')
@@ -202,11 +201,13 @@ class StandardWidgetTabController(QtGui.QTabWidget):
             themeMenu = prefMenu.addMenu("Icons Theme")
             defaultThemeAction = themeMenu.addAction("Default")
             defaultThemeAction.setCheckable(True)
-            defaultThemeAction.setStatusTip("Use the default theme (the application must be restarted for changes to take effect)")
+            defaultThemeAction.setStatusTip(
+                "Use the default theme (the application must be restarted for changes to take effect)")
 
             minimalThemeAction = themeMenu.addAction("Minimal")
             minimalThemeAction.setCheckable(True)
-            minimalThemeAction.setStatusTip("Use the minimal theme (the application must be restarted for changes to take effect)")
+            minimalThemeAction.setStatusTip(
+                "Use the minimal theme (the application must be restarted for changes to take effect)")
             themegroup = QtGui.QActionGroup(self)
             themegroup.addAction(defaultThemeAction)
             themegroup.addAction(minimalThemeAction)
@@ -284,7 +285,7 @@ class StandardWidgetTabController(QtGui.QTabWidget):
 
         """
         self.setCurrentIndex(self.addTabWidget(StandardWidgetSheetTab(self),
-                                               'Sheet %d' % (self.count()+1)))
+                                               'Sheet %d' % (self.count() + 1)))
         self.currentWidget().sheet.stretchCells()
 
     def tabInserted(self, index):
@@ -314,7 +315,7 @@ class StandardWidgetTabController(QtGui.QTabWidget):
         Actual code to delete the current sheet
 
         """
-        if self.count()>0:
+        if self.count() > 0:
             widget = self.currentWidget()
             self.tabWidgets.remove(widget)
             self.removeTab(self.currentIndex())
@@ -328,7 +329,7 @@ class StandardWidgetTabController(QtGui.QTabWidget):
         Clear and reset the controller
 
         """
-        while self.count()>0:
+        while self.count() > 0:
             self.deleteSheetActionTriggered()
         for i in reversed(range(len(self.tabWidgets))):
             t = self.tabWidgets[i]
@@ -344,7 +345,7 @@ class StandardWidgetTabController(QtGui.QTabWidget):
         QTabWidget or a QStackedWidget
 
         """
-        if self.operatingWidget!=self:
+        if self.operatingWidget != self:
             ret = self.operatingWidget.insertWidget(idx, tabWidget)
             self.operatingWidget.setCurrentIndex(ret)
             return ret
@@ -379,14 +380,14 @@ class StandardWidgetTabController(QtGui.QTabWidget):
         Move a tab at tabIdx to a different position at destination
 
         """
-        if (tabIdx<0 or tabIdx>self.count() or
-            destination<0 or destination>self.count()):
+        if (tabIdx < 0 or tabIdx > self.count() or
+                    destination < 0 or destination > self.count()):
             return
         tabText = self.tabText(tabIdx)
         tabWidget = self.widget(tabIdx)
         self.removeTab(tabIdx)
         self.insertTab(destination, tabWidget, tabText)
-        if tabIdx==self.currentIndex():
+        if tabIdx == self.currentIndex():
             self.setCurrentIndex(destination)
 
     def splitTab(self, tabIdx, pos=None):
@@ -394,7 +395,7 @@ class StandardWidgetTabController(QtGui.QTabWidget):
         Split a tab to be  a stand alone window and move to position pos
 
         """
-        if tabIdx<0 or tabIdx>self.count() or self.count()==0:
+        if tabIdx < 0 or tabIdx > self.count() or self.count() == 0:
             return
         tabWidget = self.widget(tabIdx)
         self.removeTab(tabIdx)
@@ -411,9 +412,9 @@ class StandardWidgetTabController(QtGui.QTabWidget):
         Merge a tab dock widget back to the controller at position tabIdx
 
         """
-        if tabIdx<0 or tabIdx>self.count():
+        if tabIdx < 0 or tabIdx > self.count():
             return
-        if tabIdx==self.count(): tabIdx = -1
+        if tabIdx == self.count(): tabIdx = -1
         tabWidget = frame.widget()
         frame.setWidget(None)
         while frame in self.floatingTabWidgets:
@@ -437,8 +438,8 @@ class StandardWidgetTabController(QtGui.QTabWidget):
         Insert a tab widget to the controller at some location
 
         """
-        if sheetLabel==None:
-            sheetLabel = 'Sheet %d' % (len(self.tabWidgets)+1)
+        if sheetLabel == None:
+            sheetLabel = 'Sheet %d' % (len(self.tabWidgets) + 1)
         if not tabWidget in self.tabWidgets:
             self.tabWidgets.append(tabWidget)
             tabWidget.setWindowTitle(sheetLabel)
@@ -454,7 +455,7 @@ class StandardWidgetTabController(QtGui.QTabWidget):
             if t.underMouse():
                 result = t
             else:
-                t.showHelpers(False, QtCore.QPoint(-1,-1))
+                t.showHelpers(False, QtCore.QPoint(-1, -1))
         return result
 
     def showNextTab(self):
@@ -462,8 +463,8 @@ class StandardWidgetTabController(QtGui.QTabWidget):
         Bring the next tab up
 
         """
-        if self.operatingWidget.currentIndex()<self.operatingWidget.count()-1:
-            index = self.operatingWidget.currentIndex()+1
+        if self.operatingWidget.currentIndex() < self.operatingWidget.count() - 1:
+            index = self.operatingWidget.currentIndex() + 1
             self.operatingWidget.setCurrentIndex(index)
 
     def showPrevTab(self):
@@ -471,8 +472,8 @@ class StandardWidgetTabController(QtGui.QTabWidget):
         Bring the previous tab up
 
         """
-        if self.operatingWidget.currentIndex()>0:
-            index = self.operatingWidget.currentIndex()-1
+        if self.operatingWidget.currentIndex() > 0:
+            index = self.operatingWidget.currentIndex() - 1
             self.operatingWidget.setCurrentIndex(index)
 
     def tabPopupMenu(self):
@@ -481,10 +482,10 @@ class StandardWidgetTabController(QtGui.QTabWidget):
 
         """
         menu = QtGui.QMenu(self)
-        en = self.operatingWidget.currentIndex()<self.operatingWidget.count()-1
+        en = self.operatingWidget.currentIndex() < self.operatingWidget.count() - 1
         self.showNextTabAction().setEnabled(en)
         menu.addAction(self.showNextTabAction())
-        en = self.operatingWidget.currentIndex()>0
+        en = self.operatingWidget.currentIndex() > 0
         self.showPrevTabAction().setEnabled(en)
         menu.addAction(self.showPrevTabAction())
         menu.addSeparator()
@@ -492,7 +493,7 @@ class StandardWidgetTabController(QtGui.QTabWidget):
             t = self.operatingWidget.widget(idx)
             action = menu.addAction(t.windowTitle())
             action.setData(idx)
-            if t==self.operatingWidget.currentWidget():
+            if t == self.operatingWidget.currentWidget():
                 action.setIcon(QtGui.QIcon(':/images/ok.png'))
         return menu
 

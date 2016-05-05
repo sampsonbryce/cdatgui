@@ -10,10 +10,21 @@ class VCSGraphicsMethodModel(QtCore.QAbstractItemModel):
         self.gm_types = sorted(vcs.graphicsmethodlist())
         self.gms = {gmtype: [el for el in vcs.elements[gmtype].values() if el.name[:1] != "__"]
                     for gmtype in vcs.graphicsmethodlist()}
+        self.next_id = 0
+        self.keys = {}
 
     def add_gm(self, gm):
         parent_row = self.gm_types.index(vcs.graphicsmethodtype(gm))
         self.insertRows(self.rowCount(), 1, [gm], self.index(parent_row, 0))
+
+    def removeRows(self, row, count, parent=QtCore.QModelIndex()):
+        if not parent.isValid():
+            # Can't remove graphics method types
+            return False
+        self.beginRemoveRows(parent, row, row + count - 1)
+        del self.gms[self.gm_types[parent.row()]][row:row + count]
+        self.endRemoveRows()
+        return True
 
     def indexOf(self, gmtype, gm):
         parent = self.gm_types.index(gmtype)
@@ -45,24 +56,31 @@ class VCSGraphicsMethodModel(QtCore.QAbstractItemModel):
 
     def index(self, row, col, parent=QtCore.QModelIndex()):
         if parent.isValid():
-            # Grab the child of parent
-            gm_type = self.gm_types[parent.row()]
-            pointer = self.gms[gm_type][row]
+            key = (parent.row(), row)
         else:
-            pointer = self.gm_types[row]
-
-        return self.createIndex(row, col, pointer)
+            key = (row, None)
+        if key in self.keys:
+            internalid = self.keys[key]
+        else:
+            internalid = self.next_id
+            self.keys[key] = internalid
+            self.next_id += 1
+        return self.createIndex(row, col, internalid)
 
     def parent(self, qmi):
-        if qmi.internalPointer() in self.gm_types:
-            # Root level item, no work required
+        if not qmi.isValid():
             return QtCore.QModelIndex()
 
-        for ind, gtype in enumerate(self.gm_types):
-            if qmi.internalPointer() in self.gms[gtype]:
-                return self.index(ind, 0)
+        for key in self.keys:
+            if qmi.internalId() == self.keys[key]:
+                break
+        else:
+            return QtCore.QModelIndex()
 
-        return QtCore.QModelIndex()
+        if key[1] is None:
+            return QtCore.QModelIndex()
+        else:
+            return self.index(key[0], 0)
 
     def columnCount(self, qmi=QtCore.QModelIndex()):
         return 1
@@ -86,14 +104,15 @@ class VCSGraphicsMethodModel(QtCore.QAbstractItemModel):
     def data(self, index, role=QtCore.Qt.DisplayRole):
         if role != QtCore.Qt.DisplayRole:
             return None
-        parent = index.parent()
-        if parent.isValid():
-            # index is a GM
-            gtype = parent.internalPointer()
-            gm = self.gms[gtype][index.row()]
-            return unicode(gm.name)
-        else:
-            return unicode(self.gm_types[index.row()])
+
+        for key in self.keys:
+            if self.keys[key] == index.internalId():
+                break
+        gm_type = self.gm_types[key[0]]
+        if key[1] is None:
+            return unicode(gm_type)
+        gm = self.gms[gm_type][key[1]]
+        return unicode(gm.name)
 
     def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
         return u"Graphics Method"

@@ -182,6 +182,7 @@ class InspectorWidget(StaticDockWidget):
         gm_name = self.gm_instance_combo.currentText()
 
         gm = vcs.getgraphicsmethod(gm_type, gm_name)
+        print "GOT GM", gm
         if self.gm_editor:
             self.gm_editor.close()
             self.gm_editor.deleteLater()

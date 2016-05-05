@@ -23,9 +23,11 @@ class MainWindow(QtGui.QMainWindow):
         self.add_left_dock(var_widget)
 
         gm_widget = GraphicsMethodWidget(parent=self)
+        gm_widget.editedGM.connect(self.spreadsheet.tabController.currentWidget().replotPlottersUpdateVars)
         self.add_left_dock(gm_widget)
 
         tmpl_widget = TemplateWidget(parent=self)
+        # tmpl_widget.editedTmpl.connect(self.spreadsheet.tabController.currentWidget().totalPlotsChanged)
         self.add_left_dock(tmpl_widget)
 
         inspector = InspectorWidget(self.spreadsheet, parent=self)

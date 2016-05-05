@@ -179,7 +179,6 @@ class ProjectionEditor(BaseSaveWindowWidget):
             vcs.elements['projection'].pop(self.cur_projection_name)
             vcs.createprojection(self.cur_projection_name, self.object)
             name = self.cur_projection_name
-            c_obj = vcs.elements['projection'][name]
         else:
             if name in vcs.listelements('projection'):
                 del vcs.elements['projection'][name]

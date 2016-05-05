@@ -121,7 +121,6 @@ class VCSAxis(object):
             ticks = vcs.elements["list"][ticks]
         ticks = sorted(ticks)
         left, right = vcs.minmax(self.axis)
-        print "STEP", right, left, len(ticks)
         return (right - left) / (len(ticks) - 1)  # pretty sure this need to be -
 
     @step.setter

@@ -492,7 +492,6 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
                     widget = QCDATWidget(r, c)
                     widget.plotAdded.connect(self.selectionChange)
                     widget.emitAllPlots.connect(self.totalPlotsChanged)
-                    # widget.emitAllPlots.connect(self.totalPlotsChanged)
                     cellWidget = QCellContainer(widget)
                     self.setCellByWidget(r, c, cellWidget)
 
@@ -538,6 +537,22 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
             self.createContainers()
             self.totalPlotsChanged()
 
+    def replotPlottersUpdateVars(self):
+        total_tabs = []
+        plots = []
+        for row in range(self.toolBar.rowSpinBox.value()):
+            for col in range(self.toolBar.colSpinBox.value()):
+                total_tabs.append(self.sheet.cellWidget(row, col))
+        for cell in total_tabs:
+            cell = cell.containedWidget
+            # cell is now a QCDATWidget
+            plotter = cell.getPlotters()
+            plots.extend(plotter)
+        for plot in plots:
+            if plot.can_plot():
+                plot.plot()
+        self.emitAllPlots.emit(total_tabs)
+
     def totalPlotsChanged(self):
         total_tabs = []
         for row in range(self.toolBar.rowSpinBox.value()):
@@ -546,7 +561,6 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
         self.emitAllPlots.emit(total_tabs)
 
     ### Belows are API Wrappers to connect to self.sheet
-
     def getDimension(self):
         """ getDimension() -> tuple
         Get the sheet dimensions

@@ -124,6 +124,7 @@ class PlotManager(QtCore.QObject):
         self._gm = None
         self._vars = None
         self._template = None
+        self._type = None
 
     def name(self):
         if self.can_plot() is False:
@@ -141,13 +142,16 @@ class PlotManager(QtCore.QObject):
                 except AttributeError:
                     vars.append(v.id)
 
-        gm_type = vcs.graphicsmethodtype(self._gm)
+        # gm_type = vcs.graphicsmethodtype(self.gm)
+        # gm_type = vcs.graphicsmethodtype(self.gm)
         vars = " x ".join(vars)
-        return "%s (%s)" % (vars, gm_type)
+        return "%s (%s)" % (vars, self._type)
 
     def load(self, display):
         self.dp = display
-        self._gm = vcs.getgraphicsmethod(display.g_type, display.g_name)
+        # self._gm = vcs.getgraphicsmethod(display.g_type, display.g_name)
+        self._gm = display.g_name
+        self._type = display.g_type
         self._vars = display.array
         self._template = vcs.gettemplate(display._template_origin)
 
@@ -159,18 +163,14 @@ class PlotManager(QtCore.QObject):
         return self.source.canvas
 
     def gm(self):
-        return self._gm
+        return vcs.getgraphicsmethod(self._type, self._gm)
 
-    def set_gm(self, args):
-        """If args is a tuple, assume they are passing in False. Tuple used to designate do not plot"""
-        # check gm vs vars
-        if isinstance(args, tuple):
-            self._gm = args[0]
-        else:
-            self._gm = args
-            if self.can_plot():
-                self.plot()
-        self.source.gm_label.setText(self._gm.name)
+    def set_gm(self, gm):
+        self._gm = gm.name
+        self._type = vcs.graphicsmethodtype(gm)
+        if self.can_plot():
+            self.plot()
+        self.source.gm_label.setText(self._gm)
 
     graphics_method = property(gm, set_gm)
 
@@ -264,4 +264,6 @@ class PlotManager(QtCore.QObject):
             if self.template is None:
                 self._template = vcs.gettemplate(self.dp._template_origin)
             if self.graphics_method is None:
-                self._gm = vcs.getgraphicsmethod(self.dp.g_type, self.dp.g_name)
+                # self._gm = vcs.getgraphicsmethod(self.dp.g_type, self.dp.g_name)
+                self._gm = self.dp.g_name
+                self._type = self.dp.g_type

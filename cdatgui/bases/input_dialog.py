@@ -54,6 +54,8 @@ class ValidatingInputDialog(AccessableButtonDialog):
 
         self.vertical_layout.insertLayout(0, edit_line_layout)
 
+        # self.edit.setFocus()
+
     def setLabelText(self, text):
         self.label.setText(text)
 

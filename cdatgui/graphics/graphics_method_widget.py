@@ -45,7 +45,12 @@ class EditGmDialog(GraphicsMethodOkDialog):
         self.edit_gm_name = gm.name
         super(EditGmDialog, self).__init__(gm, var, tmpl)
 
+        self.setWindowTitle('Editing ' + self.ginstance)
+
         self.rejected.connect(self.resetGM)
+        self.rejected.connect(self.resetTmpl)
+
+        self.accepted.connect(self.createGM)
 
     def resetGM(self):
         if self.edit_gm_name:
@@ -56,6 +61,18 @@ class EditGmDialog(GraphicsMethodOkDialog):
         if self.edit_tmpl_name:
             del vcs.elements['template'][self.edit_tmpl_name]
         self.edit_tmpl_name = None
+
+    def createGM(self):
+        print "deleting", self.gtype, self.ginstance
+        cur_index = get_gms().indexOf(self.gtype, vcs.getgraphicsmethod(self.gtype, self.ginstance))
+        del vcs.elements[self.gtype][self.ginstance]
+        if self.edit_gm_name:
+            print "creating gm type {0} from {1} with name {2}".format(self.gtype, self.edit_gm_name, self.ginstance)
+            gm = vcs.creategraphicsmethod(self.gtype, self.edit_gm_name, self.ginstance)
+            get_gms().replace(cur_index, gm)
+            #import pdb; pdb.set_trace()
+        self.resetTmpl()
+        self.resetGM()
 
 
 class CreateGM(ValidatingInputDialog):
@@ -144,6 +161,8 @@ class CreateGM(ValidatingInputDialog):
 
 
 class GraphicsMethodWidget(StaticDockWidget):
+    editedGM = QtCore.Signal()
+
     def __init__(self, parent=None, flags=0):
         super(GraphicsMethodWidget, self).__init__("Graphics Methods", parent=parent, flags=flags)
         self.allowed_sides = [QtCore.Qt.DockWidgetArea.LeftDockWidgetArea]
@@ -154,6 +173,7 @@ class GraphicsMethodWidget(StaticDockWidget):
                                                     self.remove_gm))
 
         self.titleBarWidget().edit.setEnabled(False)
+        self.titleBarWidget().remove.setEnabled(False)
         self.list = GraphicsMethodList()
         self.list.changedSelection.connect(self.selection_change)
         self.setWidget(self.list)
@@ -164,6 +184,7 @@ class GraphicsMethodWidget(StaticDockWidget):
 
     def selection_change(self):
         selected = self.list.get_selected()
+        self.ginstance = None
         if selected is None:
             return
         if selected:
@@ -171,17 +192,19 @@ class GraphicsMethodWidget(StaticDockWidget):
             if len(selected) > 1:
                 self.ginstance = selected[1]
                 self.titleBarWidget().edit.setEnabled(True)
+                self.titleBarWidget().remove.setEnabled(True)
         else:
             self.titleBarWidget().edit.setEnabled(False)
+            self.titleBarWidget().remove.setEnabled(False)
             return
         if self.ginstance == 'default':
             self.titleBarWidget().edit.setEnabled(False)
+            self.titleBarWidget().remove.setEnabled(False)
             return
         elif not self.ginstance:
             self.titleBarWidget().edit.setEnabled(False)
+            self.titleBarWidget().remove.setEnabled(False)
             return
-
-        # self.selectedGraphicsMethod.emit(selected)
 
     def add_gm(self):
         self.add_gm_widget = CreateGM(self.list.get_selected())
@@ -190,9 +213,10 @@ class GraphicsMethodWidget(StaticDockWidget):
 
     def edit_gm(self):
         self.edit_dialog = EditGmDialog(self.gtype, self.ginstance)
-
+        self.edit_dialog.accepted.connect(self.editedGM.emit)
         self.edit_dialog.show()
         self.edit_dialog.raise_()
 
     def remove_gm(self):
-        pass
+        model_index = get_gms().indexOf(self.gtype, vcs.getgraphicsmethod(self.gtype, self.ginstance))
+        get_gms().removeRows(model_index.row(), 1, parent=model_index.parent())
