@@ -7,6 +7,7 @@ class VcsElementsDialog(ValidatingInputDialog):
     def __init__(self, element):
         super(VcsElementsDialog, self).__init__()
         self.element = element
+        self.setValidator(VcsElementsValidator())
 
     def save(self):
         if self.textValue() in vcs.elements[self.element]:

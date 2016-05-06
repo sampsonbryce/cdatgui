@@ -90,7 +90,7 @@ class VCSGraphicsMethodModel(QtCore.QAbstractItemModel):
             raise ValueError("Can't insert new Graphics Method Types")
 
         parent_name = self.data(parent)
-        self.beginInsertRows(parent, row, row + count)
+        self.beginInsertRows(parent, row, row + count - 1)
         self.gms[parent_name] = self.gms[parent_name][:row] + gms + self.gms[parent_name][row:]
         self.endInsertRows()
 

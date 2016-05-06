@@ -65,7 +65,7 @@ class InspectorWidget(StaticDockWidget):
         super(InspectorWidget, self).__init__("Inspector", parent=parent)
         self.allowed_sides = [QtCore.Qt.DockWidgetArea.RightDockWidgetArea]
         spreadsheet.selectionChanged.connect(self.selection_change)
-        self.plotters_updated.connect(spreadsheet.tabController.currentWidget().totalPlotsChanged)
+        self.plotters_updated.connect(spreadsheet.tabController.currentWidget().replotPlottersUpdateVars)
         self.cells = []
         self.current_plot = None
         self.plots = PlotterListModel()
@@ -182,7 +182,6 @@ class InspectorWidget(StaticDockWidget):
         gm_name = self.gm_instance_combo.currentText()
 
         gm = vcs.getgraphicsmethod(gm_type, gm_name)
-        print "GOT GM", gm
         if self.gm_editor:
             self.gm_editor.close()
             self.gm_editor.deleteLater()
@@ -192,23 +191,15 @@ class InspectorWidget(StaticDockWidget):
         self.gm_editor.show()
         self.gm_editor.raise_()
 
-    def makeTmpl(self, template):
-        get_templates().add_template(template)
-
-    def editTmpl(self, template):
-        ind = get_templates().indexOf(template)
-        if ind.isValid():
-            get_templates.replace(ind.row(), template)
-
     def editTemplate(self, tmpl):
-        if self.tmpl_editor:
-            self.tmpl_editor.reject()
-            self.tmpl_editor.deleteLater()
         self.tmpl_editor = TemplateEditorDialog(tmpl)
-        self.tmpl_editor.createdTemplate.connect(self.makeTmpl)
-        self.tmpl_editor.editedTemplate.connect(self.editTmpl)
+        self.tmpl_editor.doneEditing.connect(self.setTemplateCombo)
         self.tmpl_editor.show()
         self.tmpl_editor.raise_()
+
+    def setTemplateCombo(self, tmpl_name):
+        self.template_combo.setCurrentIndex(self.template_combo.findText(tmpl_name))
+        self.plotters_updated.emit()
 
     def deletePlot(self, plot):
         ind = self.plot_combo.currentIndex()

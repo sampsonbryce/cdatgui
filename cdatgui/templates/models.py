@@ -10,7 +10,8 @@ class VCSTemplateListModel(QtCore.QAbstractListModel):
     def __init__(self, tmpl_filter=None, parent=None):
         super(VCSTemplateListModel, self).__init__(parent=parent)
         if tmpl_filter is not None:
-            self.templates = [template for template in vcs.elements["template"].values() if tmpl_filter.search(template.name) is None]
+            self.templates = [template for template in vcs.elements["template"].values() if
+                              tmpl_filter.search(template.name) is None]
         else:
             self.templates = vcs.elements["template"].values()
 
@@ -22,6 +23,13 @@ class VCSTemplateListModel(QtCore.QAbstractListModel):
                 return (m.group(1) + m.group(3) + m.group(2) + m.group(4)).lower()
 
         self.templates = sorted(self.templates, key=template_key)
+
+    def replace(self, ind, tmpl):
+        if ind < len(self.templates):
+            self.templates[ind] = tmpl
+            self.dataChanged.emit(ind, ind)
+        else:
+            raise IndexError("Index %d out of range." % ind)
 
     def get(self, ind):
         return self.templates[ind]
@@ -51,9 +59,14 @@ class VCSTemplateListModel(QtCore.QAbstractListModel):
         return vcs.elements["template"][template_name]
 
     def insertRows(self, row, count, templates, parent=QtCore.QModelIndex()):
-        self.beginInsertRows(parent, row, row + count)
+        self.beginInsertRows(parent, row, row + count - 1)
         self.templates = self.templates[:row] + templates + self.templates[row:]
         self.endInsertRows()
+
+    def removeRows(self, row, count, parent=QtCore.QModelIndex()):
+        self.beginRemoveRows(parent, row, row + count - 1)
+        self.templates.pop(row)
+        self.endRemoveRows()
 
     def rowCount(self, modelIndex=None):
         return len(self.templates)

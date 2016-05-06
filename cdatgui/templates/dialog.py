@@ -2,6 +2,9 @@ from PySide import QtGui, QtCore
 from cdatgui.editors.template import TemplateEditor
 import vcs
 import copy
+from cdatgui.bases.vcs_elements_dialog import VcsElementsDialog
+
+from cdatgui.templates import get_templates
 
 
 def sync_template(self, src):
@@ -60,11 +63,13 @@ def sync_template(self, src):
 
 
 class TemplateEditorDialog(QtGui.QDialog):
-    createdTemplate = QtCore.Signal(object)
-    editedTemplate = QtCore.Signal(object)
+    doneEditing = QtCore.Signal(str)
 
     def __init__(self, tmpl, parent=None):
         super(TemplateEditorDialog, self).__init__(parent=parent)
+        self.setWindowModality(QtCore.Qt.ApplicationModal)
+        shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Escape), self)
+        shortcut.activated.connect(self.close)
         self.real_tmpl = tmpl
         self.tmpl = vcs.createtemplate(source=tmpl)
         l = QtGui.QVBoxLayout()
@@ -91,15 +96,40 @@ class TemplateEditorDialog(QtGui.QDialog):
         l.addLayout(buttons)
 
         self.setLayout(l)
+        self.dialog = None
 
     def customName(self):
-        name = QtGui.QInputDialog.getText(self, u"Save As", u"Name for template:")
-        self.save(name)
+        # name = QtGui.QInputDialog.getText(self, u"Save As", u"Name for template:")
+        self.dialog = VcsElementsDialog('template')
+        self.dialog.setLabelText('Name:')
+        self.dialog.setWindowTitle('Save As')
+
+        self.dialog.accepted.connect(self.grabName)
+        self.dialog.show()
+        self.dialog.raise_()
+
+    def grabName(self):
+        self.save(self.dialog.textValue())
 
     def save(self, name=None):
         if name is None:
             sync_template(self.real_tmpl, self.tmpl)
-            self.editedTemplate.emit(self.real_tmpl)
+            self.editTmpl(self.real_tmpl)
+            name = self.real_tmpl.name
         else:
-            template = vcs.createtemplate(name, self.tmpl.name)
-            self.createdTemplate.emit(template)
+            if name in vcs.listelements('template'):
+                del vcs.elements['template'][name]
+            template = vcs.createtemplate(str(name), self.tmpl.name)
+            self.makeTmpl(template)
+
+        self.doneEditing.emit(name)
+        self.close()
+
+    def editTmpl(self, template):
+        ind = get_templates().indexOf(template)
+        if ind.isValid():
+            get_templates().replace(ind.row(), template)
+
+    def makeTmpl(self, template):
+        get_templates().add_template(template)
+
