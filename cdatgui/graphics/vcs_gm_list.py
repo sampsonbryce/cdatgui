@@ -15,7 +15,6 @@ class GraphicsMethodList(QtGui.QTreeView):
 
     def get_selected(self):
         items = self.selectedIndexes()
-        print 'get_selected'
         for selected in items:
             if not selected.parent().isValid():
                 return [selected.data()]

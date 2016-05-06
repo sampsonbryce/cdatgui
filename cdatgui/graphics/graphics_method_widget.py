@@ -63,14 +63,11 @@ class EditGmDialog(GraphicsMethodOkDialog):
         self.edit_tmpl_name = None
 
     def createGM(self):
-        print "deleting", self.gtype, self.ginstance
         cur_index = get_gms().indexOf(self.gtype, vcs.getgraphicsmethod(self.gtype, self.ginstance))
         del vcs.elements[self.gtype][self.ginstance]
         if self.edit_gm_name:
-            print "creating gm type {0} from {1} with name {2}".format(self.gtype, self.edit_gm_name, self.ginstance)
             gm = vcs.creategraphicsmethod(self.gtype, self.edit_gm_name, self.ginstance)
             get_gms().replace(cur_index, gm)
-            #import pdb; pdb.set_trace()
         self.resetTmpl()
         self.resetGM()
 

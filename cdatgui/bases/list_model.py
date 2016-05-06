@@ -29,7 +29,7 @@ class ListModel(QtCore.QAbstractListModel):
         self.dataChanged.emit(ind, ind)
 
     def remove(self, ind):
-        self.removeRows(ind, 1)
+        return self.removeRows(ind, 1)
 
     def clear(self):
         self.removeRows(0, len(self.values))
@@ -40,9 +40,10 @@ class ListModel(QtCore.QAbstractListModel):
         self.endInsertRows()
 
     def removeRows(self, row, count, parent=QtCore.QModelIndex()):
-        self.beginRemoveRows(parent, row, row + count)
+        self.beginRemoveRows(parent, row, row + count - 1)
         self.values = self.values[:row] + self.values[row + count:]
         self.endRemoveRows()
+        return True
 
     def rowCount(self, modelIndex=None):
         return len(self.values)

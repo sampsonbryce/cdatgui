@@ -1,5 +1,7 @@
 from PySide import QtGui, QtCore
 import os.path
+from collections import OrderedDict
+
 from cdatgui.utils import icon
 import urlparse
 
@@ -66,11 +68,20 @@ class CDMSFileTree(QtGui.QTreeWidget):
 
     def get_selected(self):
         items = self.selectedItems()
-        variables = []
+        variables = OrderedDict()
         for item in items:
-            var_name = item.text(1)
-            file_index = self.indexOfTopLevelItem(item.parent())
-            cdmsfile = self.files_ordered[file_index]
-            variables.append(cdmsfile(var_name))
+            new_vars = []
+            if isinstance(item, CDMSFileItem):
+                for index in range(item.childCount()):
+                    new_vars.append(item.child(index))
+            else:
+                new_vars.append(item)
+            for var in new_vars:
+                var_name = var.text(1)
+                file_index = self.indexOfTopLevelItem(var.parent())
+                cdmsfile = self.files_ordered[file_index]
+                var_meta_item = cdmsfile(var_name)
+                if var.text(1) not in variables.values():
+                    variables[var_meta_item] = var.text(1)
 
-        return variables
+        return variables.keys()

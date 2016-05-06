@@ -24,7 +24,8 @@ class CDMSVariableList(QtGui.QListView):
                     break
             else:
                 raise ValueError("Variable %s not in Variable List" % (variable.id))
-        self.model().remove_variable(ind)
+        res = self.model().remove_variable(ind)
+        return res
 
     def add_variable(self, cdmsvar):
         self.model().add_variable(cdmsvar)
