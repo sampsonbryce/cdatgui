@@ -1,5 +1,5 @@
 import pytest, vcs, cdms2, os
-from cdatgui.graphics.dialog import GraphicsMethodDialog
+from cdatgui.graphics.dialog import *
 from cdatgui.cdat.metadata import FileMetadataWrapper
 from cdatgui.editors import boxfill, isoline, cdat1d
 from PySide import QtCore, QtGui
@@ -24,6 +24,18 @@ def isoline_dialog():
 def oned_dialog():
     s = get_var()
     d = GraphicsMethodDialog(vcs.get1d('default'), s, vcs.createtemplate())
+    return d
+
+
+def save_dialog():
+    s = get_var()
+    d = GraphicsMethodSaveDialog(vcs.getmeshfill('a_meshfill'), s, vcs.createtemplate())
+    return d
+
+
+def ok_dialog():
+    s = get_var()
+    d = GraphicsMethodOkDialog(vcs.getvector('default'), s, vcs.createtemplate())
     return d
 
 
@@ -63,9 +75,9 @@ def test_boxfillDialog(qtbot, boxfill_dialog):
             break
 
     assert editor.levels_button.isEnabled() == False
-    save_button = boxfill_dialog.layout().itemAt(1).layout().itemAt(3).widget()
-    assert save_button.isEnabled() == False
-    boxfill_dialog.save(('test', True))
+    # save_button = boxfill_dialog.layout().itemAt(1).layout().itemAt(3).widget()
+    # assert save_button.isEnabled() == False
+    # boxfill_dialog.save(('test', True))
 
     # test ticks dialogs
     editor.editLeft()
@@ -126,3 +138,14 @@ def test_1dDialog(qtbot, oned_dialog):
     qtbot.addWidget(editor.line_editor)
     assert editor.line_editor
 
+
+def test_saveDialog(qtbot, save_dialog):
+    assert save_dialog.gm.name == 'a_meshfill'
+    save_button = save_dialog.layout().itemAt(1).layout().itemAt(3).widget()
+    assert save_button.isEnabled() == True
+
+
+
+
+
+    # boxfill_dialog.save(('test', True))

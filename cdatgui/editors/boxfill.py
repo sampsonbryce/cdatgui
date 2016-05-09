@@ -1,8 +1,6 @@
 from PySide import QtGui, QtCore
 from collections import OrderedDict
 
-from widgets.legend_widget import LegendEditorWidget
-from model.legend import VCSLegend
 from .graphics_method_editor import GraphicsMethodEditorWidget
 
 
@@ -42,6 +40,7 @@ class BoxfillEditor(GraphicsMethodEditorWidget):
     @gm.setter
     def gm(self, value):
         self._gm = value
+        self.orig_type = self._gm.boxfill_type
         type_real_vals = self.boxfill_types.values()
         index = type_real_vals.index(value.boxfill_type)
         button = self.type_group.buttons()[index]
@@ -56,7 +55,5 @@ class BoxfillEditor(GraphicsMethodEditorWidget):
             self.levels_button.setEnabled(False)
         box_type = self.boxfill_types[radio.text()]
 
-        if not self.orig_type:
-            self.orig_type = box_type
         self._gm.boxfill_type = box_type
 

@@ -125,7 +125,6 @@ class ProjectionEditor(BaseSaveWindowWidget):
         self.cur_projection_name = proj
         if self.newprojection_name in vcs.listelements('projection'):
             del vcs.elements['projection'][self.newprojection_name]
-        vcs.getprojection(proj).list()
         self.object = vcs.createprojection(source=vcs.getprojection(proj))
         self.newprojection_name = self.object.name
         self.updateAttributes()

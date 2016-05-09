@@ -80,6 +80,7 @@ class IsolineEditor(GraphicsMethodEditorWidget):
     def gm(self, value):
         """GM setter."""
         self._gm = value
+        print "label", self._gm.label
         self.label_check.setChecked(self._gm.label)
         self.edit_label_button.setEnabled(self._gm.label)
 

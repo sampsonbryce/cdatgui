@@ -169,6 +169,7 @@ class InspectorWidget(StaticDockWidget):
         self.editVariable(var)
 
     def editGraphicsMethod(self, gm):
+        print "GM NAME:", gm.name
         get_gms().replace(get_gms().indexOf(vcs.graphicsmethodtype(gm), gm), gm)
         self.current_plot.graphics_method = gm
 

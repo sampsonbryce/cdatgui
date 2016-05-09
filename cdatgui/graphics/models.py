@@ -28,7 +28,10 @@ class VCSGraphicsMethodModel(QtCore.QAbstractItemModel):
 
     def indexOf(self, gmtype, gm):
         parent = self.gm_types.index(gmtype)
-        actual = self.gms[gmtype].index(gm)
+        for list_gm in self.gms[gmtype]:
+            if list_gm.name == gm.name:
+                actual = self.gms[gmtype].index(list_gm)
+                break
         return self.index(actual, 0, parent=self.index(parent, 0))
 
     def replace(self, index, gm):

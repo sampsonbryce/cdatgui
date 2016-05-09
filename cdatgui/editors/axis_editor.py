@@ -68,7 +68,7 @@ class AxisEditorWidget(BaseOkWindowWidget):
         self.ticks_slider = QtGui.QSlider()
         self.ticks_slider.setRange(1, 100)
         self.ticks_slider.setOrientation(QtCore.Qt.Horizontal)
-        self.ticks_slider.sliderMoved.connect(self.updateTicks)
+        self.ticks_slider.valueChanged.connect(self.updateTicks)
 
         # create step edit box
         step_validator = QtGui.QDoubleValidator()
@@ -129,6 +129,11 @@ class AxisEditorWidget(BaseOkWindowWidget):
     def setAxisObject(self, axis_obj):
         self.object = axis_obj
         self.preview.setAxisObject(self.object)
+        if self.object.numticks < 0:
+            self.negative_check.setChecked(True)
+        else:
+            self.negative_check.setChecked(True)
+        self.updateTicks(self.object.numticks)
         self.preview.update()
 
     # Update mode essentially
@@ -196,7 +201,9 @@ class AxisEditorWidget(BaseOkWindowWidget):
             self.negative_check.setCheckState(QtCore.Qt.Unchecked)
         self.object.step = cur_val
         self.state = "step"
+        block = self.ticks_slider.blockSignals(True)
         self.ticks_slider.setValue(self.object.numticks)
+        self.ticks_slider.blockSignals(block)
 
         self.preview.update()
 

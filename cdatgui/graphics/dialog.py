@@ -1,4 +1,6 @@
 from PySide import QtGui, QtCore
+
+from cdatgui.bases.vcs_elements_dialog import VcsElementsDialog
 from cdatgui.editors.boxfill import BoxfillEditor
 from cdatgui.editors.isofill import IsofillEditor
 from cdatgui.editors.meshfill import MeshfillEditor
@@ -16,6 +18,7 @@ class GraphicsMethodDialog(QtGui.QDialog):
         super(GraphicsMethodDialog, self).__init__(parent=parent)
         self.setWindowModality(QtCore.Qt.ApplicationModal)
         self.newgm_name = None
+        self.origgm_name = gm.name
 
         layout = QtGui.QVBoxLayout()
 
@@ -42,10 +45,11 @@ class GraphicsMethodDialog(QtGui.QDialog):
             raise NotImplementedError("No editor exists for type %s" % self.gmtype)
         self.editor.var = var
         self.editor.tmpl = tmpl
-        self.gm = gm
-        self.editor.gm = gm
+        self.gm = self.create(source=gm)
+        self.newgm_name = self.gm.name
+        self.editor.gm = self.gm
 
-        self.setWindowTitle('Editing ' + self.gm.name)
+        self.setWindowTitle('Editing ' + gm.name)
 
         layout.addWidget(self.editor)
 
@@ -73,6 +77,7 @@ class GraphicsMethodDialog(QtGui.QDialog):
 class GraphicsMethodSaveDialog(GraphicsMethodDialog):
     def __init__(self, gm, var, tmpl, parent=None):
         super(GraphicsMethodSaveDialog, self).__init__(gm, var, tmpl, parent)
+        self.dialog = None
 
         save_as = QtGui.QPushButton("Save As")
         save_as.clicked.connect(self.customName)
@@ -84,26 +89,33 @@ class GraphicsMethodSaveDialog(GraphicsMethodDialog):
         self.buttons.addWidget(save)
 
         self.accepted.connect(self.save)
-        if gm.name == 'default':
-            self.gm = self.create(source=gm)
-            self.newgm_name = self.gm.name
-            save.setEnabled(False)
-        else:
-            self.gm = gm
 
-        self.editor.gm = self.gm
+        if self.origgm_name == 'default':
+            save.setEnabled(False)
 
     def customName(self):
-        name = QtGui.QInputDialog.getText(self, u"Save As", u"Name for {0}:".format(unicode(self.gmtype)))
-        if name[1]:
-            self.save(name)
+        self.dialog = VcsElementsDialog('boxfill')
+        self.dialog.setLabelText('Name for {0}'.format(unicode(self.gmtype)))
+        self.dialog.setWindowTitle('Save As')
+        self.dialog.accepted.connect(self.grabGm)
+        self.dialog.show()
+        self.dialog.raise_()
+
+    def grabGm(self):
+        self.save(self.dialog.textValue())
 
     def save(self, name=None):
         if name is None:
-            self.editedGM.emit(self.gm)
+            del vcs.elements[self.gmtype][self.origgm_name]
+            gm = vcs.creategraphicsmethod(self.gmtype, self.newgm_name, self.origgm_name)
+            self.editedGM.emit(gm)
         else:
-            gm = self.create(name[0], self.gm)
+            if name in vcs.listelements(self.gmtype):
+                del vcs.elements[self.gmtype][name]
+            gm = self.create(name, self.newgm_name)
             self.createdGM.emit(gm)
+
+        del vcs.elements[self.gmtype][self.newgm_name]
 
         self.close()
 
@@ -114,5 +126,13 @@ class GraphicsMethodOkDialog(GraphicsMethodDialog):
 
         ok_button = QtGui.QPushButton('OK')
         ok_button.clicked.connect(self.accept)
+
+        self.accepted.connect(self.okClicked)
         self.buttons.addWidget(ok_button)
 
+    def okClicked(self):
+        del vcs.elements[self.gmtype][self.origgm_name]
+        gm = vcs.creategraphicsmethod(self.gmtype, self.newgm_name, self.origgm_name)
+        self.editedGM.emit(gm)
+
+        del vcs.elements[self.gmtype][self.newgm_name]
