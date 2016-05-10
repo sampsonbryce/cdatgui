@@ -28,13 +28,13 @@ def save_as(name):
 
 def test_save(qtbot, window):
     base = window
-    base.savePressed.connect(save)
+    base.accepted.connect(save)
     base.save()
 
 
 def test_save_as(qtbot, window):
     base = window
-    base.savePressed.connect(save_as)
+    base.accepted.connect(save_as)
     base.saveAs()
     base.win.setTextValue("pizza")
     base.win.accepted.emit()

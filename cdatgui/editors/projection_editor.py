@@ -15,7 +15,7 @@ class ProjectionEditor(BaseSaveWindowWidget):
         self.orig_projection = None
         self.cur_projection_name = None
         self.gm = None
-        self.savePressed.connect(self.savingNewProjection)
+        self.accepted.connect(self.savingNewProjection)
         self.editors = []
         self.auto_close = False
         self.newprojection_name = None
@@ -80,6 +80,7 @@ class ProjectionEditor(BaseSaveWindowWidget):
         self.cur_projection_name = obj.name
         self.object = vcs.createprojection(source=obj)
         self.newprojection_name = self.object.name
+        print "NEW PROJECTION", self.newprojection_name
 
         self.updateAttributes()
 
@@ -154,7 +155,7 @@ class ProjectionEditor(BaseSaveWindowWidget):
             return
 
         if name == self.newprojection_name:
-            vcs.elements['projection'].pop(self.cur_projection_name)
+            del vcs.elements['projection'][self.cur_projection_name]
             vcs.createprojection(self.cur_projection_name, self.object)
             name = self.cur_projection_name
         else:

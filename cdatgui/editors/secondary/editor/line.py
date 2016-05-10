@@ -11,7 +11,7 @@ class LineEditorWidget(BaseSaveWindowWidget):
     def __init__(self):
         super(LineEditorWidget, self).__init__()
         self.setPreview(LinePreviewWidget())
-        self.savePressed.connect(self.saveNewLine)
+        self.accepted.connect(self.saveNewLine)
         self.orig_name = None
         self.newline_name = None
 

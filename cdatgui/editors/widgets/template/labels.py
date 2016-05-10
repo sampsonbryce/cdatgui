@@ -132,7 +132,7 @@ class TemplateLabelEditor(QtGui.QTabWidget):
         self._template = None
         self.member_groups = {group: TemplateLabelGroup(group) for group in members}
         self.style_editor = TextStyleEditorWidget()
-        self.style_editor.savePressed.connect(self.save_style)
+        self.style_editor.accepted.connect(self.save_style)
         for group, widget in self.member_groups.iteritems():
             widget.labelUpdated.connect(self.labelUpdated.emit)
             widget.moveLabel.connect(self.moveLabel.emit)

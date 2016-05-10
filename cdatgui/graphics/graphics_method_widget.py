@@ -31,7 +31,8 @@ class NameValidator(QtGui.QValidator):
 
 
 class EditGmDialog(GraphicsMethodOkDialog):
-    def __init__(self, gtype, ginstance):
+    def __init__(self, gtype, ginstance, store=True):
+        """Store designates whether the gm is to be saved on okPressed for use when creating new gms"""
         self.gtype = gtype
         self.ginstance = ginstance
         f = cdms2.open(os.path.join(vcs.sample_data, 'clt.nc'))
@@ -50,19 +51,32 @@ class EditGmDialog(GraphicsMethodOkDialog):
         self.rejected.connect(self.resetGM)
         self.rejected.connect(self.resetTmpl)
 
-        self.accepted.connect(self.createGM)
+        if not store:
+            print "connecting to createGM"
+            self.accepted.connect(self.createGM)
+
+    def createNewGM(self, gm):
+        print "calling my new createNewGM"
+        return gm
+
+    def okClicked(self):
+        print "okclicked, hiding"
+        self.hide()
 
     def resetGM(self):
+        print "resetting gm"
         if self.edit_gm_name:
             del vcs.elements[self.gtype][self.edit_gm_name]
         self.edit_gm_name = None
 
     def resetTmpl(self):
+        print "resetting tmpl"
         if self.edit_tmpl_name:
             del vcs.elements['template'][self.edit_tmpl_name]
         self.edit_tmpl_name = None
 
     def createGM(self):
+        print "creating gm. should only be calling this if no store"
         cur_index = get_gms().indexOf(self.gtype, vcs.getgraphicsmethod(self.gtype, self.ginstance))
         del vcs.elements[self.gtype][self.ginstance]
         if self.edit_gm_name:
@@ -118,43 +132,45 @@ class CreateGM(ValidatingInputDialog):
         self.accepted.connect(self.createGM)
 
     def setGMRoot(self, index):
+        if self.edit_dialog is not None:
+            print "changing root"
+            self.edit_dialog.deleteLater()
+            self.edit_dialog = None
         self.edit.validator().gm_type = self.gm_type_combo.currentText()
         self.gm_instance_combo.setRootModelIndex(get_gms().index(index, 0))
         self.gm_instance_combo.setCurrentIndex(self.gm_instance_combo.findText('default'))
         self.edit.validator().validate(self.edit.text(), 0)
 
     def createGM(self):
+        # print "edit dialog, edit_gm_name", self.edit_dialog, self.edit_dialog.edit_gm_name
         if self.edit_dialog and self.edit_dialog.edit_gm_name:
-            get_gms().add_gm(
-                vcs.creategraphicsmethod(str(self.gm_type_combo.currentText()),
+            # print "createing gm from edit dialog", vcs.getboxfill(self.edit_dialog.edit_gm_name).list()
+            gm = vcs.creategraphicsmethod(str(self.gm_type_combo.currentText()),
                                          self.edit_dialog.edit_gm_name,
-                                         str(self.textValue())
-                                         ))
-            del vcs.elements[self.gm_type_combo.currentText()][self.edit_gm_name]
+                                         str(self.textValue()))
+            get_gms().add_gm(gm)
+            del vcs.elements[self.gm_type_combo.currentText()][self.edit_dialog.edit_gm_name]
 
         else:
-            get_gms().add_gm(
-                vcs.creategraphicsmethod(str(self.gm_type_combo.currentText()),
+            print "creating gm without using customize as source"
+            gm = vcs.creategraphicsmethod(str(self.gm_type_combo.currentText()),
                                          str(self.gm_instance_combo.currentText()),
-                                         str(self.textValue())
-                                         ))
+                                         str(self.textValue()))
+            get_gms().add_gm(gm)
+
+        if self.edit_dialog:
+            self.edit_dialog.deleteLater()
+            self.edit_dialog = None
 
     def editGM(self):
-        self.edit_dialog = EditGmDialog(self.gm_type_combo.currentText(), self.gm_instance_combo.currentText())
+        if not self.edit_dialog:
+            print "making new edit dialog"
+            self.edit_dialog = EditGmDialog(self.gm_type_combo.currentText(), self.gm_instance_combo.currentText())
+        else:
+            print "reusing edit dialog"
 
         self.edit_dialog.show()
         self.edit_dialog.raise_()
-
-    def save(self):
-        if self.edit_dialog:
-            self.edit_dialog.resetTmpl()
-        super(CreateGM, self).save()
-
-    def cancel(self):
-        if self.edit_dialog:
-            self.edit_dialog.resetTmpl()
-            self.edit_dialog.resetGM()
-        super(CreateGM, self).cancel()
 
 
 class GraphicsMethodWidget(StaticDockWidget):
@@ -209,7 +225,7 @@ class GraphicsMethodWidget(StaticDockWidget):
         self.add_gm_widget.raise_()
 
     def edit_gm(self):
-        self.edit_dialog = EditGmDialog(self.gtype, self.ginstance)
+        self.edit_dialog = EditGmDialog(self.gtype, self.ginstance, False)
         self.edit_dialog.accepted.connect(self.editedGM.emit)
         self.edit_dialog.show()
         self.edit_dialog.raise_()

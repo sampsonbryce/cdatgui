@@ -337,9 +337,20 @@ class LegendEditorWidget(BaseOkWindowWidget):
             self.end_color_widget.setEnabled(False)
             self.end_color_widget.hide()
 
-        self.extend_left_check.setChecked(self.object.ext_left)
-        self.extend_right_check.setChecked(self.object.ext_right)
+        # disable the extend left and right if the gm does not have any - might not actually be needed
+        if self.object.ext_left is not None:
+            self.extend_left_check.setChecked(self.object.ext_left)
+        else:
+            self.extend_left_check.setEnabled(False)
+            self.extend_left_check.hide()
 
+        if self.object.ext_right is not None:
+            self.extend_right_check.setChecked(self.object.ext_right)
+        else:
+            self.extend_right_check.setEnabled(False)
+            self.extend_right_check.hide()
+
+        # disable the custom fill option if the fill style is not custom
         if vcs.isboxfill(self.object._gm):
             if self.object._gm.boxfill_type == 'custom':
                 self.enableCustom(self.object._gm.fillareastyle != 'solid')

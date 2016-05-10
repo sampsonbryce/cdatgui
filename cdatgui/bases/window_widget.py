@@ -2,9 +2,10 @@ from PySide import QtCore, QtGui
 
 
 class BaseSaveWindowWidget(QtGui.QWidget):
-    savePressed = QtCore.Signal(str)
+    accepted = QtCore.Signal(str)
+    rejected = QtCore.Signal()
 
-    def __init__(self):
+    def __init__(self, parent=None):
         super(BaseSaveWindowWidget, self).__init__()
         self.auto_close = True
         self.object = None
@@ -21,7 +22,7 @@ class BaseSaveWindowWidget(QtGui.QWidget):
         # Save and Cancel Buttons
         cancel_button = QtGui.QPushButton()
         cancel_button.setText("Cancel")
-        cancel_button.clicked.connect(self.close)
+        cancel_button.clicked.connect(self.cancel)
 
         saveas_button = QtGui.QPushButton()
         saveas_button.setText("Save As")
@@ -68,18 +69,23 @@ class BaseSaveWindowWidget(QtGui.QWidget):
         except:
             name = self.object.name
 
-        self.savePressed.emit(name)
+        self.accepted.emit(name)
         if self.auto_close:
             self.close()
 
     def setSaveDialog(self, dialog):
         self.dialog = dialog
 
+    def cancel(self):
+        self.rejected.emit()
+        self.close()
+
 
 class BaseOkWindowWidget(QtGui.QWidget):
-    okPressed = QtCore.Signal()
+    accepted = QtCore.Signal()
+    rejected = QtCore.Signal()
 
-    def __init__(self):
+    def __init__(self, parent=None):
         super(BaseOkWindowWidget, self).__init__()
 
         self.object = None
@@ -94,7 +100,7 @@ class BaseOkWindowWidget(QtGui.QWidget):
         # Save and Cancel Buttons
         cancel_button = QtGui.QPushButton()
         cancel_button.setText("Cancel")
-        cancel_button.clicked.connect(lambda: self.close())
+        cancel_button.clicked.connect(self.cancel)
 
         ok_button = QtGui.QPushButton()
         ok_button.setText("OK")
@@ -118,5 +124,9 @@ class BaseOkWindowWidget(QtGui.QWidget):
         self.vertical_layout.insertWidget(0, self.preview)
 
     def okClicked(self):
-        self.okPressed.emit()
+        self.accepted.emit()
+        self.close()
+
+    def cancel(self):
+        self.rejected.emit()
         self.close()

@@ -4,12 +4,13 @@ from bisect import bisect_left
 from cdatgui.cdat.vcswidget import QVCSWidget
 from PySide import QtCore, QtGui
 from .widgets.adjust_values import AdjustValues
+from cdatgui.bases.window_widget import BaseOkWindowWidget
 import vcsaddons
 import vcs
 import numpy
 
 
-class LevelEditor(QtGui.QWidget):
+class LevelEditor(BaseOkWindowWidget):
     """Uses DictEditor to select levels for a GM and displays a histogram."""
 
     levelsUpdated = QtCore.Signal()
@@ -26,27 +27,23 @@ class LevelEditor(QtGui.QWidget):
         self.value_sliders = AdjustValues()
         self.value_sliders.valuesChanged.connect(self.update_levels)
 
-        layout = QtGui.QVBoxLayout()
-        layout.addWidget(self.canvas)
-        layout.addWidget(self.value_sliders)
-        self.setLayout(layout)
+        self.vertical_layout.insertWidget(0,self.canvas)
+        self.vertical_layout.insertWidget(1, self.value_sliders)
+        self.setLayout(self.vertical_layout)
 
         self.histo = vcsaddons.histograms.Ghg()
 
-        self.reset = QtGui.QPushButton(u"Cancel")
-        self.reset.clicked.connect(self.reset_levels)
-
-        self.apply = QtGui.QPushButton(u"Apply")
-        self.apply.clicked.connect(self.levelsUpdated.emit)
-
         self.orig_levs = None
-        button_layout = QtGui.QHBoxLayout()
-        layout.addLayout(button_layout)
-        button_layout.addWidget(self.reset)
-        button_layout.addWidget(self.apply)
+        self.rejected.connect(self.reset_levels)
+        self.accepted.connect(self.updated_levels)
 
     def reset_levels(self):
+        self.close()
         self.gm.levels = self.orig_levs
+        self.levelsUpdated.emit()
+
+    def updated_levels(self):
+        self.close()
         self.levelsUpdated.emit()
 
     def update_levels(self, levs, clear=False):
@@ -64,7 +61,7 @@ class LevelEditor(QtGui.QWidget):
 
     @var.setter
     def var(self, value):
-        print "VAR", value, type(value)
+        # print "VAR", value, type(value)
         self._var = value
         flat = self._var.data
         flat = sorted(numpy.unique(flat.flatten()))
@@ -93,7 +90,7 @@ class LevelEditor(QtGui.QWidget):
         for lev in levs:
             if lev not in values:
                 values.insert(bisect_left(values, lev), lev)
-        print "LEVS:", levs
+        # print "LEVS:", levs
         self.canvas.clear()
         self.value_sliders.update(values, levs)
         self.update_levels(levs, clear=True)

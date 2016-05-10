@@ -3,8 +3,10 @@ import vcs
 
 class VCSAxis(object):
     def __init__(self, gm, tmpl, axis, var):
-        self.gm = gm
-        self.tmpl = tmpl
+        self.gm = vcs.creategraphicsmethod(vcs.graphicsmethodtype(gm), gm.name)
+        self.orig_gm_name = gm.name
+        self.tmpl = vcs.createtemplate(source=tmpl)
+        self.orig_tmpl_name = tmpl.name
         self._axis = axis
         self.var = var
 
@@ -114,6 +116,10 @@ class VCSAxis(object):
             step = (right - left) / float(num)
             self.ticks = {right + n * step: right + n * step for n in range(-1 * num)}
 
+    def is_positive(self):
+        left, right = vcs.minmax(self.axis)
+        return left in self.ticks
+
     @property
     def step(self):
         ticks = self.ticks
@@ -121,6 +127,7 @@ class VCSAxis(object):
             ticks = vcs.elements["list"][ticks]
         ticks = sorted(ticks)
         left, right = vcs.minmax(self.axis)
+        # print "LEFT = {0} RIGHT = {1} len(ticks) = {2} ticks = {3}".format(left, right, len(ticks), ticks)
         return (right - left) / (len(ticks) - 1)  # pretty sure this need to be -
 
     @step.setter
@@ -211,6 +218,18 @@ class VCSAxis(object):
             ticks = vcs.elements["list"][ticks]
         return ticks
 
-    def save(self, name):
-        vcs.elements["list"][name] = self.ticks
-        vcs.elements["list"][name + "_miniticks"] = self.miniticks
+    def save(self):
+        gtype = vcs.graphicsmethodtype(self.gm)
+        del vcs.elements[gtype][self.orig_gm_name]
+        vcs.elements[gtype][self.orig_gm_name] = self.gm
+        del vcs.elements['template'][self.orig_tmpl_name]
+        vcs.elements['template'][self.orig_tmpl_name] = self.tmpl
+
+        # vcs.elements["list"][name] = self.ticks
+        # vcs.elements["list"][name + "_miniticks"] = self.miniticks
+
+    def cancel(self):
+        gtype = vcs.graphicsmethodtype(self.gm)
+        del vcs.elements[gtype][self.gm.name]
+        del vcs.elements['template'][self.tmpl.name]
+

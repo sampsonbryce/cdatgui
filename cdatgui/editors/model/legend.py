@@ -119,19 +119,25 @@ class VCSLegend(LevelsBaseModel):
 
     @property
     def ext_left(self):
-        return self._gm.ext_1
+        if hasattr(self._gm, "ext_1"):
+            return self._gm.ext_1
+        return None
 
     @ext_left.setter
     def ext_left(self, v):
-        self._gm.ext_1 = v
+        if hasattr(self._gm, "ext_1"):
+            self._gm.ext_1 = v
 
     @property
     def ext_right(self):
-        return self._gm.ext_2
+        if hasattr(self._gm, "ext_2"):
+            return self._gm.ext_2
+        return None
 
     @ext_right.setter
     def ext_right(self, v):
-        self._gm.ext_2 = v
+        if hasattr(self._gm, "ext_2"):
+            self._gm.ext_2 = v
 
     @property
     def level_names(self):

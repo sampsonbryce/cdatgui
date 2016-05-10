@@ -90,12 +90,13 @@ class MultiLineEditor(BaseOkWindowWidget):
 
     def okClicked(self):
         self.updateGM()
-        self.okPressed.emit()
+        self.accepted.emit()
         self.close()
 
     def updateGM(self):
         colors = []
         widths = []
+        print "updating GM", self.isoline_model.line
         for line in self.isoline_model.line:
             colors.append(vcs.getline(line).color[0])
             widths.append(vcs.getline(line).width[0])

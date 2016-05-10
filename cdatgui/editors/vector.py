@@ -25,7 +25,7 @@ class VectorEditor(GraphicsMethodEditorWidget):
     def editLine(self):
         if not self.line_editor:
             self.line_editor = LineEditorWidget()
-            self.line_editor.savePressed.connect(self.updateLine)
+            self.line_editor.accepted.connect(self.updateLine)
         line_obj = vcs.createline(ltype=self.gm.line, color=self.gm.linecolor, width=self.gm.linewidth)
         self.line_editor.setLineObject(line_obj)
         self.line_editor.raise_()

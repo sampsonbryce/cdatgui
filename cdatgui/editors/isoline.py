@@ -37,6 +37,9 @@ class IsolineEditor(GraphicsMethodEditorWidget):
         self.text_edit_widget = None
         self.line_edit_widget = None
 
+        self.legend_button.setEnabled(False)
+        self.legend_button.hide()
+
     def editText(self):
         if self.text_edit_widget:
             self.text_edit_widget.close()
@@ -80,7 +83,6 @@ class IsolineEditor(GraphicsMethodEditorWidget):
     def gm(self, value):
         """GM setter."""
         self._gm = value
-        print "label", self._gm.label
         self.label_check.setChecked(self._gm.label)
         self.edit_label_button.setEnabled(self._gm.label)
 

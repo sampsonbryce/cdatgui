@@ -28,9 +28,9 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
         self.levels_button.clicked.connect(self.editLevels)
         self.levels_button.setDefault(False)
         self.levels_button.setAutoDefault(False)
-        legend_button = QtGui.QPushButton("Edit Legend")
-        legend_button.clicked.connect(self.editLegend)
-        legend_button.setAutoDefault(False)
+        self.legend_button = QtGui.QPushButton("Edit Legend")
+        self.legend_button.clicked.connect(self.editLegend)
+        self.legend_button.setAutoDefault(False)
         left_axis = QtGui.QPushButton("Edit Left Ticks")
         left_axis.clicked.connect(self.editLeft)
         right_axis = QtGui.QPushButton("Edit Right Ticks")
@@ -43,7 +43,7 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
         projection.clicked.connect(self.editProjection)
 
         self.button_layout.addWidget(self.levels_button)
-        self.button_layout.addWidget(legend_button)
+        self.button_layout.addWidget(self.legend_button)
         self.button_layout.addWidget(left_axis)
         self.button_layout.addWidget(right_axis)
         self.button_layout.addWidget(top_axis)
@@ -56,11 +56,9 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
         self.projection_editor = None
 
     def editAxis(self, axis):
-        if self.axis_editor:
-            self.axis_editor.close()
-            self.axis_editor.deleteLater()
-        self.axis_editor = AxisEditorWidget(axis[0])
-        self.axis_editor.okPressed.connect(self.updated)
+        self.axis_editor = AxisEditorWidget(axis)
+        self.axis_editor.accepted.connect(self.updated)
+        self.axis_editor.rejected.connect(self.updated)
         axis = VCSAxis(self.gm, self.tmpl, axis, self.var)
         self.axis_editor.setAxisObject(axis)
         self.axis_editor.show()
@@ -80,9 +78,8 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
 
     def editLevels(self):
         """Edit the levels of this GM."""
-        if self.level_editor is None:
-            self.level_editor = LevelEditor()
-            self.level_editor.levelsUpdated.connect(self.updated)
+        self.level_editor = LevelEditor()
+        self.level_editor.levelsUpdated.connect(self.updated)
         self.level_editor.gm = self.gm
         self.level_editor.var = self.var.var
         self.level_editor.show()
@@ -90,12 +87,17 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
 
     def updated(self):
         if self.legend_editor is not None:
+            self.legend_editor.deleteLater()
             self.legend_editor = None
         if self.axis_editor is not None:
+            self.axis_editor.deleteLater()
             self.axis_editor = None
         if self.level_editor is not None:
             self.level_editor.deleteLater()
             self.level_editor = None
+        if self.projection_editor is not None:
+            self.projection_editor.deleteLater()
+            self.projection_editor = None
 
     @property
     def gm(self):
@@ -108,21 +110,19 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
         self._gm = value
 
     def editLegend(self):
-        if self.legend_editor is None:
-            self.legend_editor = LegendEditorWidget()
-            self.legend_editor.okPressed.connect(self.updated)
+        self.legend_editor = LegendEditorWidget()
+        self.legend_editor.accepted.connect(self.updated)
+        self.legend_editor.rejected.connect(self.updated)
         legend = VCSLegend(self.gm, self.var.var)
         self.legend_editor.setObject(legend)
         self.legend_editor.show()
         self.legend_editor.raise_()
 
     def editProjection(self):
-        if self.projection_editor:
-            self.projection_editor.close()
-            self.projection_editor.deleteLater()
         self.projection_editor = ProjectionEditor()
+        self.projection_editor.rejected.connect(self.updated)
+        self.projection_editor.accepted.connect(self.updated)
         self.projection_editor.setProjectionObject(vcs.getprojection(self.gm.projection))
         self.projection_editor.gm = self.gm
         self.projection_editor.show()
         self.projection_editor.raise_()
-

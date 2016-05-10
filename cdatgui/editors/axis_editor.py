@@ -66,7 +66,7 @@ class AxisEditorWidget(BaseOkWindowWidget):
 
         # create slider for Ticks
         self.ticks_slider = QtGui.QSlider()
-        self.ticks_slider.setRange(1, 100)
+        self.ticks_slider.setRange(2, 100)
         self.ticks_slider.setOrientation(QtCore.Qt.Horizontal)
         self.ticks_slider.valueChanged.connect(self.updateTicks)
 
@@ -89,18 +89,18 @@ class AxisEditorWidget(BaseOkWindowWidget):
         ticks_row.addWidget(self.step_edit)
 
         # create show mini ticks check box
-        show_mini_check_box = QtGui.QCheckBox()
-        show_mini_check_box.stateChanged.connect(self.updateShowMiniTicks)
+        self.show_mini_check_box = QtGui.QCheckBox()
+        self.show_mini_check_box.stateChanged.connect(self.updateShowMiniTicks)
 
         # create mini tick spin box
-        mini_tick_box = QtGui.QSpinBox()
-        mini_tick_box.setRange(0, 255)
-        mini_tick_box.valueChanged.connect(self.updateMiniTicks)
+        self.mini_tick_box = QtGui.QSpinBox()
+        self.mini_tick_box.setRange(0, 255)
+        self.mini_tick_box.valueChanged.connect(self.updateMiniTicks)
 
         mini_ticks_row.addWidget(show_mini_label)
-        mini_ticks_row.addWidget(show_mini_check_box)
+        mini_ticks_row.addWidget(self.show_mini_check_box)
         mini_ticks_row.addWidget(mini_per_tick_label)
-        mini_ticks_row.addWidget(mini_tick_box)
+        mini_ticks_row.addWidget(self.mini_tick_box)
 
         self.adjuster_layout = QtGui.QVBoxLayout()
 
@@ -121,26 +121,34 @@ class AxisEditorWidget(BaseOkWindowWidget):
         self.preview.setMinimumWidth(150)
         self.preview.setMaximumWidth(350)
 
-        if self.axis == "y":
+        if self.axis[0] == "y":
             self.horizontal_layout.insertWidget(0, self.preview)
-        elif self.axis == "x":
+        elif self.axis[0] == "x":
             self.adjuster_layout.insertWidget(0, self.preview)
 
     def setAxisObject(self, axis_obj):
         self.object = axis_obj
         self.preview.setAxisObject(self.object)
-        if self.object.numticks < 0:
-            self.negative_check.setChecked(True)
-        else:
-            self.negative_check.setChecked(True)
-        self.updateTicks(self.object.numticks)
+        if self.object.numticks:
+            if self.object.is_positive():
+                self.negative_check.setChecked(False)
+            else:
+                self.negative_check.setChecked(True)
+            self.updateTicks(self.object.numticks)
+            block = self.ticks_slider.blockSignals(True)
+            self.ticks_slider.setValue(self.object.numticks)
+            self.ticks_slider.blockSignals(block)
+            self.show_mini_check_box.setChecked(self.object.show_miniticks)
+            self.mini_tick_box.setValue(self.object.minitick_count)
         self.preview.update()
+        self.accepted.connect(self.object.save)
+        self.rejected.connect(self.object.cancel)
 
     # Update mode essentially
     def updateTickmark(self, button):
-        if self.axis == "x":
+        if self.axis[0] == "x":
             index = 2
-        elif self.axis == "y":
+        elif self.axis[0] == "y":
             index = 1
         while self.adjuster_layout.count() > index + 1:
             widget = self.adjuster_layout.takeAt(index).widget()

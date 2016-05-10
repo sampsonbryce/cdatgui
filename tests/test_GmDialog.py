@@ -1,4 +1,6 @@
 import pytest, vcs, cdms2, os
+
+from cdatgui.editors.model.legend import VCSLegend
 from cdatgui.graphics.dialog import *
 from cdatgui.cdat.metadata import FileMetadataWrapper
 from cdatgui.editors import boxfill, isoline, cdat1d
@@ -27,15 +29,17 @@ def oned_dialog():
     return d
 
 
+@pytest.fixture
 def save_dialog():
     s = get_var()
     d = GraphicsMethodSaveDialog(vcs.getmeshfill('a_meshfill'), s, vcs.createtemplate())
     return d
 
 
+@pytest.fixture
 def ok_dialog():
     s = get_var()
-    d = GraphicsMethodOkDialog(vcs.getvector('default'), s, vcs.createtemplate())
+    d = GraphicsMethodOkDialog(vcs.getboxfill('a_boxfill'), s, vcs.createtemplate())
     return d
 
 
@@ -53,6 +57,7 @@ def saveAs(gm):
 def test_boxfillDialog(qtbot, boxfill_dialog):
     """Test boxfill gm editor as well as basic dialog functionality and GraphicsMethodEditor functionality"""
     editor = boxfill_dialog.editor
+
     assert isinstance(editor, boxfill.BoxfillEditor)
     assert editor.levels_button.isEnabled() == False
 
@@ -82,17 +87,46 @@ def test_boxfillDialog(qtbot, boxfill_dialog):
     # test ticks dialogs
     editor.editLeft()
     assert editor.axis_editor
-    assert editor.axis_editor.axis == 'y'
+    assert editor.axis_editor.axis == 'y1'
+
+    editor.updated()
+    assert editor.axis_editor is None
 
     editor.editRight()
-    assert editor.axis_editor.axis == 'y'
+    assert editor.axis_editor.axis == 'y2'
+
+    editor.updated()
+    assert editor.axis_editor is None
 
     editor.editBottom()
-    assert editor.axis_editor.axis == 'x'
+    assert editor.axis_editor.axis == 'x1'
+
+    editor.updated()
+    assert editor.axis_editor is None
 
     editor.editTop()
     qtbot.addWidget(editor.axis_editor)
-    assert editor.axis_editor.axis == 'x'
+    assert editor.axis_editor.axis == 'x2'
+
+    editor.updated()
+
+    # testing legend crashes with autolabels error. autolabels not supposed to implemented?
+    # editor.editLegend()
+    # assert editor.legend_editor
+    # assert isinstance(editor.object, VCSLegend)
+
+    # editor.updated()
+
+    editor.editProjection()
+    assert editor.projection_editor
+    assert editor.projection_editor.cur_projection_name == 'linear'
+    editor.projection_editor.close()
+
+    editor.updated()
+    assert editor.axis_editor is None
+    assert editor.projection_editor is None
+
+    boxfill_dialog.reject()
 
 
 def test_isolineDialog(qtbot, isoline_dialog):
@@ -138,14 +172,28 @@ def test_1dDialog(qtbot, oned_dialog):
     qtbot.addWidget(editor.line_editor)
     assert editor.line_editor
 
+    oned_dialog.reject()
+    assert oned_dialog.newgm_name not in vcs.listelements('1d')
+
 
 def test_saveDialog(qtbot, save_dialog):
-    assert save_dialog.gm.name == 'a_meshfill'
+    assert save_dialog.origgm_name == 'a_meshfill'
     save_button = save_dialog.layout().itemAt(1).layout().itemAt(3).widget()
     assert save_button.isEnabled() == True
+    save_dialog.customName()
+    assert isinstance(save_dialog.dialog, VcsElementsDialog)
 
 
+def test_okDialog(qtbot, ok_dialog):
+    assert ok_dialog.origgm_name == 'a_boxfill'
+    ok_dialog.okClicked()
+    assert ok_dialog.newgm_name not in vcs.listelements('boxfill')
 
 
+def test_saveButtonDisabled(qtbot):
+    s = get_var()
+    d = GraphicsMethodSaveDialog(vcs.getisoline('default'), s, vcs.createtemplate())
+    save_button = d.layout().itemAt(1).layout().itemAt(3).widget()
+    assert save_button.isEnabled() == False
 
     # boxfill_dialog.save(('test', True))

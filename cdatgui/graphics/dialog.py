@@ -45,7 +45,7 @@ class GraphicsMethodDialog(QtGui.QDialog):
             raise NotImplementedError("No editor exists for type %s" % self.gmtype)
         self.editor.var = var
         self.editor.tmpl = tmpl
-        self.gm = self.create(source=gm)
+        self.gm = self.createNewGM(gm)
         self.newgm_name = self.gm.name
         self.editor.gm = self.gm
 
@@ -65,8 +65,14 @@ class GraphicsMethodDialog(QtGui.QDialog):
 
         self.setLayout(layout)
 
+    def createNewGM(self, gm):
+        """This is here so it can be overridden when inherited"""
+        return self.create(source=gm)
+
     def reject(self):
+        print "rejecting in gm dialog"
         super(GraphicsMethodDialog, self).reject()
+
         if isinstance(self.editor, BoxfillEditor):
             self.gm.boxfill_type = self.editor.orig_type
 
@@ -134,5 +140,4 @@ class GraphicsMethodOkDialog(GraphicsMethodDialog):
         del vcs.elements[self.gmtype][self.origgm_name]
         gm = vcs.creategraphicsmethod(self.gmtype, self.newgm_name, self.origgm_name)
         self.editedGM.emit(gm)
-
         del vcs.elements[self.gmtype][self.newgm_name]

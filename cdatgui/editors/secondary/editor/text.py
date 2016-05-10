@@ -11,7 +11,7 @@ class TextStyleEditorWidget(BaseSaveWindowWidget):
     def __init__(self):
         super(TextStyleEditorWidget, self).__init__()
         self.setPreview(TextStylePreviewWidget())
-        self.savePressed.connect(self.saveNewText)
+        self.accepted.connect(self.saveNewText)
         self.orig_names = []
         self.newtextcombined_name = None
 
