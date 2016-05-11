@@ -70,7 +70,6 @@ class GraphicsMethodDialog(QtGui.QDialog):
         return self.create(source=gm)
 
     def reject(self):
-        print "rejecting in gm dialog"
         super(GraphicsMethodDialog, self).reject()
 
         if isinstance(self.editor, BoxfillEditor):

@@ -85,6 +85,6 @@ class MultiTextEditor(BaseOkWindowWidget):
     def update(self, index, name):
         self.text_combos[index].setCurrentIndex(self.text_combos[index].findText(name))
 
-    def okClicked(self):
+    def accept(self):
         self.accepted.emit()
         self.close()

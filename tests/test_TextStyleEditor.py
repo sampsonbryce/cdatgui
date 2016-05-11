@@ -51,7 +51,7 @@ def test_alignment(qtbot, editor):
 
     # test save as well
     editor.saved.connect(save_check)
-    editor.save()
+    editor.accept()
 
 
 def test_angle(editor):
@@ -63,7 +63,7 @@ def test_angle(editor):
     editor.updateAngle(440)
     assert editor.object.angle == 80
 
-    editor.save()
+    editor.accept()
 
 
 def test_font(editor):
@@ -73,7 +73,7 @@ def test_font(editor):
     editor.updateFont("Chinese")
     assert editor.object.font == 8
 
-    editor.save()
+    editor.accept()
 
 
 def test_size(editor):
@@ -82,7 +82,7 @@ def test_size(editor):
     editor.updateSize(50)
     assert editor.object.height == 50
 
-    editor.save()
+    editor.accept()
 
 
 def saveas_check(name):

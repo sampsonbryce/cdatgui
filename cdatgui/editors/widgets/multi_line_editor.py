@@ -88,7 +88,7 @@ class MultiLineEditor(BaseOkWindowWidget):
         self.isoline_model.line[index] = str(name)
         self.line_combos[index].setCurrentIndex(self.line_combos[index].findText(name))
 
-    def okClicked(self):
+    def accept(self):
         self.updateGM()
         self.accepted.emit()
         self.close()
@@ -96,7 +96,6 @@ class MultiLineEditor(BaseOkWindowWidget):
     def updateGM(self):
         colors = []
         widths = []
-        print "updating GM", self.isoline_model.line
         for line in self.isoline_model.line:
             colors.append(vcs.getline(line).color[0])
             widths.append(vcs.getline(line).width[0])

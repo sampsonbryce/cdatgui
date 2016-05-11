@@ -16,7 +16,7 @@ def test_type(qtbot, editor):
     editor.updateType('dash')
     assert editor.object.type == ['dash']
 
-    editor.save()
+    editor.accept()
     assert vcs.elements['line']['cyan'].type == ['dash']
     assert editor.newline_name not in vcs.listelements('line')
 
@@ -27,7 +27,7 @@ def test_color(qtbot, editor):
 
     editor.saveAs()
     editor.win.setTextValue('check')
-    editor.save()
+    editor.accept()
     assert 'check' in vcs.listelements('line')
     assert vcs.elements['line']['check'].color == [55]
 
@@ -40,7 +40,7 @@ def test_width(qtbot, editor):
     editor.updateWidth(250)
     assert editor.object.width == [250]
 
-    editor.save()
+    editor.accept()
     assert vcs.elements['line']['cyan'].width == [250]
     assert editor.newline_name not in vcs.listelements('line')
 

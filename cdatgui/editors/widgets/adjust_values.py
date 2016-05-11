@@ -55,10 +55,10 @@ class AdjustValues(QWidget):
         for i, s in enumerate(self.slides):
 
             if i < cur_index:
-                if s.sliderPosition() > slide.sliderPosition():
+                if s.sliderPosition() >= slide.sliderPosition():
                     s.setValue(slide.sliderPosition())
             else:
-                if s.sliderPosition() < slide.sliderPosition():
+                if s.sliderPosition() <= slide.sliderPosition():
                     s.setValue(slide.sliderPosition())
 
     def send_values(self):

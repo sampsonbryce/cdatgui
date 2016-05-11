@@ -186,7 +186,7 @@ def test_saveDialog(qtbot, save_dialog):
 
 def test_okDialog(qtbot, ok_dialog):
     assert ok_dialog.origgm_name == 'a_boxfill'
-    ok_dialog.okClicked()
+    ok_dialog.accept()
     assert ok_dialog.newgm_name not in vcs.listelements('boxfill')
 
 

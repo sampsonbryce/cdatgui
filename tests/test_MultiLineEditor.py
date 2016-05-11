@@ -65,7 +65,7 @@ def test_MultiLineEditor(qtbot, line_editor):
     editor.update(4, 'dummy')
     assert editor.line_combos[4].currentText() == 'dummy'
 
-    editor.okClicked()
+    editor.accept()
 
     # check and see if the isoline was updated when combo changed and ok was pressed
     assert gm.linecolors[2] == 254
@@ -105,7 +105,7 @@ def test_MultiTextEditor(qtbot, text_editor):
     editor.update(3, 'dummy')
     assert editor.text_combos[3].currentText() == 'dummy'
 
-    editor.okClicked()
+    editor.accept()
 
     # check and see if the isoline was updated when combo changed and ok was pressed
     assert vcs.gettextcombined(gm.text[3], gm.text[3]).name == 'dummy:::dummy'

@@ -7,6 +7,7 @@ from cdatgui.templates import get_templates
 from cdatgui.variables.edit_variable_widget import EditVariableDialog
 from cdatgui.templates.dialog import TemplateEditorDialog
 from cdatgui.graphics.dialog import GraphicsMethodSaveDialog
+from cdatgui.graphics import gms_with_non_implemented_editors
 import vcs
 
 
@@ -169,14 +170,15 @@ class InspectorWidget(StaticDockWidget):
         self.editVariable(var)
 
     def editGraphicsMethod(self, gm):
-        print "GM NAME:", gm.name
         get_gms().replace(get_gms().indexOf(vcs.graphicsmethodtype(gm), gm), gm)
-        self.current_plot.graphics_method = gm
+        self.current_plot.graphics_method = (gm, False)
+        self.plotters_updated.emit()
 
     def makeGraphicsMethod(self, gm):
         get_gms().add_gm(gm)
         self.gm_instance_combo.setCurrentIndex(self.gm_instance_combo.count() - 1)
-        self.current_plot.graphics_method = gm
+        self.current_plot.graphics_method = (gm, False)
+        self.plotters_updated.emit()
 
     def editGM(self):
         gm_type = self.gm_type_combo.currentText()
@@ -212,14 +214,15 @@ class InspectorWidget(StaticDockWidget):
         self.edit_gm_button.setEnabled(False)
 
     def setTemplate(self, template):
-        self.current_plot.template = template
+        self.current_plot.template = (template, False)
         self.plotters_updated.emit()
 
     def updateGM(self, index):
-        self.edit_gm_button.setEnabled(True)
+        if self.gm_type_combo.currentText() not in gms_with_non_implemented_editors:
+            self.edit_gm_button.setEnabled(True)
         gm_type = self.gm_type_combo.currentText()
         gm_name = self.gm_instance_combo.currentText()
-        if gm_type in ['vector', '3d_vector']:
+        if gm_type in ['vector', '3d_vector', '3d_dual_scalar']:
             self.var_combos[1].setEnabled(True)
             enabled = True
         else:
@@ -235,19 +238,20 @@ class InspectorWidget(StaticDockWidget):
             self.current_plot.graphics_method = (gm, False)
         else:
             gm = vcs.getgraphicsmethod(gm_type, gm_name)
-            self.current_plot.graphics_method = gm
-            
+            self.current_plot.graphics_method = (gm, False)
+
         self.plotters_updated.emit()
 
     def setFirstVar(self, var):
-        self.current_plot.variables = [var, self.current_plot.variables[1]]
+        self.current_plot.variables = [var, self.current_plot.variables[1], False]
         self.plotters_updated.emit()
 
     def setSecondVar(self, var):
         old_vars = self.current_plot.variables
         try:
-            self.current_plot.variables = [self.current_plot.variables[0], var.var]
+            self.current_plot.variables = [self.current_plot.variables[0], var.var, False]
         except ValueError:
+            old_vars.append(False)
             self.current_plot.variables = old_vars
 
         self.plotters_updated.emit()
@@ -281,7 +285,7 @@ class InspectorWidget(StaticDockWidget):
             block = self.template_combo.blockSignals(True)
             self.template_combo.setCurrentIndex(self.template_combo.findText(plot.template.name))
             self.template_combo.blockSignals(block)
-            if self.gm_instance_combo.currentText() != '':
+            if self.gm_instance_combo.currentText() != '' and self.gm_type_combo.currentText() not in gms_with_non_implemented_editors:
                 self.edit_gm_button.setEnabled(True)
             else:
                 self.edit_gm_button.setEnabled(False)

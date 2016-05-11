@@ -29,7 +29,7 @@ def save_as(name):
 def test_save(qtbot, window):
     base = window
     base.accepted.connect(save)
-    base.save()
+    base.accept()
 
 
 def test_save_as(qtbot, window):

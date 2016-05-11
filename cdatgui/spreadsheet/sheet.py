@@ -232,7 +232,7 @@ class StandardWidgetItemDelegate(QtGui.QItemDelegate):
         """
         QtGui.QItemDelegate.paint(self, painter, option, index)
         if ((index.row(), index.column()) == self.table.activeCell):
-            painter.save()
+            painter.accept()
             painter.setPen(QtGui.QPen(QtGui.QBrush(
                 QtGui.QColor(0.8549 * 255, 0.6971 * 255, 0.2255 * 255)), self.padding))
             r = self.table.visualRect(index)

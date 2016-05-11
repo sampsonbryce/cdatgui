@@ -144,6 +144,7 @@ class ConsoleWidget(QtGui.QWidget):
     def codeExecuted(self, *varargs):
         namespace = self.kernel.shell.user_ns
         cur_keys = set(namespace)
+        variable_updated = False
 
         # get last output
         out_dict = namespace["Out"]
@@ -166,7 +167,7 @@ class ConsoleWidget(QtGui.QWidget):
                     self.variable_list.add_variable(cdms_var)
                 else:
                     self.variable_list.update_variable(cdms_var, key)
-                    self.updatedVar.emit()
+                    variable_updated = True
 
             elif is_displayplot(value) and value not in self.display_plots:
                 self.display_plots.append(value)
@@ -175,6 +176,9 @@ class ConsoleWidget(QtGui.QWidget):
         if is_displayplot(last_line) and last_line not in self.display_plots:
             self.display_plots.append(last_line)
             self.createdPlot.emit(last_line)
+
+        if variable_updated:
+            self.updatedVar.emit()
 
     def fixInvalidVariables(self, var):
         var = re.sub(' +', '_', var)

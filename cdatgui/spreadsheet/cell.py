@@ -118,11 +118,11 @@ class QCellWidget(QtGui.QWidget):
         pixmap = self.grabWindowPixmap()
         ext = os.path.splitext(filename)[1].lower()
         if not ext:
-            pixmap.save(filename, 'PNG')
+            pixmap.accept(filename, 'PNG')
         elif ext == '.pdf':
             self.saveToPDF(filename)
         else:
-            pixmap.save(filename)
+            pixmap.accept(filename)
 
     def saveToPDF(self, filename):
         printer = QtGui.QPrinter()

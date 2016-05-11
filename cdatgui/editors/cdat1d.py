@@ -84,5 +84,4 @@ class Cdat1dEditor(GraphicsMethodEditorWidget):
     def gm(self, value):
         """GM setter."""
         self._gm = value
-        print value.flip
         self.flip_check.setChecked(value.flip)

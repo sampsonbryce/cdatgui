@@ -29,7 +29,7 @@ def test_changingNameAndType(qtbot, editor):
     assert editor.cur_projection_name == 'orthographic'
     assert editor.type_combo.currentText() == 'hotin oblique merc'
 
-    editor.save()
+    editor.accept()
 
     assert vcs.elements['projection']['orthographic'] != orig_ortho
     assert vcs.elements['projection']['orthographic'].type == 'hotin oblique merc'
@@ -77,7 +77,7 @@ def test_settingAttributes(qtbot, editor):
     editor.type_combo.setCurrentIndex(editor.type_combo.findText('robinson'))
     editor.editors[0][0].setText('12')
 
-    editor.save()
+    editor.accept()
 
     old_proj = vcs.getprojection(old_proj_name)
     assert old_proj.type == 'robinson'

@@ -8,6 +8,7 @@ from cdatgui.graphics import get_gms
 from cdatgui.graphics.dialog import GraphicsMethodOkDialog
 from cdatgui.utils import label
 from cdatgui.cdat.metadata import FileMetadataWrapper
+from . import gms_with_non_implemented_editors
 import vcs, cdms2, os
 
 
@@ -52,31 +53,25 @@ class EditGmDialog(GraphicsMethodOkDialog):
         self.rejected.connect(self.resetTmpl)
 
         if not store:
-            print "connecting to createGM"
             self.accepted.connect(self.createGM)
 
     def createNewGM(self, gm):
-        print "calling my new createNewGM"
         return gm
 
     def okClicked(self):
-        print "okclicked, hiding"
         self.hide()
 
     def resetGM(self):
-        print "resetting gm"
         if self.edit_gm_name:
             del vcs.elements[self.gtype][self.edit_gm_name]
         self.edit_gm_name = None
 
     def resetTmpl(self):
-        print "resetting tmpl"
         if self.edit_tmpl_name:
             del vcs.elements['template'][self.edit_tmpl_name]
         self.edit_tmpl_name = None
 
     def createGM(self):
-        print "creating gm. should only be calling this if no store"
         cur_index = get_gms().indexOf(self.gtype, vcs.getgraphicsmethod(self.gtype, self.ginstance))
         del vcs.elements[self.gtype][self.ginstance]
         if self.edit_gm_name:
@@ -124,16 +119,16 @@ class CreateGM(ValidatingInputDialog):
         self.vertical_layout.insertLayout(0, type_layout)
 
         # add customize button
-        button_layout = self.vertical_layout.itemAt(self.vertical_layout.count() - 1).layout()
-        customize_button = QtGui.QPushButton('Customize')
-        customize_button.clicked.connect(self.editGM)
-        button_layout.insertWidget(1, customize_button)
+        if not (currently_selected and currently_selected[0] in gms_with_non_implemented_editors):
+            button_layout = self.vertical_layout.itemAt(self.vertical_layout.count() - 1).layout()
+            customize_button = QtGui.QPushButton('Customize')
+            customize_button.clicked.connect(self.editGM)
+            button_layout.insertWidget(1, customize_button)
 
         self.accepted.connect(self.createGM)
 
     def setGMRoot(self, index):
         if self.edit_dialog is not None:
-            print "changing root"
             self.edit_dialog.deleteLater()
             self.edit_dialog = None
         self.edit.validator().gm_type = self.gm_type_combo.currentText()
@@ -142,9 +137,7 @@ class CreateGM(ValidatingInputDialog):
         self.edit.validator().validate(self.edit.text(), 0)
 
     def createGM(self):
-        # print "edit dialog, edit_gm_name", self.edit_dialog, self.edit_dialog.edit_gm_name
         if self.edit_dialog and self.edit_dialog.edit_gm_name:
-            # print "createing gm from edit dialog", vcs.getboxfill(self.edit_dialog.edit_gm_name).list()
             gm = vcs.creategraphicsmethod(str(self.gm_type_combo.currentText()),
                                          self.edit_dialog.edit_gm_name,
                                          str(self.textValue()))
@@ -152,7 +145,6 @@ class CreateGM(ValidatingInputDialog):
             del vcs.elements[self.gm_type_combo.currentText()][self.edit_dialog.edit_gm_name]
 
         else:
-            print "creating gm without using customize as source"
             gm = vcs.creategraphicsmethod(str(self.gm_type_combo.currentText()),
                                          str(self.gm_instance_combo.currentText()),
                                          str(self.textValue()))
@@ -164,10 +156,7 @@ class CreateGM(ValidatingInputDialog):
 
     def editGM(self):
         if not self.edit_dialog:
-            print "making new edit dialog"
             self.edit_dialog = EditGmDialog(self.gm_type_combo.currentText(), self.gm_instance_combo.currentText())
-        else:
-            print "reusing edit dialog"
 
         self.edit_dialog.show()
         self.edit_dialog.raise_()
@@ -202,7 +191,7 @@ class GraphicsMethodWidget(StaticDockWidget):
             return
         if selected:
             self.gtype = selected[0]
-            if len(selected) > 1:
+            if len(selected) > 1 and self.gtype not in gms_with_non_implemented_editors:
                 self.ginstance = selected[1]
                 self.titleBarWidget().edit.setEnabled(True)
                 self.titleBarWidget().remove.setEnabled(True)

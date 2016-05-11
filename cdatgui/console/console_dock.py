@@ -11,7 +11,7 @@ class ConsoleDockWidget(StaticDockWidget):
 
         self.console.createdPlot.connect(self.added_plot)
         self.console.createdPlot.connect(spreadsheet.tabController.currentWidget().totalPlotsChanged)
-        self.console.updatedVar.connect(spreadsheet.tabController.currentWidget().totalPlotsChanged)
+        self.console.updatedVar.connect(spreadsheet.tabController.currentWidget().replotPlottersUpdateVars)
         spreadsheet.emitAllPlots.connect(self.updateAllPlots)
         self.setWidget(self.console)
 

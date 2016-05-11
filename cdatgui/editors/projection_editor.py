@@ -72,15 +72,21 @@ class ProjectionEditor(BaseSaveWindowWidget):
         type_row.addWidget(type_label)
         type_row.addWidget(self.type_combo)
 
+        well = QtGui.QFrame()
+        well.setFrameShape(QtGui.QFrame.StyledPanel)
+        well.setFrameShadow(QtGui.QFrame.Sunken)
+        self.well_layout = QtGui.QVBoxLayout()
+        well.setLayout(self.well_layout)
+        self.well_layout.addLayout(type_row)
+
         self.vertical_layout.insertLayout(0, name_row)
-        self.vertical_layout.insertLayout(1, type_row)
+        self.vertical_layout.insertWidget(1, well)
 
     def setProjectionObject(self, obj):
         self.orig_projection = obj
         self.cur_projection_name = obj.name
         self.object = vcs.createprojection(source=obj)
         self.newprojection_name = self.object.name
-        print "NEW PROJECTION", self.newprojection_name
 
         self.updateAttributes()
 
@@ -91,8 +97,8 @@ class ProjectionEditor(BaseSaveWindowWidget):
         else:
             self.save_button.setEnabled(True)
 
-        for i in range(2, self.vertical_layout.count() - 1):
-            row = self.vertical_layout.takeAt(2).layout()
+        for i in range(1, self.well_layout.count()):
+            row = self.well_layout.takeAt(1).layout()
             row.takeAt(0).widget().deleteLater()
             row.takeAt(0).widget().deleteLater()
             row.deleteLater()
@@ -119,7 +125,8 @@ class ProjectionEditor(BaseSaveWindowWidget):
             row.addWidget(label(name.capitalize() + ":"))
             row.addWidget(edit_attr)
 
-            self.vertical_layout.insertLayout(self.vertical_layout.count() - 1, row)
+            # self.vertical_layout.insertLayout(self.vertical_layout.count() - 1, row)
+            self.well_layout.addLayout(row)
 
     def updateCurrentProjection(self, proj):
         proj = str(proj)

@@ -61,7 +61,6 @@ class LevelEditor(BaseOkWindowWidget):
 
     @var.setter
     def var(self, value):
-        # print "VAR", value, type(value)
         self._var = value
         flat = self._var.data
         flat = sorted(numpy.unique(flat.flatten()))
@@ -90,7 +89,6 @@ class LevelEditor(BaseOkWindowWidget):
         for lev in levs:
             if lev not in values:
                 values.insert(bisect_left(values, lev), lev)
-        # print "LEVS:", levs
         self.canvas.clear()
         self.value_sliders.update(values, levs)
         self.update_levels(levs, clear=True)
@@ -115,7 +113,6 @@ class LevelEditor(BaseOkWindowWidget):
         except:
             length = len(self._gm.levels)
         try:
-            print self._gm.levels
             return length != 2 or not numpy.allclose(self._gm.levels, [1e+20] * 2)
         except ValueError:
             return True

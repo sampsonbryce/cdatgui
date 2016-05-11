@@ -95,8 +95,12 @@ class VCSAxis(object):
 
     @mode.setter
     def mode(self, value):
-        if value == "auto" and isinstance(self.ticks, dict):
-            self.ticks = "*"
+        # if value == "auto" and isinstance(self.ticks, dict):
+            # self.ticks = "*"
+        if value == 'even' and isinstance(self.ticks, str):
+            if self.ticks != "*":
+                step = self.step
+                self.step = step
 
     @property
     def numticks(self):
@@ -127,7 +131,6 @@ class VCSAxis(object):
             ticks = vcs.elements["list"][ticks]
         ticks = sorted(ticks)
         left, right = vcs.minmax(self.axis)
-        # print "LEFT = {0} RIGHT = {1} len(ticks) = {2} ticks = {3}".format(left, right, len(ticks), ticks)
         return (right - left) / (len(ticks) - 1)  # pretty sure this need to be -
 
     @step.setter
@@ -150,7 +153,6 @@ class VCSAxis(object):
             cur_val += value
 
         self.ticks = {i: i for i in tick_vals}
-        print "SET TICKS", self.ticks
 
     @property
     def show_miniticks(self):

@@ -22,7 +22,7 @@ class BaseSaveWindowWidget(QtGui.QWidget):
         # Save and Cancel Buttons
         cancel_button = QtGui.QPushButton()
         cancel_button.setText("Cancel")
-        cancel_button.clicked.connect(self.cancel)
+        cancel_button.clicked.connect(self.reject)
 
         saveas_button = QtGui.QPushButton()
         saveas_button.setText("Save As")
@@ -30,7 +30,7 @@ class BaseSaveWindowWidget(QtGui.QWidget):
 
         self.save_button = QtGui.QPushButton()
         self.save_button.setText("Save")
-        self.save_button.clicked.connect(self.save)
+        self.save_button.clicked.connect(self.accept)
 
         save_cancel_row = QtGui.QHBoxLayout()
         save_cancel_row.addWidget(cancel_button)
@@ -55,12 +55,12 @@ class BaseSaveWindowWidget(QtGui.QWidget):
         self.win = self.dialog
 
         self.win.setLabelText("Enter New Name:")
-        self.win.accepted.connect(self.save)
+        self.win.accepted.connect(self.accept)
 
         self.win.show()
         self.win.raise_()
 
-    def save(self):
+    def accept(self):
 
         try:
             name = self.win.textValue()
@@ -76,7 +76,7 @@ class BaseSaveWindowWidget(QtGui.QWidget):
     def setSaveDialog(self, dialog):
         self.dialog = dialog
 
-    def cancel(self):
+    def reject(self):
         self.rejected.emit()
         self.close()
 
@@ -100,11 +100,11 @@ class BaseOkWindowWidget(QtGui.QWidget):
         # Save and Cancel Buttons
         cancel_button = QtGui.QPushButton()
         cancel_button.setText("Cancel")
-        cancel_button.clicked.connect(self.cancel)
+        cancel_button.clicked.connect(self.reject)
 
         ok_button = QtGui.QPushButton()
         ok_button.setText("OK")
-        ok_button.clicked.connect(self.okClicked)
+        ok_button.clicked.connect(self.accept)
 
         ok_cancel_row = QtGui.QHBoxLayout()
         ok_cancel_row.addWidget(cancel_button)
@@ -123,10 +123,10 @@ class BaseOkWindowWidget(QtGui.QWidget):
         self.preview = preview
         self.vertical_layout.insertWidget(0, self.preview)
 
-    def okClicked(self):
+    def accept(self):
         self.accepted.emit()
         self.close()
 
-    def cancel(self):
+    def reject(self):
         self.rejected.emit()
         self.close()

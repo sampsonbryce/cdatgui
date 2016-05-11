@@ -56,13 +56,13 @@ class AxisEditorWidget(BaseOkWindowWidget):
         self.tickmark_button_group.buttonClicked.connect(self.updateTickmark)
 
         # create preset combo box
-        preset_box = QtGui.QComboBox()
-        preset_box.addItem("default")
-        preset_box.addItems(vcs.listelements("list"))
-        preset_box.currentIndexChanged[str].connect(self.updatePreset)
+        self.preset_box = QtGui.QComboBox()
+        self.preset_box.addItem("default")
+        self.preset_box.addItems(vcs.listelements("list"))
+        self.preset_box.currentIndexChanged[str].connect(self.updatePreset)
 
         preset_row.addWidget(preset_label)
-        preset_row.addWidget(preset_box)
+        preset_row.addWidget(self.preset_box)
 
         # create slider for Ticks
         self.ticks_slider = QtGui.QSlider()
@@ -140,6 +140,14 @@ class AxisEditorWidget(BaseOkWindowWidget):
             self.ticks_slider.blockSignals(block)
             self.show_mini_check_box.setChecked(self.object.show_miniticks)
             self.mini_tick_box.setValue(self.object.minitick_count)
+
+        # set initial mode
+        for button in self.tickmark_button_group.buttons():
+            if isinstance(self.object.ticks, dict) and button.text() == 'Even':
+                button.click()
+            elif self.object.ticks == '*' and button.text() == 'Manual':
+                button.setEnabled(False)
+
         self.preview.update()
         self.accepted.connect(self.object.save)
         self.rejected.connect(self.object.cancel)
@@ -157,16 +165,22 @@ class AxisEditorWidget(BaseOkWindowWidget):
         if button.text() == "Auto":
             self.adjuster_layout.insertWidget(index, self.preset_widget)
             self.preset_widget.setVisible(True)
+            self.updatePreset(self.preset_box.currentText())
 
         elif button.text() == "Even":
             self.adjuster_layout.insertWidget(index, self.ticks_widget)
             self.ticks_widget.setVisible(True)
             self.state = "count"
+            self.mini_tick_box.setEnabled(True)
+            self.show_mini_check_box.setEnabled(True)
+            for button in self.tickmark_button_group.buttons():
+                if button.text() == 'Manual':
+                    button.setEnabled(True)
 
         elif button.text() == "Manual":
             self.adjuster_layout.insertWidget(index, self.scroll_area)
             self.dict_widget.setDict(self.object.ticks_as_dict())
-            self.dict_widget.setVisible(True)
+            self.scroll_area.setVisible(True)
 
         self.object.mode = button.text().lower()
         self.preview.update()
@@ -174,8 +188,19 @@ class AxisEditorWidget(BaseOkWindowWidget):
     def updatePreset(self, preset):
         if preset == "default":
             self.object.ticks = "*"
+            self.mini_tick_box.setEnabled(False)
+            self.show_mini_check_box.setEnabled(False)
+            for button in self.tickmark_button_group.buttons():
+                if button.text() == 'Manual':
+                    button.setEnabled(False)
         else:
             self.object.ticks = preset
+            self.mini_tick_box.setEnabled(True)
+            self.show_mini_check_box.setEnabled(True)
+            for button in self.tickmark_button_group.buttons():
+                if button.text() == 'Manual':
+                    button.setEnabled(True)
+
         self.preview.update()
 
     def updateShowMiniTicks(self, state):

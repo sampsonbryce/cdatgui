@@ -7,7 +7,7 @@ class BorderHighlightStyleDelegate(QtGui.QStyledItemDelegate):
 		painter.fillRect(option.rect, bg)
 		super(BorderHighlightStyleDelegate, self).paint(painter, option, index)
 		if option.state & QtGui.QStyle.State_Selected:
-			painter.save()
+			painter.accept()
 			color = QtGui.QColor(76, 177 ,255)
 			pen = QtGui.QPen(color, 2, QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.MiterJoin)
 			w = pen.width() / 2
