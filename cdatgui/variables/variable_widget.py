@@ -3,6 +3,7 @@ from functools import partial
 from cdatgui.bases import StaticDockWidget
 from PySide import QtCore, QtGui
 from cdatgui.toolbars import AddEditRemoveToolbar
+from cdatgui.variables import get_variables
 from variable_add import AddDialog
 from cdms_var_list import CDMSVariableList
 from edit_variable_widget import EditVariableDialog
@@ -10,6 +11,8 @@ from edit_variable_widget import EditVariableDialog
 
 class VariableWidget(StaticDockWidget):
     selectedVariable = QtCore.Signal(object)
+    variableListNotEmpty = QtCore.Signal()
+    variableListEmpty = QtCore.Signal()
 
     def __init__(self, parent=None, flags=0):
         super(VariableWidget, self).__init__(u"Variables", parent, flags)
@@ -35,6 +38,7 @@ class VariableWidget(StaticDockWidget):
         new_variables = self.add_dialog.selected_variables()
         for var in new_variables:
             self.variable_widget.add_variable(var)
+        self.variableListNotEmpty.emit()
 
     def load(self, vars):
         for var in vars:
@@ -75,3 +79,5 @@ class VariableWidget(StaticDockWidget):
         if answer == QtGui.QMessageBox.StandardButton.Ok:
             for count, index in enumerate(indices):
                 self.variable_widget.remove_variable(index.row() - count)
+        if not get_variables().values:
+            self.variableListEmpty.emit()

@@ -35,9 +35,11 @@ class MainWindow(QtGui.QMainWindow):
 
         con = ConsoleDockWidget(self.spreadsheet, parent=self)
         self.add_right_dock(con)
+        mm = MainMenu(self.spreadsheet, var_widget, gm_widget, tmpl_widget)
+        self.setMenuBar(mm)
 
-        self.setMenuBar(MainMenu(self.spreadsheet, var_widget,
-                                 gm_widget, tmpl_widget))
+        var_widget.variableListNotEmpty.connect(lambda: mm.edit_data_menu.setEnabled(True))
+        var_widget.variableListEmpty.connect(lambda: mm.edit_data_menu.setEnabled(False))
 
     def add_left_dock(self, widget):
         self.addDockWidget(DockWidgetArea.LeftDockWidgetArea, widget)

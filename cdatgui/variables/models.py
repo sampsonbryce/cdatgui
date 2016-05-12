@@ -43,9 +43,13 @@ class CDMSVariableListModel(ListModel):
         else:
             raise IndexError("Index %d out of range." % index)
 
-    def variable_exists(self, variable):
+    def variable_exists(self, variable_or_id):
+        if isinstance(variable_or_id, str):
+            v_id = variable_or_id
+        else:
+            v_id = variable_or_id.id
         for var in self.values:
-            if var[0] == variable.id:
+            if var[0] == v_id:
                 return True
         return False
 
