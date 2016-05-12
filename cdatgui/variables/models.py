@@ -11,7 +11,6 @@ class CDMSVariableListModel(ListModel):
             return self.get(var_name_or_index)
         else:
             for v in self.values:
-                # print "Stored", type(v)
                 if v[0] == var_name_or_index:
                     return v[1]
             raise ValueError("No variable found with ID %s" % var_name_or_index)

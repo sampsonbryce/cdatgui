@@ -269,7 +269,6 @@ class PlotManager(QtCore.QObject):
                 args.append(vcs.graphicsmethodtype(self.graphics_method))
                 args.append(self.graphics_method.name)
 
-            print "updating by clear and replotting"
             self.canvas.clear(preserve_display=True, render=False)
             self.dp = self.canvas.plot(*args)
 

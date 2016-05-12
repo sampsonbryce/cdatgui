@@ -551,7 +551,6 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
             plots.extend(plotter)
         for plot in plots:
             if plot.can_plot():
-                print "plotting cause updated", plot.variables[0].id, plot.graphics_method.name
                 plot.plot()
         self.emitAllPlots.emit(total_tabs)
 
