@@ -8,7 +8,31 @@ from cdatgui.variables.variable_add import FileNameValidator
 import cdutil
 
 
-class ClimatologyDialog(AccessableButtonDialog):
+class VariableSelectorDialog(AccessableButtonDialog):
+    def __init__(self, parent=None):
+        super(VariableSelectorDialog, self).__init__(parent=parent)
+
+        self.variable_combo = QtGui.QComboBox()
+        self.variable_combo.setModel(get_variables())
+
+        variable_label = label("Variable:")
+
+        variable_layout = QtGui.QHBoxLayout()
+        variable_layout.addWidget(variable_label)
+        variable_layout.addWidget(self.variable_combo)
+
+        self.vertical_layout.insertLayout(0, variable_layout)
+
+        self.save_button.setText('Save as')
+
+    def getVarName(self):
+        return self.variable_combo.currentText()
+
+    def accept(self):
+        self.accepted.emit()
+
+
+class ClimatologyDialog(VariableSelectorDialog):
     def __init__(self, climo_type, parent=None):
         super(ClimatologyDialog, self).__init__(parent=parent)
 
@@ -25,17 +49,7 @@ class ClimatologyDialog(AccessableButtonDialog):
         clim_layout.addWidget(clim_label)
         clim_layout.addWidget(self.climo_combo)
 
-        self.variable_combo = QtGui.QComboBox()
-        self.variable_combo.setModel(get_variables())
-
-        variable_label = label("Variable:")
-
-        variable_layout = QtGui.QHBoxLayout()
-        variable_layout.addWidget(variable_label)
-        variable_layout.addWidget(self.variable_combo)
-
-        self.vertical_layout.insertLayout(0, clim_layout)
-        self.vertical_layout.insertLayout(1, variable_layout)
+        self.vertical_layout.insertLayout(1, clim_layout)
 
         if climo_type == 'seasonal':
             self.bounds_combo = QtGui.QComboBox()
@@ -49,38 +63,22 @@ class ClimatologyDialog(AccessableButtonDialog):
 
             self.vertical_layout.insertLayout(2, bounds_layout)
 
-        self.save_button.setText('Save as')
-
     def getClimatology(self):
         return self.climo_combo.currentText()
-
-    def getVarName(self):
-        return self.variable_combo.currentText()
 
     def getBounds(self):
         return self.bounds_combo.currentText()
 
-    def accept(self):
-        self.accepted.emit()
 
-
-class RegridDialog(AccessableButtonDialog):
+class RegridDialog(VariableSelectorDialog):
     def __init__(self, parent=None):
         super(RegridDialog, self).__init__(parent=parent)
 
-        self.variable_combo = QtGui.QComboBox()
-        self.variable_combo.setModel(get_variables())
-
-        variable_label = label("Variable:")
-
-        variable_layout = QtGui.QHBoxLayout()
-        variable_layout.addWidget(variable_label)
-        variable_layout.addWidget(self.variable_combo)
-
         self.source_grid_combo = QtGui.QComboBox()
         for v_label, var in get_variables().values:
-            self.source_grid_combo.addItem(
-                '{0} {1}'.format(v_label, var.getGrid().shape))
+            if var.getGrid() is not None:
+                self.source_grid_combo.addItem(
+                    '{0} {1}'.format(v_label, var.getGrid().shape))
 
         source_grid_label = label("Source Grid:")
 
@@ -100,6 +98,7 @@ class RegridDialog(AccessableButtonDialog):
 
         self.regrid_method_combo = QtGui.QComboBox()
         self.regrid_method_combo.addItems(['conserve', 'linear', 'patch'])
+        self.regrid_method_combo.setEnabled(False)
 
         regrid_method_label = label("Regrid Method:")
 
@@ -107,27 +106,15 @@ class RegridDialog(AccessableButtonDialog):
         regrid_method_layout.addWidget(regrid_method_label)
         regrid_method_layout.addWidget(self.regrid_method_combo)
 
-        self.regrid_method_widget = QtGui.QWidget()
-        self.regrid_method_widget.setLayout(regrid_method_layout)
-        self.regrid_method_widget.hide()
-
-        self.vertical_layout.insertLayout(0, variable_layout)
         self.vertical_layout.insertLayout(1, source_grid_layout)
         self.vertical_layout.insertLayout(2, regrid_tool_layout)
-
-        self.save_button.setText('Save as')
+        self.vertical_layout.insertLayout(3, regrid_method_layout)
 
     def updateRegridMethod(self, index):
         if self.regrid_tool_combo.currentText() == 'esmf':
-            self.vertical_layout.insertWidget(3, self.regrid_method_widget)
-            self.regrid_method_widget.show()
+            self.regrid_method_combo.setEnabled(True)
         else:
-            if self.regrid_method_widget.isVisible():
-                self.vertical_layout.takeAt(3)
-                self.regrid_method_widget.hide()
-
-    def getVarName(self):
-        return self.variable_combo.currentText()
+            self.regrid_method_combo.setEnabled(False)
 
     def getSourceVarName(self):
         return self.source_grid_combo.currentText().split(" ")[0]
@@ -136,12 +123,91 @@ class RegridDialog(AccessableButtonDialog):
         return self.regrid_tool_combo.currentText()
 
     def getRegridMethod(self):
-        if self.regrid_method_widget.isVisible():
+        if self.regrid_method_combo.isEnabled():
             return self.regrid_method_combo.currentText()
         return None
 
-    def accept(self):
-        self.accepted.emit()
+
+class AxisListWidget(QtGui.QListWidget):
+    changedSelection = QtCore.Signal()
+
+    def selectionChanged(self, selected, deselected):
+        super(AxisListWidget, self).selectionChanged(selected, deselected)
+        self.changedSelection.emit()
+
+
+class AverageDialog(VariableSelectorDialog):
+    def __init__(self, parent=None):
+        super(AverageDialog, self).__init__(parent=parent)
+        self.variable_combo.currentIndexChanged.connect(self.update)
+
+        self.axis_list = AxisListWidget()
+        self.axis_list.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
+        self.axis_list.changedSelection.connect(self.selectionChanged)
+
+        axis_label = label('Axis:')
+
+        axis_layout = QtGui.QHBoxLayout()
+        axis_layout.addWidget(axis_label)
+        axis_layout.addWidget(self.axis_list)
+
+        self.bounds_combo = QtGui.QComboBox()
+        self.bounds_combo.addItems(['Auto', 'Daily', 'Monthly', 'Yearly'])
+        self.bounds_combo.setEnabled(False)
+
+        bounds_label = label('Time bounds:')
+
+        bounds_layout = QtGui.QHBoxLayout()
+        bounds_layout.addWidget(bounds_label)
+        bounds_layout.addWidget(self.bounds_combo)
+
+        self.vertical_layout.insertLayout(1, axis_layout)
+        self.vertical_layout.insertLayout(2, bounds_layout)
+
+        self.update()
+        self.save_button.setEnabled(False)
+
+    def update(self):
+        var = self.getVar()
+        time_axis = var.getTime()
+        bounds = time_axis.getBounds()
+        if bounds is not None:
+            self.bounds_combo.insertItem(0, 'Original bounds')
+
+        for row in range(self.axis_list.count()):
+            widgetitem = self.axis_list.takeItem(0)
+            del widgetitem
+        self.populateAxisList()
+
+    def populateAxisList(self):
+        for axis in self.getVar().getAxisList():
+            self.axis_list.addItem(axis.id.capitalize())
+
+    def selectionChanged(self):
+        if len(self.axis_list.selectedIndexes()) > 0:
+            self.save_button.setEnabled(True)
+        else:
+            self.save_button.setEnabled(False)
+
+        for ind in self.axis_list.selectedIndexes():
+            if ind.data().lower() == self.getVar().getTime().id:
+                self.bounds_combo.setEnabled(True)
+                return
+        self.bounds_combo.setEnabled(False)
+
+    def getVar(self):
+        return get_variables().get_variable(self.variable_combo.currentText())
+
+    def getAxis(self):
+        selected_axis = []
+        for ind in self.axis_list.selectedIndexes():
+            for axis in self.getVar().getAxisList():
+                if axis.id == ind.data().lower():
+                    selected_axis.append(axis.axis.lower())
+        return ''.join(selected_axis)
+
+    def getBounds(self):
+        return self.bounds_combo.currentText()
 
 
 class Manipulations(object):
@@ -150,6 +216,21 @@ class Manipulations(object):
         self.dialog = None
         self.name_dialog = None
 
+    def launchClimatologyDialog(self, ctype):
+        self.dialog = ClimatologyDialog(ctype)
+        self.dialog.accepted.connect(partial(self.getClimoSuggestedName, ctype))
+        self.dialog.rejected.connect(self.dialog.deleteLater)
+        self.dialog.setMinimumSize(300, 200)
+        self.dialog.show()
+        self.dialog.raise_()
+
+    def launchAverageDialog(self):
+        self.dialog = AverageDialog()
+        self.dialog.accepted.connect(self.getAverageSuggestedName)
+        self.dialog.rejected.connect(self.dialog.deleteLater)
+        self.dialog.show()
+        self.dialog.raise_()
+
     def launchRegridDialog(self):
         self.dialog = RegridDialog()
         self.dialog.accepted.connect(self.getRegridSuggestedName)
@@ -157,8 +238,22 @@ class Manipulations(object):
         self.dialog.show()
         self.dialog.raise_()
 
+    def getAverageSuggestedName(self):
+        text = '{0}_average_over_{1}'.format(self.dialog.getVarName(), self.dialog.getAxis())
+
+        count = 1
+        while get_variables().variable_exists(text):
+            if count == 1:
+                text = text + '_' + str(count)
+            else:
+                text = text[:-2] + '_' + str(count)
+            count += 1
+
+        self.launchNameDialog(text, self.average)
+
     def getRegridSuggestedName(self):
-        text = '{0}_regrid_from_{1}_{2}'.format(self.dialog.getVarName(), self.dialog.getSourceVarName(), self.dialog.getRegridTool())
+        text = '{0}_regrid_from_{1}_{2}'.format(self.dialog.getVarName(), self.dialog.getSourceVarName(),
+                                                self.dialog.getRegridTool())
         if self.dialog.getRegridMethod():
             text += '_' + str(self.dialog.getRegridMethod())
 
@@ -171,45 +266,6 @@ class Manipulations(object):
             count += 1
 
         self.launchNameDialog(text, self.regrid)
-
-    def regrid(self):
-        var_name = self.dialog.getVarName()
-        var = get_variables().get_variable(var_name)
-        source_var_name = self.dialog.getSourceVarName()
-        source_var = get_variables().get_variable(source_var_name)
-        regrid_tool = self.dialog.getRegridTool()
-        kargs = {}
-        kargs['regrid_tool'] = regrid_tool
-        if regrid_tool == 'esmf':
-            kargs['regrid_method'] = self.dialog.getRegridMethod()
-        elif regrid_tool == 'libcf':
-            kargs['regrid_method'] = 'linear'
-
-        # spits out filemetadatawrapper :D
-        new_var = var.regrid(source_var.getGrid(), **kargs)
-        new_var.id = self.name_dialog.textValue()
-
-        get_variables().add_variable(new_var)
-
-        self.dialog.close()
-        self.dialog.deleteLater()
-
-        self.name_dialog.close()
-        self.name_dialog.deleteLater()
-
-    def launchAverageDialog(self):
-        pass
-
-    def average(self):
-        pass
-
-    def launchClimatologyDialog(self, ctype):
-        self.dialog = ClimatologyDialog(ctype)
-        self.dialog.accepted.connect(partial(self.getClimoSuggestedName, ctype))
-        self.dialog.rejected.connect(self.dialog.deleteLater)
-        self.dialog.setMinimumSize(300, 200)
-        self.dialog.show()
-        self.dialog.raise_()
 
     def getClimoSuggestedName(self, ctype):
         if ctype == 'seasonal':
@@ -241,6 +297,58 @@ class Manipulations(object):
         self.name_dialog.show()
         self.name_dialog.raise_()
 
+    def regrid(self):
+        var_name = self.dialog.getVarName()
+        var = get_variables().get_variable(var_name)
+        source_var_name = self.dialog.getSourceVarName()
+        source_var = get_variables().get_variable(source_var_name)
+        regrid_tool = self.dialog.getRegridTool()
+        kargs = {'regrid_tool': regrid_tool}
+        if regrid_tool == 'esmf':
+            kargs['regrid_method'] = self.dialog.getRegridMethod()
+        elif regrid_tool == 'libcf':
+            kargs['regrid_method'] = 'linear'
+
+        # spits out filemetadatawrapper :D
+        new_var = var.regrid(source_var.getGrid(), **kargs)
+        new_var.id = self.name_dialog.textValue()
+
+        get_variables().add_variable(new_var)
+
+        self.dialog.close()
+        self.dialog.deleteLater()
+
+        self.name_dialog.close()
+        self.name_dialog.deleteLater()
+
+    def average(self):
+        var_name = self.dialog.getVarName()
+        var = get_variables().get_variable(var_name)
+
+        # set all axis to autolevels if isLevel
+        for axis in var.getAxisList():
+            if axis.isLevel():
+                axis.setBounds(axis.genGenericBounds())
+
+        axis = self.dialog.getAxis()
+        if 't' in axis:
+            time_axis = var.getTime()
+            bounds = self.dialog.getBounds()
+            if bounds == 'Auto':
+                time_axis.setBounds(time_axis.genGenericBounds())
+            elif bounds != 'Original bounds':
+                self.setBounds(time_axis, bounds)
+
+        new_var = cdutil.averager(var, axis=axis)
+        new_var.id = str(self.name_dialog.textValue())
+        get_variables().add_variable(new_var)
+
+        self.dialog.close()
+        self.dialog.deleteLater()
+
+        self.name_dialog.close()
+        self.name_dialog.deleteLater()
+
     def makeClimatologyVar(self):
         climo = self.dialog.getClimatology()
         var_name = self.dialog.getVarName()
@@ -250,14 +358,7 @@ class Manipulations(object):
         if climo in ['DJF', 'MAM', 'JJA', 'SON', 'ANN']:
             bounds = self.dialog.getBounds()
             time_axis = var.getTime()
-            if bounds == "Daily":
-                cdutil.setAxisTimeBoundsDaily(time_axis)
-            elif bounds == "Monthly":
-                cdutil.setAxisTimeBoundsMonthly(time_axis)
-            elif bounds == "Yearly":
-                cdutil.setAxisTimeBoundsYearly(time_axis)
-            else:
-                raise ValueError("No bounds function for %s" % bounds)
+            self.setBounds(time_axis, bounds)
         else:
             time_axis = var.getTime()
             cdutil.setAxisTimeBoundsMonthly(time_axis)
@@ -306,3 +407,13 @@ class Manipulations(object):
 
         self.name_dialog.close()
         self.name_dialog.deleteLater()
+
+    def setBounds(self, time_axis, bounds):
+        if bounds == "Daily":
+            cdutil.setAxisTimeBoundsDaily(time_axis)
+        elif bounds == "Monthly":
+            cdutil.setAxisTimeBoundsMonthly(time_axis)
+        elif bounds == "Yearly":
+            cdutil.setAxisTimeBoundsYearly(time_axis)
+        else:
+            raise ValueError("No bounds function for %s" % bounds)

@@ -39,7 +39,7 @@ class MainMenu(QtGui.QMenuBar):
         regrid.triggered.connect(self.manipulations.launchRegridDialog)
 
         average = self.edit_data_menu.addAction("Average")
-        average.triggered.connect(self.manipulations.average)
+        average.triggered.connect(self.manipulations.launchAverageDialog)
 
     def open_script(self):
         filePath = QtGui.QFileDialog.getOpenFileName(self,
