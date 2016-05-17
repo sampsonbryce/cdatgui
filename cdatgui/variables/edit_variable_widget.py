@@ -25,6 +25,9 @@ class EditVariableDialog(QtGui.QDialog):
 
     def __init__(self, var, parent=None):
         QtGui.QDialog.__init__(self, parent=parent)
+        self.setWindowModality(QtCore.Qt.ApplicationModal)
+        shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Escape), self)
+        shortcut.activated.connect(self.reject)
 
         self.var = var
         self.modified = False
@@ -47,6 +50,8 @@ class EditVariableDialog(QtGui.QDialog):
         self.roiSelector.doneConfigure.connect(self.setRoi)
 
         self.axisList = QAxisList(None, var, self)
+        self.axisList.invalidParams.connect(self.disableApplySave)
+        self.axisList.validParams.connect(self.enableApplySave)
         v.addWidget(self.axisList)
 
         h = QtGui.QHBoxLayout()
@@ -84,6 +89,14 @@ class EditVariableDialog(QtGui.QDialog):
         self.btnSaveEditsAs.clicked.connect(self.saveEditsAsClicked)
         self.selectRoiButton.clicked.connect(self.selectRoi)
         self.axisList.axisEdited.connect(self.set_modified)
+
+    def enableApplySave(self):
+        self.btnApplyEdits.setEnabled(True)
+        self.btnSaveEditsAs.setEnabled(True)
+
+    def disableApplySave(self):
+        self.btnApplyEdits.setEnabled(False)
+        self.btnSaveEditsAs.setEnabled(False)
 
     def set_modified(self, axis):
         self.btnApplyEdits.setEnabled(True)

@@ -17,8 +17,13 @@ class ValueSlider(QtGui.QSlider):
     def realValue(self):
         return self.values[self.value()]
 
+    def valueIndex(self, val=None):
+        if val is None:
+            return self.values.index(self.value())
+        return self.values.index(val)
+
     def setRealValue(self, realValue):
         if isinstance(realValue, list):
             realValue = realValue[0]
-        val = min(range(len(self.values)), key=lambda i: abs(self.values[i]-realValue))
+        val = min(range(len(self.values)), key=lambda i: abs(self.values[i] - realValue))
         self.setValue(val)

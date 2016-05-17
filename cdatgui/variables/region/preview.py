@@ -1,8 +1,8 @@
 from PySide import QtGui, QtCore
 from cdatgui.utils import data_file
 
-
 __continents__ = None
+__duplicated_continents__ = None
 
 
 def continents():
@@ -12,34 +12,133 @@ def continents():
     return __continents__
 
 
-def continents_in_latlon(lat_range, lon_range, size=(200, 200)):
+def duplicatedContinents():
+    global __duplicated_continents__
+    if __duplicated_continents__ is None:
+        __duplicated_continents__ = getDuplicatedContinents()
+    return __duplicated_continents__
+
+
+def calculate_y(lat_range):
     c = continents()
-    low_x, high_x = lon_range
+
     low_y, high_y = lat_range
 
     # Adjust into first quadrant
-    low_x += 180
-    high_x += 180
     low_y += 90
     high_y += 90
 
-    # Adjust into 4th quadrant
+    # adjust into 4th quadrant
     low_y = 180 - low_y
     high_y = 180 - high_y
 
-    low_x_pct = low_x / 360.
-    high_x_pct = high_x / 360.
     low_y_pct = low_y / 180.
     high_y_pct = high_y / 180.
 
-    image_x1 = low_x_pct * c.width()
-    image_x2 = high_x_pct * c.width()
-    # The "high" y is closer to 0, which means it's the start corner
-    image_y1 = high_y_pct * c.height()
-    # The "low" y is further from 0, which means it's the end corner
-    image_y2 = low_y_pct * c.height()
+    if high_y_pct < low_y_pct:
+        # The "high" y is closer to 0, which means it's the start corner
+        image_y1 = high_y_pct * c.height()
+        # The "low" y is further from 0, which means it's the end corner
+        image_y2 = low_y_pct * c.height()
+        flip = False
+    else:
+        image_y1 = low_y_pct * c.height()
+        image_y2 = high_y_pct * c.height()
+        flip = True
 
-    cropped = c.copy(image_x1, image_y1, image_x2 - image_x1, image_y2 - image_y1)
+    return image_y1, image_y2, flip
+
+
+def calculate_x(lon_range, circular):
+
+    low_x, high_x = lon_range
+
+    if circular:
+        c = duplicatedContinents()
+        low_x += 360
+        high_x += 355
+        low_x_pct = low_x / 715.
+        high_x_pct = high_x / 715.
+
+    else:
+        c = continents()
+
+        # Adjust into first quadrant
+        low_x += 180
+        high_x += 180
+
+        low_x_pct = low_x / 360.
+        high_x_pct = high_x / 360.
+
+    if low_x_pct < high_x_pct:
+        image_x1 = low_x_pct * c.width()
+        image_x2 = high_x_pct * c.width()
+        flip = False
+    else:
+        image_x1 = high_x_pct * c.width()
+        image_x2 = low_x_pct * c.width()
+        flip = True
+
+    return image_x1, image_x2, flip
+
+
+def getDuplicatedContinents():
+    c = continents()
+    wider_image = QtGui.QImage(QtCore.QSize(c.width() * 2, c.height()), QtGui.QImage.Format_RGB16)
+    wider_image.fill('red')
+    painter = QtGui.QPainter()
+    painter.begin(wider_image)
+
+    painter.drawImage(QtCore.QRectF(
+        QtCore.QPointF(0, 0),
+        QtCore.QPointF(c.width() / 2, c.height())),
+        c,
+        QtCore.QRectF(
+            QtCore.QPointF(c.width() / 2, 0),
+            QtCore.QPoint(c.width(), c.height())))
+
+    painter.drawImage(QtCore.QRectF(
+        QtCore.QPointF(c.width() / 2, 0),
+        QtCore.QPointF(c.width() + c.width() / 2, c.height())),
+        c,
+        QtCore.QRectF(
+            QtCore.QPointF(0, 0),
+            QtCore.QPoint(c.width(), c.height())))
+
+    painter.drawImage(QtCore.QRectF(
+        QtCore.QPointF(c.width() + (c.width() / 2), 0),
+        QtCore.QPointF(c.width() * 2, c.height())),
+        c,
+        QtCore.QRectF(
+            QtCore.QPointF(0, 0),
+            QtCore.QPointF(c.width() / 2, c.height())))
+
+    painter.end()
+
+    return wider_image
+
+
+def continents_in_latlon(lat_range, lon_range, size=(200, 200), circular=False):
+    if circular:
+        c = getDuplicatedContinents()
+    else:
+        c = continents()
+
+    image_x1, image_x2, x_flip = calculate_x(lon_range, circular)
+    image_y1, image_y2, y_flip = calculate_y(lat_range)
+
+    sub_y = image_y2 - image_y1
+    sub_x = image_x2 - image_x1
+
+    flip_vertical = False
+    flip_horizontal = False
+    if y_flip:
+        flip_vertical = True
+    if x_flip:
+        flip_horizontal = True
+
+    cropped = c.copy(image_x1, image_y1, sub_x, sub_y)
+    cropped = cropped.mirrored(flip_horizontal, flip_vertical)
     if 0 in (cropped.width(), cropped.height()):
         return QtGui.QPixmap.fromImage(cropped)
     if cropped.height() > cropped.width():
@@ -60,6 +159,7 @@ class ROIPreview(QtGui.QLabel):
         self.setMinimumHeight(height)
         self.setMaximumHeight(height)
         self.size = size
+        self.circular = False
 
         self.lat_range = lat_range
         self.lon_range = lon_range
@@ -68,8 +168,12 @@ class ROIPreview(QtGui.QLabel):
 
     def setLatRange(self, low, high):
         self.lat_range = (low, high)
-        self.setPixmap(continents_in_latlon(self.lat_range, self.lon_range, size=self.size))
+        self.setPixmap(continents_in_latlon(self.lat_range, self.lon_range, size=self.size, circular=self.circular))
 
     def setLonRange(self, low, high):
         self.lon_range = (low, high)
-        self.setPixmap(continents_in_latlon(self.lat_range, self.lon_range, size=self.size))
+        self.setPixmap(continents_in_latlon(self.lat_range, self.lon_range, size=self.size, circular=self.circular))
+
+    def setCircular(self, circ):
+        self.circular = circ
+        self.setPixmap(continents_in_latlon(self.lat_range, self.lon_range, size=self.size, circular=self.circular))

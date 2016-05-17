@@ -105,6 +105,8 @@ class PlotInfo(QtGui.QFrame):
             self.newIcon = None
             self.setLayout(self.dataLayout)
             self.dataLayout = None
+            self.manager.graphics_method = (vcs.getboxfill('default'), False)
+            self.manager.template = (vcs.gettemplate('default'), False)
             self.initialized.emit()
 
     def variableSync(self, variables):

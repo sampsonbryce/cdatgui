@@ -3,6 +3,9 @@ from value_slider import ValueSlider
 
 
 class RangeValidator(QtGui.QValidator):
+    validInput = QtCore.Signal()
+    invalidInput = QtCore.Signal()
+
     def __init__(self, min, max, parse, parent=None):
         super(RangeValidator, self).__init__(parent=parent)
         self.min = min
@@ -12,8 +15,10 @@ class RangeValidator(QtGui.QValidator):
     def validate(self, i, pos):
         value = self.parser(i)
         if value is not None and value <= self.max and value >= self.min:
+            self.validInput.emit()
             return self.Acceptable
         else:
+            self.invalidInput.emit()
             return self.Intermediate
 
 
@@ -31,10 +36,11 @@ def __build_slider__(val, values):
 
 
 class RangeWidget(QtGui.QWidget):
-
     boundsEdited = QtCore.Signal()
+    validParams = QtCore.Signal()
+    invalidParams = QtCore.Signal()
 
-    def __init__(self, values, bottom=None, top=None, parent=None):
+    def __init__(self, values, bottom=None, top=None, circular=False, parent=None):
         """
         min: Minimum value for range
         max: Maximum value for range
@@ -44,6 +50,7 @@ class RangeWidget(QtGui.QWidget):
         parser: Callable that converts a string to a value
         """
         super(RangeWidget, self).__init__(parent=parent)
+        self.flipped = False
         self.values = values
         l = QtGui.QHBoxLayout()
 
@@ -58,8 +65,16 @@ class RangeWidget(QtGui.QWidget):
         self.lowerBoundText = QtGui.QLineEdit(self.format(bottom))
         self.upperBoundText = QtGui.QLineEdit(self.format(top))
 
-        self.lowerBoundText.setValidator(RangeValidator(min, top, self.parse))
-        self.upperBoundText.setValidator(RangeValidator(bottom, max, self.parse))
+        lower_validator = RangeValidator(min, top, self.parse)
+        upper_validator = RangeValidator(bottom, max, self.parse)
+
+        lower_validator.validInput.connect(self.validParams.emit)
+        lower_validator.invalidInput.connect(self.invalidParams.emit)
+        upper_validator.validInput.connect(self.validParams.emit)
+        upper_validator.invalidInput.connect(self.invalidParams.emit)
+
+        self.lowerBoundText.setValidator(lower_validator)
+        self.upperBoundText.setValidator(upper_validator)
 
         self.lowerBoundSlider = __build_slider__(bottom, values)
         self.upperBoundSlider = __build_slider__(top, values)
@@ -107,19 +122,27 @@ class RangeWidget(QtGui.QWidget):
         self.upperBoundSlider.setValue(high)
 
     def updateLower(self, value):
-        if value > self.upperBoundSlider.value():
-            self.lowerBoundSlider.setValue(self.upperBoundSlider.value())
-            return
-        self.upperBoundText.validator().min = value
+        if value > self.upperBoundSlider.value() and not self.flipped:
+            self.values.reverse()
+            self.flipped = True
+        elif value < self.upperBoundSlider.value() and self.flipped:
+            self.values.reverse()
+            self.flipped = False
+
+        self.upperBoundText.setText(self.format(self.upperBoundSlider.value()))
         self.boundsEdited.emit()
         if value != self.parse(self.lowerBoundText.text()):
             self.lowerBoundText.setText(self.format(value))
 
     def updateUpper(self, value):
-        if value < self.lowerBoundSlider.value():
-            self.upperBoundSlider.setValue(self.lowerBoundSlider.value())
-            return
-        self.lowerBoundText.validator().max = value
+        if value < self.lowerBoundSlider.value() and not self.flipped:
+            self.values.reverse()
+            self.flipped = True
+        elif value > self.lowerBoundSlider.value() and self.flipped:
+            self.values.reverse()
+            self.flipped = False
+
+        self.lowerBoundText.setText(self.format(self.lowerBoundSlider.value()))
         self.boundsEdited.emit()
         if value != self.parse(self.upperBoundText.text()):
             self.upperBoundText.setText(self.format(value))

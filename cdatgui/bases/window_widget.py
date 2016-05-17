@@ -14,7 +14,7 @@ class BaseSaveWindowWidget(QtGui.QWidget):
         self.dialog.setModal(QtCore.Qt.ApplicationModal)
         self.setWindowModality(QtCore.Qt.ApplicationModal)
         shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Escape), self)
-        shortcut.activated.connect(self.close)
+        shortcut.activated.connect(self.reject)
 
         # Layout to add new elements
         self.vertical_layout = QtGui.QVBoxLayout()
@@ -92,7 +92,7 @@ class BaseOkWindowWidget(QtGui.QWidget):
         self.preview = None
         self.setWindowModality(QtCore.Qt.ApplicationModal)
         shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Escape), self)
-        shortcut.activated.connect(self.close)
+        shortcut.activated.connect(self.reject)
 
         # Layout to add new elements
         self.vertical_layout = QtGui.QVBoxLayout()

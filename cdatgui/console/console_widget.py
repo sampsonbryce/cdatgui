@@ -22,6 +22,7 @@ def is_displayplot(v):
 class ConsoleWidget(QtGui.QWidget):
     createdPlot = QtCore.Signal(object)
     updatedVar = QtCore.Signal()
+    checkDisplayPlots = QtCore.Signal(list)
 
     def __init__(self, parent=None):
         super(ConsoleWidget, self).__init__()
@@ -176,6 +177,8 @@ class ConsoleWidget(QtGui.QWidget):
         if is_displayplot(last_line) and last_line not in self.display_plots:
             self.display_plots.append(last_line)
             self.createdPlot.emit(last_line)
+
+        self.checkDisplayPlots.emit(self.display_plots)
 
         if variable_updated:
             self.updatedVar.emit()

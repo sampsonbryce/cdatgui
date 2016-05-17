@@ -6,6 +6,9 @@ from region import ROIPreview
 
 class QAxisList(QtGui.QWidget):
     axisEdited = QtCore.Signal(object)
+    validParams = QtCore.Signal()
+    invalidParams = QtCore.Signal()
+
     """ Widget containing a list of axis widgets for the selected variable """
 
     def __init__(self, cdmsFile=None, var=None, parent=None):
@@ -31,10 +34,15 @@ class QAxisList(QtGui.QWidget):
         self.roi_layout.addLayout(self.roi_vbox)
 
         roi_preview = QtGui.QVBoxLayout()
-        self.roi_sample = ROIPreview((200, 200))
+        # keep this proportional
+        self.roi_sample = ROIPreview((500, 500))
         roi_preview.addWidget(self.roi_sample)
-        self.roi_layout.addLayout(roi_preview)
+        # self.roi_layout.addLayout(roi_preview)
+        vbox.addLayout(roi_preview)
         vbox.addLayout(self.roi_layout)
+
+        success = vbox.setAlignment(roi_preview, QtCore.Qt.AlignCenter)
+        self.roi_vbox.setAlignment(QtCore.Qt.AlignCenter)
         self.var = var
 
     def clear(self):
@@ -89,7 +97,9 @@ class QAxisList(QtGui.QWidget):
         self.roi_sample.setLonRange(min_lon, max_lon)
 
     def getVar(self):
-        return self._var.get_original()(**self.getKwargs())
+        orig = self._var.get_original()
+        new_var = orig(**self.getKwargs())
+        return new_var
 
     def setVar(self, var):
         """ Iterate through the variable's axes and create and initialize an Axis
@@ -107,10 +117,14 @@ class QAxisList(QtGui.QWidget):
 
         for axis in orig.getAxisList():
             w = AxisBoundsChooser(var_axes[axis.id], source_axis=axis)
+            w.validParams.connect(self.validParams.emit)
+            w.invalidParams.connect(self.invalidParams.emit)
             if axis.isLatitude():
                 self.latitude = w
             elif axis.isLongitude():
                 self.longitude = w
+                if axis.isCircular():
+                    self.roi_sample.setCircular(True)
             else:
                 self.vbox.addWidget(w)
             w.boundsEdited.connect(self.axisEdited.emit)
@@ -123,10 +137,11 @@ class QAxisList(QtGui.QWidget):
                 self.layout().addLayout(self.roi_layout)
                 self.latitude.boundsEdited.connect(self.updateROI)
                 self.longitude.boundsEdited.connect(self.updateROI)
+                self.latitude.boundsEdited.emit(10)  # dummy var to set initial values
+                self.longitude.boundsEdited.emit(10)
             else:
                 self.layout().addWidget(self.latitude)
         elif self.longitude is not None:
             self.layout().addWidget(self.longitude)
-
 
     var = property(getVar, setVar)
