@@ -56,7 +56,7 @@ class EditVariableDialog(QtGui.QDialog):
 
         h = QtGui.QHBoxLayout()
         self.selectRoiButton = QtGui.QPushButton('Select Region Of Interest')
-        self.selectRoiButton.setDefault(False)
+        # self.selectRoiButton.setDefault(False)
         self.selectRoiButton.setHidden(True)
         for axis in self.var.getAxisList():
             if axis.isLatitude() or axis.isLongitude():

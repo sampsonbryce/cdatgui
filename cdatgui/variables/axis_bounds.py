@@ -46,15 +46,14 @@ class AxisBoundsChooser(QtGui.QWidget):
                     if v == top:
                         top_ind = i
 
-                self.range = RangeWidget(formatted_vals, bottom=bot_ind, top=top_ind)
+                self.range = RangeWidget(formatted_vals, bottom=bot_ind, top=top_ind, axis_type=source_axis.id)
             else:
                 for i, v in enumerate(source_axis):
                     if v == bottom:
                         bot_ind = i
                     if v == top:
                         top_ind = i
-
-                self.range = RangeWidget(axis_values(source_axis), bottom=bot_ind, top=top_ind)
+                self.range = RangeWidget(axis_values(source_axis), bottom=bot_ind, top=top_ind, axis_type=source_axis.id)
         else:
             minimum, maximum = (float(num) for num in genutil.minmax(axis))
             self.range = RangeWidget(axis_values(axis))
