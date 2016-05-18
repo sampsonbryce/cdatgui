@@ -93,8 +93,8 @@ class QAxisList(QtGui.QWidget):
     def updateROI(self, axis):
         min_lat, max_lat = self.latitude.getBotTop()
         min_lon, max_lon = self.longitude.getBotTop()
-        self.roi_sample.setLatRange(min_lat, max_lat)
-        self.roi_sample.setLonRange(min_lon, max_lon)
+        self.roi_sample.setLatRange(min_lat, max_lat, self.latitude.range.flipped)
+        self.roi_sample.setLonRange(min_lon, max_lon, self.longitude.range.flipped)
 
     def getVar(self):
         orig = self._var.get_original()

@@ -42,7 +42,7 @@ class RangeWidget(QtGui.QWidget):
     validParams = QtCore.Signal()
     invalidParams = QtCore.Signal()
 
-    def __init__(self, values, bottom=None, top=None, axis_type=None, parent=None):
+    def __init__(self, values, bottom=None, top=None, axis_type=None, flipped=False, parent=None):
         """
         min: Minimum value for range
         max: Maximum value for range
@@ -52,7 +52,7 @@ class RangeWidget(QtGui.QWidget):
         parser: Callable that converts a string to a value
         """
         super(RangeWidget, self).__init__(parent=parent)
-        self.flipped = False
+        self.flipped = flipped
         self.values = values
         self.center = False
 
@@ -70,8 +70,8 @@ class RangeWidget(QtGui.QWidget):
         self.upperBoundText = QtGui.QLineEdit(self.format(top))
         self.upperBoundText.setFixedWidth(120)
 
-        lower_validator = RangeValidator(self.min, top, self.parse)
-        upper_validator = RangeValidator(bottom, self.max, self.parse)
+        lower_validator = RangeValidator(self.min, self.max, self.parse)
+        upper_validator = RangeValidator(self.min, self.max, self.parse)
 
         lower_validator.validInput.connect(self.validParams.emit)
         lower_validator.invalidInput.connect(self.invalidParams.emit)

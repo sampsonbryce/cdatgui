@@ -4,7 +4,7 @@ import numpy
 
 from cdatgui.bases import RangeWidget
 from cdatgui.utils import header_label
-from cdatgui.cdat.axis import axis_values, selector_value, format_degrees
+from cdatgui.cdat.axis import axis_values, selector_value, format_degrees, format_time_axis, parse_degrees, format_axis
 from functools import partial
 import genutil
 
@@ -20,11 +20,18 @@ class AxisBoundsChooser(QtGui.QWidget):
             self.axis = source_axis
         else:
             self.axis = axis
+        if all(earlier >= later for earlier, later in zip(axis, axis[1:])):
+            flipped = True
+        else:
+            flipped = False
         l = QtGui.QVBoxLayout()
         l.addWidget(header_label(axis.id))
 
         if source_axis is not None:
-            self.values = [val for val in source_axis]
+            if flipped:
+                self.values = [val for val in reversed(source_axis)]
+            else:
+                self.values = [val for val in source_axis]
 
             minimum, maximum = (float(num) for num in genutil.minmax(source_axis))
             bottom, top = (float(num) for num in genutil.minmax(axis))
@@ -46,14 +53,22 @@ class AxisBoundsChooser(QtGui.QWidget):
                     if v == top:
                         top_ind = i
 
-                self.range = RangeWidget(formatted_vals, bottom=bot_ind, top=top_ind, axis_type=source_axis.id)
+                self.range = RangeWidget(formatted_vals, bottom=bot_ind, top=top_ind, axis_type=source_axis.id,
+                                         flipped=flipped)
             else:
-                for i, v in enumerate(source_axis):
+                for i, v in enumerate(self.values):
                     if v == bottom:
                         bot_ind = i
                     if v == top:
                         top_ind = i
-                self.range = RangeWidget(axis_values(source_axis), bottom=bot_ind, top=top_ind, axis_type=source_axis.id)
+
+                formatter = format_axis(axis)
+                values = []
+                for value in self.values:
+                    values.append(formatter(value))
+
+                self.range = RangeWidget(values, bottom=bot_ind, top=top_ind,
+                                         axis_type=source_axis.id, flipped=flipped)
         else:
             minimum, maximum = (float(num) for num in genutil.minmax(axis))
             self.range = RangeWidget(axis_values(axis))
@@ -76,6 +91,8 @@ class AxisBoundsChooser(QtGui.QWidget):
     def getBotTop(self):
         indices = self.range.getBounds()
         values = [self.values[index] for index in indices]
+        # if self.range.flipped:
+            # values.reverse()
         return values
 
     def setBotTop(self, bottom, top):
@@ -96,11 +113,14 @@ class AxisBoundsChooser(QtGui.QWidget):
         self.range.setBounds(lower_ind, upper_ind)
 
     def getSelector(self):
-        lower, upper = self.range.getBounds()
+        bound1, bound2 = self.range.getBounds()
         if self.axis.isTime():
-            lower = selector_value(lower, self.axis)
-            upper = selector_value(upper, self.axis)
+            bound1 = self.range.values[bound1]
+            bound2 = self.range.values[bound2]
         else:
-            lower = self.values[lower]
-            upper = self.values[upper]
-        return self.axis.id, (lower, upper)
+            bound1 = parse_degrees(self.range.values[bound1])
+            bound2 = parse_degrees(self.range.values[bound2])
+        if not self.range.flipped:
+            return self.axis.id, (bound1, bound2)
+        else:
+            return self.axis.id, (bound2, bound1)

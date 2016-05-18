@@ -50,7 +50,6 @@ def calculate_y(lat_range):
 
 
 def calculate_x(lon_range, circular):
-
     low_x, high_x = lon_range
 
     if circular:
@@ -70,7 +69,8 @@ def calculate_x(lon_range, circular):
         low_x_pct = low_x / 360.
         high_x_pct = high_x / 360.
 
-    if low_x_pct < high_x_pct:
+    # print "lon range adjusted", low_x, high_x
+    if low_x < high_x:
         image_x1 = low_x_pct * c.width()
         image_x2 = high_x_pct * c.width()
         flip = False
@@ -118,7 +118,7 @@ def getDuplicatedContinents():
     return wider_image
 
 
-def continents_in_latlon(lat_range, lon_range, size=(200, 200), circular=False):
+def continents_in_latlon(lat_range, lon_range, size=(200, 200), circular=False, lat_flipped=False, lon_flipped=False):
     if circular:
         c = getDuplicatedContinents()
     else:
@@ -130,15 +130,21 @@ def continents_in_latlon(lat_range, lon_range, size=(200, 200), circular=False):
     sub_y = image_y2 - image_y1
     sub_x = image_x2 - image_x1
 
+    '''
     flip_vertical = False
     flip_horizontal = False
     if y_flip:
+        print "flip horizontal"
         flip_vertical = True
     if x_flip:
+        print "flip vertical"
         flip_horizontal = True
+    '''
 
     cropped = c.copy(image_x1, image_y1, sub_x, sub_y)
-    cropped = cropped.mirrored(flip_horizontal, flip_vertical)
+    # cropped = cropped.mirrored(flip_horizontal, flip_vertical)
+    # print "lat_flipped", lat_flipped, 'lon_flipped', lon_flipped
+    cropped = cropped.mirrored(lon_flipped, lat_flipped)
     if 0 in (cropped.width(), cropped.height()):
         return QtGui.QPixmap.fromImage(cropped)
     if cropped.height() > cropped.width():
@@ -160,19 +166,25 @@ class ROIPreview(QtGui.QLabel):
         self.setMaximumHeight(height)
         self.size = size
         self.circular = False
+        self.lat_flipped = False
+        self.lon_flipped = False
 
         self.lat_range = lat_range
         self.lon_range = lon_range
         self.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
         self.setPixmap(continents_in_latlon(self.lat_range, self.lon_range, size=size))
 
-    def setLatRange(self, low, high):
+    def setLatRange(self, low, high, flipped):
+        self.lat_flipped = flipped
         self.lat_range = (low, high)
-        self.setPixmap(continents_in_latlon(self.lat_range, self.lon_range, size=self.size, circular=self.circular))
+        self.setPixmap(continents_in_latlon(self.lat_range, self.lon_range, size=self.size, circular=self.circular,
+                                            lat_flipped=self.lat_flipped, lon_flipped=self.lon_flipped))
 
-    def setLonRange(self, low, high):
+    def setLonRange(self, low, high, flipped):
+        self.lon_flipped = flipped
         self.lon_range = (low, high)
-        self.setPixmap(continents_in_latlon(self.lat_range, self.lon_range, size=self.size, circular=self.circular))
+        self.setPixmap(continents_in_latlon(self.lat_range, self.lon_range, size=self.size, circular=self.circular,
+                                            lat_flipped=self.lat_flipped, lon_flipped=self.lon_flipped))
 
     def setCircular(self, circ):
         self.circular = circ
