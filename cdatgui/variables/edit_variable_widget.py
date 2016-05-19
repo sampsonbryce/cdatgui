@@ -44,26 +44,12 @@ class EditVariableDialog(QtGui.QDialog):
         self.dims.setLayout(self.dimsLayout)
         v.addWidget(self.dims)
 
-        self.roiSelector = ROISelectionDialog(self)
-        self.roiSelector.setWindowFlags(self.roiSelector.windowFlags() |
-                                        QtCore.Qt.WindowStaysOnTopHint)
-        self.roiSelector.doneConfigure.connect(self.setRoi)
-
         self.axisList = QAxisList(None, var, self)
         self.axisList.invalidParams.connect(self.disableApplySave)
         self.axisList.validParams.connect(self.enableApplySave)
         v.addWidget(self.axisList)
 
         h = QtGui.QHBoxLayout()
-        self.selectRoiButton = QtGui.QPushButton('Select Region Of Interest')
-        # self.selectRoiButton.setDefault(False)
-        self.selectRoiButton.setHidden(True)
-        for axis in self.var.getAxisList():
-            if axis.isLatitude() or axis.isLongitude():
-                self.selectRoiButton.setHidden(False)
-                break
-
-        h.addWidget(self.selectRoiButton)
 
         s = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding,
                               QtGui.QSizePolicy.Preferred)
@@ -87,7 +73,6 @@ class EditVariableDialog(QtGui.QDialog):
         # Define button
         self.btnApplyEdits.clicked.connect(self.applyEditsClicked)
         self.btnSaveEditsAs.clicked.connect(self.saveEditsAsClicked)
-        self.selectRoiButton.clicked.connect(self.selectRoi)
         self.axisList.axisEdited.connect(self.set_modified)
 
     def enableApplySave(self):
@@ -100,16 +85,6 @@ class EditVariableDialog(QtGui.QDialog):
 
     def set_modified(self, axis):
         self.btnApplyEdits.setEnabled(True)
-
-    def selectRoi(self):
-        (lat0, lat1), (lon0, lon1) = self.axisList.getROI()
-        self.roiSelector.setROI((lon0, lat0, lon1, lat1))
-        self.roiSelector.show()
-
-    def setRoi(self):
-        roi = self.roiSelector.getROI()
-        lon0, lat0, lon1, lat1 = roi
-        self.axisList.setROI((lat0, lat1), (lon0, lon1))
 
     def applyEditsClicked(self):
         newvar = self.axisList.var

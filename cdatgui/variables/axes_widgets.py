@@ -72,24 +72,6 @@ class QAxisList(QtGui.QWidget):
                 lon_ax = axis
         return lat_ax, lon_ax
 
-    def getROI(self):
-        if self._var is None:
-            return
-
-        for w in self.axisWidgets:
-            if w.axis.isLatitude():
-                lat_bot, lat_top = w.getBotTop()
-            if w.axis.isLongitude():
-                lon_bot, lon_top = w.getBotTop()
-
-        return (lat_bot, lat_top), (lon_bot, lon_top)
-
-    def setROI(self, latitude=None, longitude=None):
-        if latitude is not None and self.latitude is not None:
-            self.latitude.setBotTop(*latitude)
-        if longitude is not None and self.longitude is not None:
-            self.longitude.setBotTop(*longitude)
-
     def updateROI(self, axis):
         min_lat, max_lat = self.latitude.getBotTop()
         min_lon, max_lon = self.longitude.getBotTop()
