@@ -84,6 +84,7 @@ def test_settingAttributes(qtbot, editor):
     assert old_proj.sphere == 12.0
 
     new_editor = ProjectionEditor()
+    qtbot.addWidget(new_editor)
     new_editor.setProjectionObject(old_proj)
     new_editor.gm = editor.gm
     assert new_editor.editors[0][0].text() == '12.0'

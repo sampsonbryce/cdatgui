@@ -38,14 +38,15 @@ def test_save_and_load_script(tmpdir, qtbot):
     pi = PlotInfo(vcs.init(), 0, 0)
     qtbot.addWidget(pi)
     pm = PlotManager(pi)
-    pm.graphics_method = vcs.getboxfill("default")
-    pm.template = vcs.gettemplate('default')
-
+    pm.graphics_method = vcs.createboxfill(source="default")
+    pm.template = vcs.createtemplate(source='default')
     f = cdms2.open(vcs.sample_data + "/clt.nc")
     fmw = FileMetadataWrapper(f)
     clt = fmw["clt"]
 
     pm.variables = [clt.var, None]
+
+    pm.plot()
     pi.canvas.close()
 
     export_script(path, [clt], [[pm]])
@@ -96,6 +97,7 @@ def test_save_loaded_script(tmpdir, qtbot):
             pm.template = vcs.gettemplate(display._template_origin)
             pm.variables = display.array
             pm_group.append(pm)
+            pm.plot()
         plot_managers.append(pm_group)
 
     export_script(str(save_file), loaded.variables.values(), plot_managers)

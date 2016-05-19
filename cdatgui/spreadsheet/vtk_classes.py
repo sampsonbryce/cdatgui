@@ -123,6 +123,8 @@ class QCDATWidget(QtGui.QFrame):
         if vcs_gm_mime in event.mimeData().formats():
             event.accept()
             target.graphics_method(dropped)
+        if target.manager.can_plot():
+            target.manager.plot()
 
         self.iren.show()
         self.dragTarget.hide()

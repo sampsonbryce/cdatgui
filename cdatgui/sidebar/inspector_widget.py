@@ -171,13 +171,13 @@ class InspectorWidget(StaticDockWidget):
 
     def editGraphicsMethod(self, gm):
         get_gms().replace(get_gms().indexOf(vcs.graphicsmethodtype(gm), gm), gm)
-        self.current_plot.graphics_method = (gm, False)
+        self.current_plot.graphics_method = gm
         self.plotters_updated.emit()
 
     def makeGraphicsMethod(self, gm):
         get_gms().add_gm(gm)
         self.gm_instance_combo.setCurrentIndex(self.gm_instance_combo.count() - 1)
-        self.current_plot.graphics_method = (gm, False)
+        self.current_plot.graphics_method = gm
         self.plotters_updated.emit()
 
     def editGM(self):
@@ -214,7 +214,7 @@ class InspectorWidget(StaticDockWidget):
         self.edit_gm_button.setEnabled(False)
 
     def setTemplate(self, template):
-        self.current_plot.template = (template, False)
+        self.current_plot.template = template
         self.plotters_updated.emit()
 
     def updateGM(self, index):
@@ -235,21 +235,21 @@ class InspectorWidget(StaticDockWidget):
 
         if enabled and self.var_combos[1].currentIndex() == -1:
             gm = vcs.getgraphicsmethod(gm_type, gm_name)
-            self.current_plot.graphics_method = (gm, False)
+            self.current_plot.graphics_method = gm
         else:
             gm = vcs.getgraphicsmethod(gm_type, gm_name)
-            self.current_plot.graphics_method = (gm, False)
+            self.current_plot.graphics_method = gm
 
         self.plotters_updated.emit()
 
     def setFirstVar(self, var):
-        self.current_plot.variables = [var, self.current_plot.variables[1], False]
+        self.current_plot.variables = [var, self.current_plot.variables[1]]
         self.plotters_updated.emit()
 
     def setSecondVar(self, var):
         old_vars = self.current_plot.variables
         try:
-            self.current_plot.variables = [self.current_plot.variables[0], var.var, False]
+            self.current_plot.variables = [self.current_plot.variables[0], var.var]
         except ValueError:
             old_vars.append(False)
             self.current_plot.variables = old_vars
