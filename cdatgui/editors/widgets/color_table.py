@@ -63,7 +63,6 @@ class ColormapTable(QtGui.QTableWidget):
             self.singleColorSelected.emit(self.row_col_to_ind(sel.topRow(), sel.leftColumn()))
             return
         else:
-            print "Emitting None"
             self.singleColorSelected.emit(None)
 
 

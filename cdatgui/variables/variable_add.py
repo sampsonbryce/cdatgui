@@ -7,7 +7,8 @@ from cdatgui.toolbars import AddEditRemoveToolbar
 from cdms_file_chooser import CDMSFileChooser
 from cdms_file_tree import CDMSFileTree
 from manager import manager
-from . import get_variables, reserved_words
+from . import get_variables
+from cdatgui.constants import reserved_words
 from cdatgui.bases.input_dialog import ValidatingInputDialog
 
 

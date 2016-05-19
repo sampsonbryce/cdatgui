@@ -3,14 +3,14 @@ from PySide import QtCore, QtGui
 import vcs
 
 
-class VcsElementsDialog(ValidatingInputDialog):
+class VCSElementsDialog(ValidatingInputDialog):
     def __init__(self, element):
-        super(VcsElementsDialog, self).__init__()
+        super(VCSElementsDialog, self).__init__()
         self.element = element
-        self.setValidator(VcsElementsValidator())
+        self.setValidator(VCSElementsValidator())
 
     def save(self):
-        if self.textValue() in vcs.elements[self.element]:
+        if self.textValue() in vcs.elements[self.element] or self.textValue() + '_miniticks' in vcs.elements[self.element]:
             check = QtGui.QMessageBox.question(self, "Overwrite {0}?".format(self.element),
                                                "{0} '{1}' already exists. Overwrite?".format(self.element.capitalize(), self.textValue()),
                                                buttons=QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
@@ -22,7 +22,7 @@ class VcsElementsDialog(ValidatingInputDialog):
             self.accepted.emit()
 
 
-class VcsElementsValidator(QtGui.QValidator):
+class VCSElementsValidator(QtGui.QValidator):
     invalidInput = QtCore.Signal()
     validInput = QtCore.Signal()
 

@@ -2,7 +2,7 @@ from PySide import QtGui, QtCore
 from cdatgui.editors.template import TemplateEditor
 import vcs
 import copy
-from cdatgui.bases.vcs_elements_dialog import VcsElementsDialog
+from cdatgui.bases.vcs_elements_dialog import VCSElementsDialog
 
 from cdatgui.templates import get_templates
 
@@ -100,7 +100,7 @@ class TemplateEditorDialog(QtGui.QDialog):
 
     def customName(self):
         # name = QtGui.QInputDialog.getText(self, u"Save As", u"Name for template:")
-        self.dialog = VcsElementsDialog('template')
+        self.dialog = VCSElementsDialog('template')
         self.dialog.setLabelText('Name:')
         self.dialog.setWindowTitle('Save As')
 

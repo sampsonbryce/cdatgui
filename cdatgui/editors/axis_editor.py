@@ -1,15 +1,18 @@
 from PySide import QtGui, QtCore
-from cdatgui.bases.window_widget import BaseOkWindowWidget
+
+from cdatgui.bases.vcs_elements_dialog import VCSElementsDialog
+from cdatgui.bases.window_widget import BaseSaveWindowWidget
 from cdatgui.editors.preview.axis_preview import AxisPreviewWidget
 from cdatgui.editors.widgets.dict_editor import DictEditorWidget
 import vcs
 
 
-class AxisEditorWidget(BaseOkWindowWidget):
+class AxisEditorWidget(BaseSaveWindowWidget):
     def __init__(self, axis, parent=None):
         super(AxisEditorWidget, self).__init__()
         self.axis = axis
         self.state = None
+        self.setSaveDialog(VCSElementsDialog('line'))
 
         # create layout so you can set the preview
         self.horizontal_layout = QtGui.QHBoxLayout()
@@ -128,6 +131,16 @@ class AxisEditorWidget(BaseOkWindowWidget):
 
     def setAxisObject(self, axis_obj):
         self.object = axis_obj
+
+        # initialize combo value
+        if isinstance(axis_obj.ticks, str):
+            if axis_obj.ticks == '*':
+                ticks = 'default'
+            else:
+                ticks = axis_obj.ticks
+            self.preset_box.setCurrentIndex(self.preset_box.findText(ticks))
+            self.updatePreset(ticks)
+
         self.preview.setAxisObject(self.object)
         if self.object.numticks:
             if self.object.is_positive():
@@ -149,7 +162,7 @@ class AxisEditorWidget(BaseOkWindowWidget):
                 button.setEnabled(False)
 
         self.preview.update()
-        self.accepted.connect(self.object.save)
+        self.accepted.connect(self.saveTicks)
         self.rejected.connect(self.object.cancel)
 
     # Update mode essentially
@@ -188,6 +201,7 @@ class AxisEditorWidget(BaseOkWindowWidget):
     def updatePreset(self, preset):
         if preset == "default":
             self.object.ticks = "*"
+            self.save_button.setEnabled(False)
             self.mini_tick_box.setEnabled(False)
             self.show_mini_check_box.setEnabled(False)
             for button in self.tickmark_button_group.buttons():
@@ -195,6 +209,7 @@ class AxisEditorWidget(BaseOkWindowWidget):
                     button.setEnabled(False)
         else:
             self.object.ticks = preset
+            self.save_button.setEnabled(True)
             self.mini_tick_box.setEnabled(True)
             self.show_mini_check_box.setEnabled(True)
             for button in self.tickmark_button_group.buttons():
@@ -268,3 +283,6 @@ class AxisEditorWidget(BaseOkWindowWidget):
         self.step_edit.setText(str(-val))
 
         self.preview.update()
+
+    def saveTicks(self, name):
+        self.object.save(name)

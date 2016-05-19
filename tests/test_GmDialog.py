@@ -181,7 +181,7 @@ def test_saveDialog(qtbot, save_dialog):
     save_button = save_dialog.layout().itemAt(1).layout().itemAt(3).widget()
     assert save_button.isEnabled() == True
     save_dialog.customName()
-    assert isinstance(save_dialog.dialog, VcsElementsDialog)
+    assert isinstance(save_dialog.dialog, VCSElementsDialog)
 
 
 def test_okDialog(qtbot, ok_dialog):
