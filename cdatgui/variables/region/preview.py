@@ -130,20 +130,7 @@ def continents_in_latlon(lat_range, lon_range, size=(200, 200), circular=False, 
     sub_y = image_y2 - image_y1
     sub_x = image_x2 - image_x1
 
-    '''
-    flip_vertical = False
-    flip_horizontal = False
-    if y_flip:
-        print "flip horizontal"
-        flip_vertical = True
-    if x_flip:
-        print "flip vertical"
-        flip_horizontal = True
-    '''
-
     cropped = c.copy(image_x1, image_y1, sub_x, sub_y)
-    # cropped = cropped.mirrored(flip_horizontal, flip_vertical)
-    # print "lat_flipped", lat_flipped, 'lon_flipped', lon_flipped
     cropped = cropped.mirrored(lon_flipped, lat_flipped)
     if 0 in (cropped.width(), cropped.height()):
         return QtGui.QPixmap.fromImage(cropped)

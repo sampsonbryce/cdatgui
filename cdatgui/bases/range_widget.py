@@ -178,10 +178,10 @@ class RangeWidget(QtGui.QWidget):
 
     def updateLower(self, value):
         if value > self.upperBoundSlider.value() and not self.flipped:
-            self.values.reverse()
+            # self.values.reverse()
             self.flipped = True
         elif value < self.upperBoundSlider.value() and self.flipped:
-            self.values.reverse()
+            # self.values.reverse()
             self.flipped = False
 
         self.upperBoundText.setText(self.format(self.upperBoundSlider.value()))
@@ -203,35 +203,20 @@ class RangeWidget(QtGui.QWidget):
             diff = self.prev_diff
         diff /= 2
 
-        if not self.flipped:
-            if value - diff < self.min:
-                lower_val = self.min
-                self.centerLineText.validator().min = value
-                upper_val = lower_val + self.prev_diff
-                recenter = True
-            elif value + diff > self.max:
-                upper_val = self.max
-                self.centerLineText.validator().max = value
-                lower_val = upper_val - self.prev_diff
-                recenter = True
-            else:
-                lower_val = self.centerLineSlider.value() - diff
-                upper_val = self.centerLineSlider.value() + diff
+        # if not self.flipped:
+        if value - diff < self.min:
+            lower_val = self.min
+            self.centerLineText.validator().min = value
+            upper_val = lower_val + self.prev_diff
+            recenter = True
+        elif value + diff > self.max:
+            upper_val = self.max
+            self.centerLineText.validator().max = value
+            lower_val = upper_val - self.prev_diff
+            recenter = True
         else:
-            # diff is negative
-            if value + diff < self.min:
-                upper_val = self.min
-                self.centerLineText.validator().min = value
-                lower_val = upper_val - self.prev_diff
-                recenter = True
-            elif value - diff > self.max:
-                lower_val = self.max
-                self.centerLineText.validator().max = value
-                upper_val = lower_val + self.prev_diff
-                recenter = True
-            else:
-                lower_val = self.centerLineSlider.value() - diff
-                upper_val = self.centerLineSlider.value() + diff
+            lower_val = self.centerLineSlider.value() - diff
+            upper_val = self.centerLineSlider.value() + diff
 
         block = self.lowerBoundSlider.blockSignals(True)
         self.lowerBoundSlider.setValue(lower_val)
@@ -277,10 +262,10 @@ class RangeWidget(QtGui.QWidget):
 
     def updateUpper(self, value):
         if value < self.lowerBoundSlider.value() and not self.flipped:
-            self.values.reverse()
+            # self.values.reverse()
             self.flipped = True
         elif value > self.lowerBoundSlider.value() and self.flipped:
-            self.values.reverse()
+            # self.values.reverse()
             self.flipped = False
 
         self.lowerBoundText.setText(self.format(self.lowerBoundSlider.value()))

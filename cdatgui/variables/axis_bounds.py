@@ -28,10 +28,7 @@ class AxisBoundsChooser(QtGui.QWidget):
         l.addWidget(header_label(axis.id))
 
         if source_axis is not None:
-            if flipped:
-                self.values = [val for val in reversed(source_axis)]
-            else:
-                self.values = [val for val in source_axis]
+            self.values = [val for val in source_axis]
 
             minimum, maximum = (float(num) for num in genutil.minmax(source_axis))
             bottom, top = (float(num) for num in genutil.minmax(axis))
@@ -52,6 +49,10 @@ class AxisBoundsChooser(QtGui.QWidget):
                         bot_ind = i
                     if v == top:
                         top_ind = i
+                if flipped:
+                    tmp = bot_ind
+                    bot_ind = top_ind
+                    top_ind = tmp
 
                 self.range = RangeWidget(formatted_vals, bottom=bot_ind, top=top_ind, axis_type=source_axis.id,
                                          flipped=flipped)
@@ -61,6 +62,10 @@ class AxisBoundsChooser(QtGui.QWidget):
                         bot_ind = i
                     if v == top:
                         top_ind = i
+                if flipped:
+                    tmp = bot_ind
+                    bot_ind = top_ind
+                    top_ind = tmp
 
                 formatter = format_axis(axis)
                 values = []
@@ -120,7 +125,7 @@ class AxisBoundsChooser(QtGui.QWidget):
         else:
             bound1 = parse_degrees(self.range.values[bound1])
             bound2 = parse_degrees(self.range.values[bound2])
-        if not self.range.flipped:
-            return self.axis.id, (bound1, bound2)
-        else:
-            return self.axis.id, (bound2, bound1)
+        # if not self.range.flipped:
+        return self.axis.id, (bound1, bound2)
+        # else:
+        # return self.axis.id, (bound2, bound1)
