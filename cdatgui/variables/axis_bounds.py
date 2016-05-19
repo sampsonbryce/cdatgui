@@ -96,8 +96,6 @@ class AxisBoundsChooser(QtGui.QWidget):
     def getBotTop(self):
         indices = self.range.getBounds()
         values = [self.values[index] for index in indices]
-        # if self.range.flipped:
-            # values.reverse()
         return values
 
     def setBotTop(self, bottom, top):
@@ -125,7 +123,4 @@ class AxisBoundsChooser(QtGui.QWidget):
         else:
             bound1 = parse_degrees(self.range.values[bound1])
             bound2 = parse_degrees(self.range.values[bound2])
-        # if not self.range.flipped:
         return self.axis.id, (bound1, bound2)
-        # else:
-        # return self.axis.id, (bound2, bound1)

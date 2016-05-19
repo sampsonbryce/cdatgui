@@ -44,12 +44,11 @@ class RangeWidget(QtGui.QWidget):
 
     def __init__(self, values, bottom=None, top=None, axis_type=None, flipped=False, parent=None):
         """
-        min: Minimum value for range
-        max: Maximum value for range
+        values: Axis values to be used for slider
         bottom: Lower bound
         top: Upper bound
-        formatter: Callable that converts a value to a string
-        parser: Callable that converts a string to a value
+        axis_type: Axis type to set up slider labels
+        flipped: the graph was flipped previously or not
         """
         super(RangeWidget, self).__init__(parent=parent)
         self.flipped = flipped
@@ -178,10 +177,8 @@ class RangeWidget(QtGui.QWidget):
 
     def updateLower(self, value):
         if value > self.upperBoundSlider.value() and not self.flipped:
-            # self.values.reverse()
             self.flipped = True
         elif value < self.upperBoundSlider.value() and self.flipped:
-            # self.values.reverse()
             self.flipped = False
 
         self.upperBoundText.setText(self.format(self.upperBoundSlider.value()))
@@ -203,7 +200,6 @@ class RangeWidget(QtGui.QWidget):
             diff = self.prev_diff
         diff /= 2
 
-        # if not self.flipped:
         if value - diff < self.min:
             lower_val = self.min
             self.centerLineText.validator().min = value
@@ -262,10 +258,8 @@ class RangeWidget(QtGui.QWidget):
 
     def updateUpper(self, value):
         if value < self.lowerBoundSlider.value() and not self.flipped:
-            # self.values.reverse()
             self.flipped = True
         elif value > self.lowerBoundSlider.value() and self.flipped:
-            # self.values.reverse()
             self.flipped = False
 
         self.lowerBoundText.setText(self.format(self.lowerBoundSlider.value()))

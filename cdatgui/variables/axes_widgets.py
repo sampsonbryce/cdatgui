@@ -37,7 +37,6 @@ class QAxisList(QtGui.QWidget):
         # keep this proportional
         self.roi_sample = ROIPreview((500, 500))
         roi_preview.addWidget(self.roi_sample)
-        # self.roi_layout.addLayout(roi_preview)
         vbox.addLayout(roi_preview)
         vbox.addLayout(self.roi_layout)
 
