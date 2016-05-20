@@ -41,6 +41,9 @@ class MainMenu(QtGui.QMenuBar):
         average = self.edit_data_menu.addAction("Average")
         average.triggered.connect(self.manipulations.launchAverageDialog)
 
+        summation = self.edit_data_menu.addAction("Summation")
+        summation.triggered.connect(self.manipulations.launchSumDialog)
+
     def open_script(self):
         filePath = QtGui.QFileDialog.getOpenFileName(self,
                                                      u"Open Script",

@@ -52,7 +52,7 @@ class VariableWidget(StaticDockWidget):
         index = indexes[0].row()
         variable = self.variable_widget.get_variable(index)
         label = self.variable_widget.get_variable_label(variable)
-        e = EditVariableDialog(variable, self)
+        e = EditVariableDialog(variable, self.variable_widget, self)
         e.editedVariable.connect(partial(self.variable_widget.update_variable, label=label))
         e.createdVariable.connect(self.variable_widget.add_variable)
         e.show()

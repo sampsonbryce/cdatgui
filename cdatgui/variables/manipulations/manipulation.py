@@ -1,27 +1,27 @@
 from functools import partial
 
 from PySide import QtCore, QtGui
-from cdatgui.bases.input_dialog import ValidatingInputDialog, AccessableButtonDialog
+from cdatgui.bases.input_dialog import ValidatingInputDialog, AccessibleButtonDialog
 from cdatgui.utils import label
 from cdatgui.variables import get_variables
 from cdatgui.variables.variable_add import FileNameValidator
 import cdutil
 
 
-class VariableSelectorDialog(AccessableButtonDialog):
-    def __init__(self, parent=None):
+class VariableSelectorDialog(AccessibleButtonDialog):
+    def __init__(self, prepopulated=False, parent=None):
         super(VariableSelectorDialog, self).__init__(parent=parent)
-
         self.variable_combo = QtGui.QComboBox()
         self.variable_combo.setModel(get_variables())
 
-        variable_label = label("Variable:")
+        if not prepopulated:
+            variable_label = label("Variable:")
 
-        variable_layout = QtGui.QHBoxLayout()
-        variable_layout.addWidget(variable_label)
-        variable_layout.addWidget(self.variable_combo)
+            variable_layout = QtGui.QHBoxLayout()
+            variable_layout.addWidget(variable_label)
+            variable_layout.addWidget(self.variable_combo)
 
-        self.vertical_layout.insertLayout(0, variable_layout)
+            self.vertical_layout.insertLayout(0, variable_layout)
 
         self.save_button.setText('Save as')
 
@@ -30,6 +30,51 @@ class VariableSelectorDialog(AccessableButtonDialog):
 
     def accept(self):
         self.accepted.emit()
+
+
+class SumDialog(VariableSelectorDialog):
+    def __init__(self, prepopulated=False, var=None, parent=None):
+        super(SumDialog, self).__init__(prepopulated=prepopulated, parent=parent)
+        if not prepopulated:
+            self.variable_combo.currentIndexChanged.connect(self.changeAxis)
+            index = 1
+        else:
+            self.save_button.setText('Save')
+            self.var = var
+            self.variable_combo.setCurrentIndex(
+                self.variable_combo.findText(get_variables().get_variable_label(self.var)))
+            index = 0
+
+        self.axis_list = AxisListWidget()
+        self.axis_list.changedSelection.connect(self.selectionChanged)
+        self.vertical_layout.insertWidget(index, self.axis_list)
+
+        self.populateAxisList()
+
+        self.save_button.setEnabled(False)
+
+    def changeAxis(self, index):
+        for row in range(self.axis_list.count()):
+            widgetitem = self.axis_list.takeItem(0)
+            del widgetitem
+        self.populateAxisList()
+
+    def getVar(self):
+        return get_variables().get_variable(self.variable_combo.currentText())
+
+    def populateAxisList(self):
+        for axis in self.getVar().getAxisList():
+            self.axis_list.addItem(axis.id)
+
+    def getAxis(self):
+        ind = self.axis_list.selectedIndexes()[0]
+        return str(ind.data())
+
+    def selectionChanged(self):
+        if len(self.axis_list.selectedIndexes()) > 0:
+            self.save_button.setEnabled(True)
+        else:
+            self.save_button.setEnabled(False)
 
 
 class ClimatologyDialog(VariableSelectorDialog):
@@ -181,7 +226,7 @@ class AverageDialog(VariableSelectorDialog):
 
     def populateAxisList(self):
         for axis in self.getVar().getAxisList():
-            self.axis_list.addItem(axis.id.capitalize())
+            self.axis_list.addItem(axis.id)
 
     def selectionChanged(self):
         if len(self.axis_list.selectedIndexes()) > 0:
@@ -203,14 +248,16 @@ class AverageDialog(VariableSelectorDialog):
         for ind in self.axis_list.selectedIndexes():
             for axis in self.getVar().getAxisList():
                 if axis.id == ind.data().lower():
-                    selected_axis.append(axis.axis.lower())
+                    selected_axis.append(axis.axis)
         return ''.join(selected_axis)
 
     def getBounds(self):
         return self.bounds_combo.currentText()
 
 
-class Manipulations(object):
+class Manipulations(QtCore.QObject):
+    remove = QtCore.Signal(object)
+
     def __init__(self):
         super(Manipulations, self).__init__()
         self.dialog = None
@@ -417,3 +464,52 @@ class Manipulations(object):
             cdutil.setAxisTimeBoundsYearly(time_axis)
         else:
             raise ValueError("No bounds function for %s" % bounds)
+
+    def launchSumDialog(self, var=None):
+        if var is None:
+            self.dialog = SumDialog()
+            self.dialog.accepted.connect(self.getSumSuggestedName)
+        else:
+            self.dialog = SumDialog(True)
+            self.dialog.accepted.connect(partial(self.sum, True))
+
+        self.dialog.show()
+        self.dialog.raise_()
+
+    def getSumSuggestedName(self):
+        text = '{0}_sum_over_{1}'.format(self.dialog.getVarName(), self.dialog.getAxis())
+
+        count = 1
+        while get_variables().variable_exists(text):
+            if count == 1:
+                text = text + '_' + str(count)
+            else:
+                text = text[:-2] + '_' + str(count)
+            count += 1
+
+        self.launchNameDialog(text, self.sum)
+
+    def sum(self, replace=False):
+        var = self.dialog.getVar()
+        axis = self.dialog.getAxis()
+        axis_index = var.getAxisIndex(axis)
+        if axis_index == -1:
+            raise Exception("Invalid axis cannot perform summation")
+
+        new_var = var.sum(axis_index)
+
+        if replace:
+            new_var.id = var.id
+            self.remove.emit(var)
+        else:
+            new_var.id = self.name_dialog.textValue()
+
+        get_variables().add_variable(new_var)
+
+        self.dialog.close()
+        self.dialog.deleteLater()
+
+        if self.name_dialog is not None:
+            self.name_dialog.close()
+            self.name_dialog.deleteLater()
+

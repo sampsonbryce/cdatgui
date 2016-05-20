@@ -1,12 +1,12 @@
 from PySide import QtCore, QtGui
 
 
-class AccessableButtonDialog(QtGui.QWidget):
+class AccessibleButtonDialog(QtGui.QWidget):
     accepted = QtCore.Signal()
     rejected = QtCore.Signal()
 
     def __init__(self, parent=None):
-        super(AccessableButtonDialog, self).__init__(parent=parent)
+        super(AccessibleButtonDialog, self).__init__(parent=parent)
 
         self.setWindowModality(QtCore.Qt.ApplicationModal)
         shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Escape), self)
@@ -38,7 +38,7 @@ class AccessableButtonDialog(QtGui.QWidget):
         self.accepted.emit()
 
 
-class ValidatingInputDialog(AccessableButtonDialog):
+class ValidatingInputDialog(AccessibleButtonDialog):
     def __init__(self, parent=None):
         super(ValidatingInputDialog, self).__init__(parent=parent)
 

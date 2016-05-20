@@ -20,8 +20,11 @@ class CDMSVariableListModel(ListModel):
 
     def get_variable_label(self, var):
         for label, value in self.values:
-            if value == var:
-                return label
+            try:
+                if value == var:
+                    return label
+            except ValueError:
+                pass
 
     def append(self, variable):
         super(CDMSVariableListModel, self).append((variable.id, variable))
