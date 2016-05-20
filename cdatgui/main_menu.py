@@ -44,6 +44,9 @@ class MainMenu(QtGui.QMenuBar):
         summation = self.edit_data_menu.addAction("Summation")
         summation.triggered.connect(self.manipulations.launchSumDialog)
 
+        std = self.edit_data_menu.addAction("Standard Deviation")
+        std.triggered.connect(self.manipulations.launchSTDDialog)
+
     def open_script(self):
         filePath = QtGui.QFileDialog.getOpenFileName(self,
                                                      u"Open Script",

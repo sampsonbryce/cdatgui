@@ -58,7 +58,7 @@ class EditVariableDialog(QtGui.QDialog):
         self.manipulations.remove.connect(self.removeVar)
 
         self.manipulations_combo = QtGui.QComboBox()
-        for item in ['No Change', 'Summation']:
+        for item in ['No Change', 'Summation', 'Standard Deviation']:
             self.manipulations_combo.addItem(item)
 
         self.manipulations_combo.currentIndexChanged.connect(self.manipulateVar)
@@ -96,7 +96,10 @@ class EditVariableDialog(QtGui.QDialog):
 
     def manipulateVar(self, index):
         if index != 0:
-            self.manipulations.launchSumDialog(self.var)
+            if self.manipulations_combo.currentText() == 'Summation':
+                self.manipulations.launchSumDialog(self.var)
+            elif self.manipulations_combo.currentText() == 'Standard Deviation':
+                self.manipulations.launchSTDDialog(self.var)
         self.manipulations_combo.setCurrentIndex(0)
 
     def removeVar(self, var):
