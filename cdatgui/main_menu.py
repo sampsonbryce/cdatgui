@@ -47,6 +47,28 @@ class MainMenu(QtGui.QMenuBar):
         std = self.edit_data_menu.addAction("Standard Deviation")
         std.triggered.connect(self.manipulations.launchSTDDialog)
 
+        departure = self.edit_data_menu.addAction("Departures")
+        departure.triggered.connect(self.manipulations.launchDepartureDialog)
+
+        correlation = self.edit_data_menu.addAction("Correlation")
+        correlation.triggered.connect(
+            partial(self.manipulations.launchCorrelationOrCovarianceDialog, correlation.text()))
+
+        covariance = self.edit_data_menu.addAction("Covariance")
+        covariance.triggered.connect(partial(self.manipulations.launchCorrelationOrCovarianceDialog, covariance.text()))
+
+        lagged_correlation = self.edit_data_menu.addAction("Lagged Correlation")
+        lagged_correlation.triggered.connect(
+            partial(self.manipulations.launchCorrelationOrCovarianceDialog, lagged_correlation.text()))
+
+        lagged_covariance = self.edit_data_menu.addAction("Lagged Covariance")
+        lagged_covariance.triggered.connect(
+            partial(self.manipulations.launchCorrelationOrCovarianceDialog, lagged_covariance.text()))
+
+        linear_regression = self.edit_data_menu.addAction("Linear Regression")
+        linear_regression.triggered.connect(self.manipulations.launchLinearRegressionDialog)
+
+
     def open_script(self):
         filePath = QtGui.QFileDialog.getOpenFileName(self,
                                                      u"Open Script",

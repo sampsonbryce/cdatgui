@@ -1,5 +1,6 @@
 from PySide import QtCore
 from cdatgui.bases.list_model import ListModel
+import cdms2
 
 
 class CDMSVariableListModel(ListModel):
@@ -23,7 +24,7 @@ class CDMSVariableListModel(ListModel):
             try:
                 if value == var:
                     return label
-            except ValueError:
+            except (ValueError, cdms2.error.CDMSError):
                 pass
 
     def append(self, variable):

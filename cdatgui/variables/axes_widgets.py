@@ -1,11 +1,13 @@
 from PySide import QtGui, QtCore
 from axis_bounds import AxisBoundsChooser
 from cdatgui.utils import header_label
+from cdatgui.variables.manipulations.manipulation import Manipulations
 from region import ROIPreview
 
 
 class QAxisList(QtGui.QWidget):
     axisEdited = QtCore.Signal(object)
+    manipulationComboIndexesChanged = QtCore.Signal()
     validParams = QtCore.Signal()
     invalidParams = QtCore.Signal()
 
@@ -16,6 +18,8 @@ class QAxisList(QtGui.QWidget):
         self.axisWidgets = []  # List of QAxis widgets
         self.cdmsFile = cdmsFile  # cdms file associated with the variable
         self._var = None
+
+        self.manipulation_combos = []
 
         # Init & set the layout
         self.vbox = QtGui.QVBoxLayout()
@@ -89,6 +93,8 @@ class QAxisList(QtGui.QWidget):
 
         self.clear()
         self._var = var
+        latitude_layout = None
+        longitude_layout = None
 
         if var is None:
             return
@@ -98,23 +104,36 @@ class QAxisList(QtGui.QWidget):
 
         for axis in orig.getAxisList():
             w = AxisBoundsChooser(var_axes[axis.id], source_axis=axis)
+            # add manipulations
+            manipulations_combo = QtGui.QComboBox()
+            manipulations_combo.currentIndexChanged.connect(lambda y: self.manipulationComboIndexesChanged.emit())
+            self.manipulation_combos.append((axis.id, manipulations_combo))
+
+            for item in ['Default', 'Summation', 'Standard Deviation']:
+                manipulations_combo.addItem(item)
+
+            axis_bounds_layout = QtGui.QHBoxLayout()
+            axis_bounds_layout.addWidget(manipulations_combo)
+            axis_bounds_layout.addWidget(w)
             w.validParams.connect(self.validParams.emit)
             w.invalidParams.connect(self.invalidParams.emit)
             if axis.isLatitude():
                 self.latitude = w
+                latitude_layout = axis_bounds_layout
             elif axis.isLongitude():
                 self.longitude = w
+                longitude_layout = axis_bounds_layout
                 if axis.isCircular():
                     self.roi_sample.setCircular(True)
             else:
-                self.vbox.addWidget(w)
+                self.vbox.addLayout(axis_bounds_layout)
             w.boundsEdited.connect(self.axisEdited.emit)
             self.axisWidgets.append(w)
 
         if self.latitude is not None:
             if self.longitude is not None:
-                self.roi_vbox.addWidget(self.latitude)
-                self.roi_vbox.addWidget(self.longitude)
+                self.roi_vbox.addLayout(latitude_layout)
+                self.roi_vbox.addLayout(longitude_layout)
                 self.layout().addLayout(self.roi_layout)
                 self.latitude.boundsEdited.connect(self.updateROI)
                 self.longitude.boundsEdited.connect(self.updateROI)

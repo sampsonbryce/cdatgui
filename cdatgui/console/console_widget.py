@@ -47,7 +47,7 @@ class ConsoleWidget(QtGui.QWidget):
 
         self.kernel_client = self.kernel_manager.client()
         self.kernel_client.start_channels()
-        self.kernel_client.execute("import vcs, cdms2, cdutil", silent=True)
+        self.kernel_client.execute("import vcs, cdms2, cdutil, numpy", silent=True)
 
         self.jupyter_widget = RichJupyterWidget()
         self.jupyter_widget.kernel_manager = self.kernel_manager

@@ -20,7 +20,6 @@ from cdatgui.variables.manipulations.manipulation import Manipulations
 
 
 class EditVariableDialog(QtGui.QDialog):
-
     createdVariable = QtCore.Signal(object)
     editedVariable = QtCore.Signal(object)
 
@@ -29,9 +28,12 @@ class EditVariableDialog(QtGui.QDialog):
         self.setWindowModality(QtCore.Qt.ApplicationModal)
         shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Escape), self)
         shortcut.activated.connect(self.reject)
+        self.valid = True
         self.var = var
         self.var_list = var_list
         self.modified = False
+        self.manipulations = Manipulations()
+        self.manipulations.remove.connect(self.removeVar)
 
         self.setWindowTitle('Edit Variable "%s"' % var.id)
 
@@ -48,21 +50,13 @@ class EditVariableDialog(QtGui.QDialog):
         self.axisList = QAxisList(None, var, self)
         self.axisList.invalidParams.connect(self.disableApplySave)
         self.axisList.validParams.connect(self.enableApplySave)
+        self.axisList.manipulationComboIndexesChanged.connect(
+            lambda: self.enableApplySave() if self.valid else self.disableApplySave())
         v.addWidget(self.axisList)
 
         seperator_frame = QtGui.QFrame()
         seperator_frame.setFrameShape(QtGui.QFrame.HLine)
         v.addWidget(seperator_frame)
-
-        self.manipulations = Manipulations()
-        self.manipulations.remove.connect(self.removeVar)
-
-        self.manipulations_combo = QtGui.QComboBox()
-        for item in ['No Change', 'Summation', 'Standard Deviation']:
-            self.manipulations_combo.addItem(item)
-
-        self.manipulations_combo.currentIndexChanged.connect(self.manipulateVar)
-        v.addWidget(self.manipulations_combo)
 
         seperator_frame = QtGui.QFrame()
         seperator_frame.setFrameShape(QtGui.QFrame.HLine)
@@ -94,23 +88,17 @@ class EditVariableDialog(QtGui.QDialog):
         self.btnSaveEditsAs.clicked.connect(self.saveEditsAsClicked)
         self.axisList.axisEdited.connect(self.set_modified)
 
-    def manipulateVar(self, index):
-        if index != 0:
-            if self.manipulations_combo.currentText() == 'Summation':
-                self.manipulations.launchSumDialog(self.var)
-            elif self.manipulations_combo.currentText() == 'Standard Deviation':
-                self.manipulations.launchSTDDialog(self.var)
-        self.manipulations_combo.setCurrentIndex(0)
-
     def removeVar(self, var):
         self.var_list.remove_variable(var)
         self.reject()
 
     def enableApplySave(self):
+        self.valid = True
         self.btnApplyEdits.setEnabled(True)
         self.btnSaveEditsAs.setEnabled(True)
 
     def disableApplySave(self):
+        self.valid = False
         self.btnApplyEdits.setEnabled(False)
         self.btnSaveEditsAs.setEnabled(False)
 
@@ -119,9 +107,21 @@ class EditVariableDialog(QtGui.QDialog):
 
     def applyEditsClicked(self):
         newvar = self.axisList.var
+        newvar = self.applyManipulations(newvar)
         newvar.id = self.var.id
         self.editedVariable.emit(newvar)
         self.close()
+
+    def applyManipulations(self, var):
+        new_var = var
+        for axis_id, combo in self.axisList.manipulation_combos:
+            manipulation = combo.currentText()
+            if manipulation == 'Summation':
+                new_var = self.manipulations.sum(new_var, axis_id)
+            elif manipulation == 'Standard Deviation':
+                new_var = self.manipulations.std(new_var, axis_id)
+
+        return new_var
 
     def saveEditsAsClicked(self):
         text, ok = QtGui.QInputDialog.getText(self, u"Save Variable As...", u"New Variable Name:")
