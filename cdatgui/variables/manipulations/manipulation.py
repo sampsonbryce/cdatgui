@@ -31,6 +31,7 @@ def getTimes(var):
             break
     else:
         times.append('YEAR')
+        times.append('ANNUALCYCLE')
 
     for ind, item in enumerate(['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT',
                                 'NOV', 'DEC']):
@@ -291,9 +292,11 @@ class DepartureDialog(VariableSelectorDialog):
 class ClimatologyDialog(VariableSelectorDialog):
     def __init__(self, climo_type, parent=None):
         super(ClimatologyDialog, self).__init__(parent=parent)
+
+        self.variable_combo.currentIndexChanged.connect(self.populateClimos)
         self.climo_type = climo_type
         self.climo_combo = QtGui.QComboBox()
-        self.populateBounds()
+        self.populateClimos()
         clim_label = label("Climatology:")
 
         clim_layout = QtGui.QHBoxLayout()
@@ -320,15 +323,15 @@ class ClimatologyDialog(VariableSelectorDialog):
     def getBounds(self):
         return self.bounds_combo.currentText()
 
-    def populateBounds(self):
+    def populateClimos(self):
         seasons = ['DJF', 'MAM', 'JJA', 'SON', 'YEAR']
-        times = self.getTimes(self.getVar())
+        times = getTimes(self.getVar())
         for _ in range(self.climo_combo.count()):
             self.climo_combo.removeItem(0)
         for item in times:
             if self.climo_type == 'seasonal' and item in seasons:
                 self.climo_combo.addItem(item)
-            elif item not in seasons:
+            elif self.climo_type == 'monthly' and item not in seasons:
                 self.climo_combo.addItem(item)
 
 
@@ -720,6 +723,8 @@ class Manipulations(QtCore.QObject):
             new_var = cdutil.NOV.climatology(var)
         elif climo == 'DEC':
             new_var = cdutil.DEC.climatology(var)
+        elif climo == 'ANNUALCYCLE':
+            new_var = cdutil.ANNUALCYCLE.climatology(var)
         else:
             raise Exception(climo + " is not a valid climatology")
 
@@ -926,6 +931,8 @@ class Manipulations(QtCore.QObject):
             new_var = cdutil.NOV.departures(var)
         elif departure == 'DEC':
             new_var = cdutil.DEC.departures(var)
+        elif departure == 'ANNUALCYCLE':
+            new_var = cdutil.ANNUALCYCLE.departures(var)
         else:
             raise Exception('Did not provide a valid climatology')
 

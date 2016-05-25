@@ -33,7 +33,7 @@ class MainMenu(QtGui.QMenuBar):
         seasonal_climatology.triggered.connect(partial(self.manipulations.launchClimatologyDialog, 'seasonal'))
 
         monthly_climatology = self.edit_data_menu.addAction("Monthly Climatologies")
-        monthly_climatology.triggered.connect(partial(self.manipulations.launchClimatologyDialog, 'month'))
+        monthly_climatology.triggered.connect(partial(self.manipulations.launchClimatologyDialog, 'monthly'))
 
         regrid = self.edit_data_menu.addAction("Regrid")
         regrid.triggered.connect(self.manipulations.launchRegridDialog)

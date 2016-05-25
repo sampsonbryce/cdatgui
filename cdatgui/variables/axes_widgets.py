@@ -1,7 +1,6 @@
 from PySide import QtGui, QtCore
 from axis_bounds import AxisBoundsChooser
 from cdatgui.utils import header_label
-from cdatgui.variables.manipulations.manipulation import Manipulations
 from region import ROIPreview
 
 
@@ -18,6 +17,7 @@ class QAxisList(QtGui.QWidget):
         self.axisWidgets = []  # List of QAxis widgets
         self.cdmsFile = cdmsFile  # cdms file associated with the variable
         self._var = None
+        self.squeeze = True
 
         self.manipulation_combos = []
 
@@ -61,6 +61,8 @@ class QAxisList(QtGui.QWidget):
         for widget in self.axisWidgets:
             key, bounds = widget.getSelector()
             kwargs[key] = bounds
+        if self.squeeze:
+            kwargs['squeeze'] = True
         return kwargs
 
     def getLatLon(self):
@@ -103,32 +105,33 @@ class QAxisList(QtGui.QWidget):
         var_axes = {ax.id: ax for ax in var.getAxisList()}
 
         for axis in orig.getAxisList():
-            w = AxisBoundsChooser(var_axes[axis.id], source_axis=axis)
-            # add manipulations
-            manipulations_combo = QtGui.QComboBox()
-            manipulations_combo.currentIndexChanged.connect(lambda y: self.manipulationComboIndexesChanged.emit())
-            self.manipulation_combos.append((axis.id, manipulations_combo))
+            if axis.id in var_axes:
+                w = AxisBoundsChooser(var_axes[axis.id], source_axis=axis)
+                # add manipulations
+                manipulations_combo = QtGui.QComboBox()
+                manipulations_combo.currentIndexChanged.connect(lambda y: self.manipulationComboIndexesChanged.emit())
+                self.manipulation_combos.append((axis.id, manipulations_combo))
 
-            for item in ['Default', 'Summation', 'Average', 'Standard Deviation', 'Geometric Mean']:
-                manipulations_combo.addItem(item)
+                for item in ['Default', 'Summation', 'Average', 'Standard Deviation', 'Geometric Mean']:
+                    manipulations_combo.addItem(item)
 
-            axis_bounds_layout = QtGui.QHBoxLayout()
-            axis_bounds_layout.addWidget(manipulations_combo)
-            axis_bounds_layout.addWidget(w)
-            w.validParams.connect(self.validParams.emit)
-            w.invalidParams.connect(self.invalidParams.emit)
-            if axis.isLatitude():
-                self.latitude = w
-                latitude_layout = axis_bounds_layout
-            elif axis.isLongitude():
-                self.longitude = w
-                longitude_layout = axis_bounds_layout
-                if axis.isCircular():
-                    self.roi_sample.setCircular(True)
-            else:
-                self.vbox.addLayout(axis_bounds_layout)
-            w.boundsEdited.connect(self.axisEdited.emit)
-            self.axisWidgets.append(w)
+                axis_bounds_layout = QtGui.QHBoxLayout()
+                axis_bounds_layout.addWidget(manipulations_combo)
+                axis_bounds_layout.addWidget(w)
+                w.validParams.connect(self.validParams.emit)
+                w.invalidParams.connect(self.invalidParams.emit)
+                if axis.isLatitude():
+                    self.latitude = w
+                    latitude_layout = axis_bounds_layout
+                elif axis.isLongitude():
+                    self.longitude = w
+                    longitude_layout = axis_bounds_layout
+                    if axis.isCircular():
+                        self.roi_sample.setCircular(True)
+                else:
+                    self.vbox.addLayout(axis_bounds_layout)
+                w.boundsEdited.connect(self.axisEdited.emit)
+                self.axisWidgets.append(w)
 
         if self.latitude is not None:
             if self.longitude is not None:

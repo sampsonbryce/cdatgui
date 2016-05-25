@@ -16,6 +16,7 @@
 from PySide import QtCore, QtGui
 
 from axes_widgets import QAxisList
+from cdatgui.utils import label
 from cdatgui.variables.manipulations.manipulation import Manipulations
 
 
@@ -54,15 +55,16 @@ class EditVariableDialog(QtGui.QDialog):
             lambda: self.enableApplySave() if self.valid else self.disableApplySave())
         v.addWidget(self.axisList)
 
-        seperator_frame = QtGui.QFrame()
-        seperator_frame.setFrameShape(QtGui.QFrame.HLine)
-        v.addWidget(seperator_frame)
-
-        seperator_frame = QtGui.QFrame()
-        seperator_frame.setFrameShape(QtGui.QFrame.HLine)
-        v.addWidget(seperator_frame)
-
         h = QtGui.QHBoxLayout()
+
+        squeeze_label = label('Squeeze')
+        squeeze_check = QtGui.QCheckBox()
+        squeeze_check.setChecked(True)
+        squeeze_check.stateChanged.connect(self.setSqueeze)
+        squeeze_layout = QtGui.QHBoxLayout()
+        squeeze_layout.addWidget(squeeze_label)
+        squeeze_layout.addWidget(squeeze_check)
+        h.addLayout(squeeze_layout)
 
         s = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding,
                               QtGui.QSizePolicy.Preferred)
@@ -88,6 +90,13 @@ class EditVariableDialog(QtGui.QDialog):
         self.btnSaveEditsAs.clicked.connect(self.saveEditsAsClicked)
         self.axisList.axisEdited.connect(self.set_modified)
 
+    def setSqueeze(self, state):
+        if state == QtCore.Qt.Checked:
+            self.axisList.squeeze = True
+        elif state == QtCore.Qt.Unchecked:
+            self.axisList.squeeze = False
+        self.set_modified()
+
     def removeVar(self, var):
         self.var_list.remove_variable(var)
         self.reject()
@@ -102,7 +111,7 @@ class EditVariableDialog(QtGui.QDialog):
         self.btnApplyEdits.setEnabled(False)
         self.btnSaveEditsAs.setEnabled(False)
 
-    def set_modified(self, axis):
+    def set_modified(self, axis=None):
         self.btnApplyEdits.setEnabled(True)
 
     def applyEditsClicked(self):
