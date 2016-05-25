@@ -109,7 +109,7 @@ class QAxisList(QtGui.QWidget):
             manipulations_combo.currentIndexChanged.connect(lambda y: self.manipulationComboIndexesChanged.emit())
             self.manipulation_combos.append((axis.id, manipulations_combo))
 
-            for item in ['Default', 'Summation', 'Standard Deviation']:
+            for item in ['Default', 'Summation', 'Average', 'Standard Deviation', 'Geometric Mean']:
                 manipulations_combo.addItem(item)
 
             axis_bounds_layout = QtGui.QHBoxLayout()
@@ -140,8 +140,8 @@ class QAxisList(QtGui.QWidget):
                 self.latitude.boundsEdited.emit(10)  # dummy var to set initial values
                 self.longitude.boundsEdited.emit(10)
             else:
-                self.layout().addWidget(self.latitude)
+                self.layout().addLayout(latitude_layout)
         elif self.longitude is not None:
-            self.layout().addWidget(self.longitude)
+            self.layout().addLayout(longitude_layout)
 
     var = property(getVar, setVar)

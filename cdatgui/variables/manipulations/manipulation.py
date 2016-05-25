@@ -40,19 +40,18 @@ def getTimes(var):
 
 
 class VariableSelectorDialog(AccessibleButtonDialog):
-    def __init__(self, prepopulated=False, parent=None):
+    def __init__(self, parent=None):
         super(VariableSelectorDialog, self).__init__(parent=parent)
         self.variable_combo = QtGui.QComboBox()
         self.variable_combo.setModel(get_variables())
 
-        if not prepopulated:
-            variable_label = label("Variable:")
+        variable_label = label("Variable:")
 
-            variable_layout = QtGui.QHBoxLayout()
-            variable_layout.addWidget(variable_label)
-            variable_layout.addWidget(self.variable_combo)
+        variable_layout = QtGui.QHBoxLayout()
+        variable_layout.addWidget(variable_label)
+        variable_layout.addWidget(self.variable_combo)
 
-            self.vertical_layout.insertLayout(0, variable_layout)
+        self.vertical_layout.insertLayout(0, variable_layout)
 
         self.save_button.setText('Save as')
 
@@ -67,23 +66,13 @@ class VariableSelectorDialog(AccessibleButtonDialog):
 
 
 class LinearRegressionDialog(VariableSelectorDialog):
-    def __init__(self, prepopulated=False, var=None, parent=None):
-        super(LinearRegressionDialog, self).__init__(prepopulated=prepopulated, parent=parent)
+    def __init__(self, parent=None):
+        super(LinearRegressionDialog, self).__init__(parent=parent)
         self.regressionType = None
-        if prepopulated:
-            if var is None:
-                raise Exception('Cannot be prepopulated without providing var')
-            self.var = var
-            index = 0
-            self.variable_combo.setCurrentIndex(self.variable_combo.findText(get_variables().get_variable_label(var)))
-            self.save_button.setText('Save')
-        else:
-            self.variable_combo.currentIndexChanged.connect(self.populateLists)
-            index = 1
+        self.variable_combo.currentIndexChanged.connect(self.populateLists)
 
         self.tab_widget = QtGui.QTabWidget()
         self.tab_widget.currentChanged.connect(self.updateRegressionType)
-        self.tab_widget.addTab(QtGui.QWidget(), 'None')
 
         self.second_var_combo = QtGui.QComboBox()
         second_label = label('Regression over:')
@@ -106,7 +95,7 @@ class LinearRegressionDialog(VariableSelectorDialog):
         self.populateAxisCombo()
         self.populateSecondVarCombo()
         self.updateRegressionType()
-        self.vertical_layout.insertWidget(index, self.tab_widget)
+        self.vertical_layout.insertWidget(1, self.tab_widget)
 
     def getSecondItemName(self):
         if self.regressionType == 'axis':
@@ -181,22 +170,13 @@ class LinearRegressionDialog(VariableSelectorDialog):
 
 
 class DoubleVarDialog(VariableSelectorDialog):
-    def __init__(self, prepopulated=False, var=None, parent=None):
-        super(DoubleVarDialog, self).__init__(prepopulated=prepopulated, parent=parent)
+    def __init__(self, parent=None):
+        super(DoubleVarDialog, self).__init__(parent=parent)
 
         self.second_label = label('Correlate with:')
         self.second_var_combo = QtGui.QComboBox()
 
-        if prepopulated:
-            if var is None:
-                raise Exception('Cannot be prepopulated without providing var')
-            self.var = var
-            index = 0
-            self.variable_combo.setCurrentIndex(self.variable_combo.findText(get_variables().get_variable_label(var)))
-            self.save_button.setText('Save')
-        else:
-            self.variable_combo.currentIndexChanged.connect(self.populateSecondVarList)
-            index = 1
+        self.variable_combo.currentIndexChanged.connect(self.populateSecondVarList)
 
         self.populateSecondVarList()
 
@@ -204,7 +184,7 @@ class DoubleVarDialog(VariableSelectorDialog):
         second_var_layout.addWidget(self.second_label)
         second_var_layout.addWidget(self.second_var_combo)
 
-        self.vertical_layout.insertLayout(index, second_var_layout)
+        self.vertical_layout.insertLayout(1, second_var_layout)
 
     def setSecondLabel(self, text):
         self.second_label.setText(text)
@@ -230,20 +210,10 @@ class DoubleVarDialog(VariableSelectorDialog):
 
 
 class AxisSelectorDialog(VariableSelectorDialog):
-    def __init__(self, prepopulated=False, var=None, parent=None):
-        super(AxisSelectorDialog, self).__init__(prepopulated=prepopulated, parent=parent)
+    def __init__(self, parent=None):
+        super(AxisSelectorDialog, self).__init__(parent=parent)
 
-        if not prepopulated:
-            self.variable_combo.currentIndexChanged.connect(self.changeAxis)
-            index = 1
-        else:
-            if var is None:
-                raise Exception('Cannot be prepopulated without providing var')
-            self.save_button.setText('Save')
-            self.var = var
-            self.variable_combo.setCurrentIndex(
-                self.variable_combo.findText(get_variables().get_variable_label(self.var)))
-            index = 0
+        self.variable_combo.currentIndexChanged.connect(self.changeAxis)
 
         axis_label = label('Axis:')
 
@@ -252,7 +222,7 @@ class AxisSelectorDialog(VariableSelectorDialog):
         axis_layout = QtGui.QHBoxLayout()
         axis_layout.addWidget(axis_label)
         axis_layout.addWidget(self.axis_combo)
-        self.vertical_layout.insertLayout(index, axis_layout)
+        self.vertical_layout.insertLayout(1, axis_layout)
 
         self.populateAxisCombo()
 
@@ -270,20 +240,10 @@ class AxisSelectorDialog(VariableSelectorDialog):
 
 
 class DepartureDialog(VariableSelectorDialog):
-    def __init__(self, prepopulated=False, var=None, parent=None):
-        super(DepartureDialog, self).__init__(prepopulated=prepopulated, parent=parent)
-        index = 1
+    def __init__(self, parent=None):
+        super(DepartureDialog, self).__init__(parent=parent)
 
-        if prepopulated:
-            self.var = var
-            if var is None:
-                raise Exception('Cannot be prepopulated without providing var')
-            self.save_button.setText('Save')
-            self.variable_combo.setCurrentIndex(
-                self.variable_combo.findText(get_variables().get_variable_label(var)))
-            index = 0
-        else:
-            self.variable_combo.currentIndexChanged.connect(self.populateDepartures)
+        self.variable_combo.currentIndexChanged.connect(self.populateDepartures)
 
         self.departure_combo = QtGui.QComboBox()
         self.populateDepartures()
@@ -295,7 +255,7 @@ class DepartureDialog(VariableSelectorDialog):
         departure_layout.addWidget(departure_label)
         departure_layout.addWidget(self.departure_combo)
 
-        self.vertical_layout.insertLayout(index, departure_layout)
+        self.vertical_layout.insertLayout(1, departure_layout)
 
         self.bounds_combo = QtGui.QComboBox()
         self.bounds_combo.addItems(['Daily', 'Monthly', 'Yearly'])
@@ -306,7 +266,7 @@ class DepartureDialog(VariableSelectorDialog):
         bounds_layout.addWidget(bounds_label)
         bounds_layout.addWidget(self.bounds_combo)
 
-        self.vertical_layout.insertLayout(index + 1, bounds_layout)
+        self.vertical_layout.insertLayout(2, bounds_layout)
 
     def toggleBounds(self, index):
         if self.departure_combo.currentText() in ['DJF', 'MAM', 'JJA', 'SON', 'YEAR']:
@@ -472,9 +432,12 @@ class AverageDialog(VariableSelectorDialog):
     def update(self):
         var = self.getVar()
         time_axis = var.getTime()
-        bounds = time_axis.getBounds()
-        if bounds is not None:
-            self.bounds_combo.insertItem(0, 'Original bounds')
+        try:
+            bounds = time_axis.getBounds()
+            if bounds is not None:
+                self.bounds_combo.insertItem(0, 'Original bounds')
+        except AttributeError:
+            pass
 
         for _ in range(self.axis_list.count()):
             widgetitem = self.axis_list.takeItem(0)
@@ -491,18 +454,26 @@ class AverageDialog(VariableSelectorDialog):
         else:
             self.save_button.setEnabled(False)
 
-        for ind in self.axis_list.selectedIndexes():
-            if ind.data().lower() == self.getVar().getTime().id:
-                self.bounds_combo.setEnabled(True)
-                return
+        try:
+            for ind in self.axis_list.selectedIndexes():
+                if ind.data().lower() == self.getVar().getTime().id:
+                    self.bounds_combo.setEnabled(True)
+                    return
+        except AttributeError:
+            pass
+
         self.bounds_combo.setEnabled(False)
 
     def getAxis(self):
         selected_axis = []
         for ind in self.axis_list.selectedIndexes():
-            for axis in self.getVar().getAxisList():
-                if axis.id == ind.data().lower():
-                    selected_axis.append(axis.axis)
+            selected_axis.append(str(self.getVar().getAxisIndex(str(ind.data()))))
+        return ''.join(selected_axis)
+
+    def getAxisCharacters(self):
+        selected_axis = []
+        for ind in self.axis_list.selectedIndexes():
+            selected_axis.append(str(ind.data()[0].lower()))
         return ''.join(selected_axis)
 
     def getBounds(self):
@@ -572,7 +543,7 @@ class Manipulations(QtCore.QObject):
         self.dialog.raise_()
 
     def getAverageSuggestedName(self):
-        text = '{0}_average_over_{1}'.format(self.dialog.getVarName(), self.dialog.getAxis())
+        text = '{0}_average_over_{1}'.format(self.dialog.getVarName(), self.dialog.getAxisCharacters())
 
         text = self.adjustNameForDuplicates(text)
         self.launchNameDialog(text, self.average)
@@ -633,33 +604,73 @@ class Manipulations(QtCore.QObject):
         self.name_dialog.close()
         self.name_dialog.deleteLater()
 
-    def average(self):
-        var_name = self.dialog.getVarName()
-        var = get_variables().get_variable(var_name)
+    def average(self, var=None, axis_id=None):
+        if var is None and axis_id is None:
+            from_edit_var = False
+            var_name = self.dialog.getVarName()
+            var = get_variables().get_variable(var_name)
+
+            axis = self.dialog.getAxis()
+            # determine if time is part of selected indices
+            time = False
+            for ind in axis:
+                ind = int(ind)
+                if var.getAxis(ind) == var.getTime():
+                    time = True
+
+            if time:
+                time_axis = var.getTime()
+                bounds = self.dialog.getBounds()
+                if bounds == 'Auto':
+                    time_axis.setBounds(time_axis.genGenericBounds())
+                elif bounds != 'Original bounds':
+                    self.setBounds(time_axis, bounds)
+        elif (var is None and axis_id is not None) or (var is not None and axis_id is None):
+            raise Exception("You provided one of two variables needed for averaging. Aborting")
+        else:
+            from_edit_var = True
+            axis_index = var.getAxisIndex(axis_id)
+            axis = str(axis_index)
+            time = False
+            for ind in axis:
+                ind = int(ind)
+                if var.getAxis(ind) == var.getTime():
+                    time = True
+            if time:
+                time_axis = var.getTime()
+                time_axis.setBounds(time_axis.genGenericBounds())
 
         # set all axis to autolevels if isLevel
-        for axis in var.getAxisList():
-            if axis.isLevel():
-                axis.setBounds(axis.genGenericBounds())
+        for axis_obj in var.getAxisList():
+            if axis_obj.isLevel():
+                axis_obj.setBounds(axis_obj.genGenericBounds())
 
-        axis = self.dialog.getAxis()
-        if 't' in axis:
-            time_axis = var.getTime()
-            bounds = self.dialog.getBounds()
-            if bounds == 'Auto':
-                time_axis.setBounds(time_axis.genGenericBounds())
-            elif bounds != 'Original bounds':
-                self.setBounds(time_axis, bounds)
+        # get axis list to re add axis to var after summation
+        axis_list = var.getAxisList()
+        for ind in axis:
+            axis_list.pop(int(ind))
 
         new_var = cdutil.averager(var, axis=axis)
-        new_var.id = str(self.name_dialog.textValue())
-        get_variables().add_variable(new_var)
 
-        self.dialog.close()
-        self.dialog.deleteLater()
+        for index, axis in enumerate(axis_list):
+            new_var.setAxis(index, axis)
 
-        self.name_dialog.close()
-        self.name_dialog.deleteLater()
+        if from_edit_var:
+            new_var.id = str(var.id)
+        else:
+            new_var.id = str(self.name_dialog.textValue())
+            get_variables().add_variable(new_var)
+
+        if self.dialog:
+            self.dialog.close()
+            self.dialog.deleteLater()
+
+        if self.name_dialog:
+            self.name_dialog.close()
+            self.name_dialog.deleteLater()
+
+        if from_edit_var:
+            return new_var
 
     def climatology(self):
         climo = self.dialog.getClimatology()
@@ -732,25 +743,16 @@ class Manipulations(QtCore.QObject):
         else:
             raise ValueError("No bounds function for %s" % bounds)
 
-    def launchSumDialog(self, var=None):
-        if var is None:
-            self.dialog = AxisSelectorDialog()
-            self.dialog.accepted.connect(self.getSumSuggestedName)
-        else:
-            self.dialog = AxisSelectorDialog(prepopulated=True, var=var)
-            self.dialog.accepted.connect(partial(self.sum, True))
-
+    def launchSumDialog(self):
+        self.dialog = AxisSelectorDialog()
+        self.dialog.accepted.connect(self.getSumSuggestedName)
         self.dialog.setWindowTitle('Summation')
         self.dialog.show()
         self.dialog.raise_()
 
-    def launchSTDDialog(self, var=None):
-        if var is None:
-            self.dialog = AxisSelectorDialog()
-            self.dialog.accepted.connect(self.getSTDSuggestedName)
-        else:
-            self.dialog = AxisSelectorDialog(prepopulated=True, var=var)
-            self.dialog.accepted.connect(partial(self.std, True))
+    def launchSTDDialog(self):
+        self.dialog = AxisSelectorDialog()
+        self.dialog.accepted.connect(self.getSTDSuggestedName)
         self.dialog.setWindowTitle('Standard Deviation')
         self.dialog.show()
         self.dialog.raise_()
@@ -869,18 +871,14 @@ class Manipulations(QtCore.QObject):
         if from_edit_var:
             return new_var
 
-    def launchDepartureDialog(self, var=None):
-        if var is None:
-            self.dialog = DepartureDialog()
-            self.dialog.accepted.connect(self.getDepartureSuggestedName)
-        else:
-            self.dialog = DepartureDialog(True, var)
-            self.dialog.accepted.connect(partial(self.departure, True))
+    def launchDepartureDialog(self):
+        self.dialog = DepartureDialog()
+        self.dialog.accepted.connect(self.getDepartureSuggestedName)
         self.dialog.setWindowTitle('Departure')
         self.dialog.show()
         self.dialog.raise_()
 
-    def departure(self, replace=False):
+    def departure(self):
         departure = self.dialog.getDeparture()
         var_name = self.dialog.getVarName()
         var = get_variables().get_variable(var_name)
@@ -931,11 +929,7 @@ class Manipulations(QtCore.QObject):
         else:
             raise Exception('Did not provide a valid climatology')
 
-        if replace:
-            new_var.id = var.id
-            self.remove.emit(var)
-        else:
-            new_var.id = self.name_dialog.textValue()
+        new_var.id = self.name_dialog.textValue()
 
         get_variables().add_variable(new_var)
 
@@ -947,7 +941,7 @@ class Manipulations(QtCore.QObject):
             self.name_dialog.close()
             self.name_dialog.deleteLater()
 
-    def launchCorrelationOrCovarianceDialog(self, operation, var=None):
+    def launchCorrelationOrCovarianceDialog(self, operation):
         if operation == 'Correlation':
             func = genutil.statistics.correlation
         elif operation == 'Covariance':
@@ -960,14 +954,9 @@ class Manipulations(QtCore.QObject):
             raise NotImplementedError('No function for operation ' + operation)
         operation = operation.replace(' ', '_')
 
-        if var is None:
-            self.dialog = DoubleVarDialog()
-            self.dialog.setWindowTitle(operation)
-            self.dialog.accepted.connect(partial(self.getCorrelationOrCovarianceSuggestedName, func, operation.lower()))
-        else:
-            self.dialog = DoubleVarDialog(True, var)
-            self.dialog.setWindowTitle(operation + " " + get_variables().get_variable_label(var))
-            self.dialog.accepted.connect(partial(self.correlationOrCovariance, func, True))
+        self.dialog = DoubleVarDialog()
+        self.dialog.setWindowTitle(operation)
+        self.dialog.accepted.connect(partial(self.getCorrelationOrCovarianceSuggestedName, func, operation.lower()))
 
         self.dialog.setSecondLabel(operation + ' with:')
         self.dialog.show()
@@ -978,17 +967,13 @@ class Manipulations(QtCore.QObject):
         text = self.adjustNameForDuplicates(text)
         self.launchNameDialog(text, partial(self.correlationOrCovariance, func))
 
-    def correlationOrCovariance(self, func, replace=False):
+    def correlationOrCovariance(self, func):
         var1 = self.dialog.getVar()
         var2 = self.dialog.getSecondVar()
 
         new_var = func(var1, var2)
 
-        if replace:
-            new_var.id = self.dialog.getVarName()
-            self.remove.emit(var1)
-        else:
-            new_var.id = self.name_dialog.textValue()
+        new_var.id = self.name_dialog.textValue()
 
         get_variables().add_variable(new_var)
 
@@ -999,13 +984,9 @@ class Manipulations(QtCore.QObject):
             self.name_dialog.close()
             self.name_dialog.deleteLater()
 
-    def launchLinearRegressionDialog(self, var=None):
-        if var is None:
-            self.dialog = LinearRegressionDialog()
-            self.dialog.accepted.connect(self.getLinearRegressionSuggestedName)
-        else:
-            self.dialog = LinearRegressionDialog(True, var)
-            self.dialog.accepted.connect(self.getLinearRegressionSuggestedName)
+    def launchLinearRegressionDialog(self):
+        self.dialog = LinearRegressionDialog()
+        self.dialog.accepted.connect(self.getLinearRegressionSuggestedName)
         self.dialog.setWindowTitle('Linear Regression')
         self.dialog.show()
         self.dialog.raise_()
@@ -1037,7 +1018,7 @@ class Manipulations(QtCore.QObject):
         self.name_dialog.show()
         self.name_dialog.raise_()
 
-    def linearRegression(self, replace=False):
+    def linearRegression(self):
         var = self.dialog.getVar()
         if self.dialog.regressionType == 'axis':
             axis = self.dialog.getAxis()
@@ -1063,3 +1044,86 @@ class Manipulations(QtCore.QObject):
         if self.name_dialog:
             self.name_dialog.close()
             self.name_dialog.deleteLater()
+
+    def geometricMean(self, var=None, axis_id=None):
+        if var is None and axis_id is None:
+            from_edit_var = False
+            var = self.dialog.getVar()
+            axis = self.dialog.getAxis()
+            axis_index = var.getAxisIndex(axis)
+            if axis_index == -1:
+                raise Exception("Invalid axis cannot perform summation")
+        elif (var is None and axis_id is not None) or (var is not None and axis_id is None):
+            raise Exception("You provided one of two variables needed for summation. Aborting")
+        else:
+            from_edit_var = True
+            axis_index = var.getAxisIds().index(axis_id)
+            if axis_index == -1:
+                raise Exception("Invalid axis cannot perform summation")
+        # get axis list to re add axis to var after summation
+        axis_list = var.getAxisList()
+        axis_list.pop(axis_index)
+
+        # create var
+        new_var = genutil.statistics.geometricmean(var, axis_index)
+        new_var = cdms2.MV2.asVariable(new_var)
+
+        # add old axis
+        for index, axis in enumerate(axis_list):
+            new_var.setAxis(index, axis)
+
+        if from_edit_var:
+            new_var.id = str(var.id)
+        else:
+            new_var.id = str(self.name_dialog.textValue())
+            get_variables().add_variable(new_var)
+
+        if self.dialog:
+            self.dialog.close()
+            self.dialog.deleteLater()
+        if self.name_dialog is not None:
+            self.name_dialog.close()
+            self.name_dialog.deleteLater()
+
+        if from_edit_var:
+            return new_var
+
+    def launchGeometricMeanDialog(self):
+        self.dialog = AxisSelectorDialog()
+        self.dialog.accepted.connect(self.getGeometricMeanSuggestedName)
+        self.dialog.setWindowTitle('Geometric Mean')
+        self.dialog.show()
+        self.dialog.raise_()
+
+    def getGeometricMeanSuggestedName(self):
+        text = '{0}_geometricmean_over_{1}'.format(self.dialog.getVarName(), self.dialog.getAxis())
+        text = self.adjustNameForDuplicates(text)
+        self.launchNameDialog(text, self.geometricMean)
+
+    def launchVarianceDialog(self):
+        self.dialog = AxisSelectorDialog()
+        self.dialog.accepted.connect(self.getVarianceSuggestedName)
+        self.dialog.setWindowTitle('Variance')
+        self.dialog.show()
+        self.dialog.raise_()
+
+    def getVarianceSuggestedName(self):
+        text = '{0}_variance_over_{1}'.format(self.dialog.getVarName(), self.dialog.getAxis())
+        text = self.adjustNameForDuplicates(text)
+        self.launchNameDialog(text, self.variance)
+
+    def variance(self):
+        var = self.dialog.getVar()
+        axis = self.dialog.getAxis()
+        axis_index = var.getAxisIndex(axis)
+
+        new_var = var.var(axis_index)
+
+        new_var.id = self.name_dialog.textValue()
+        get_variables().add_variable(new_var)
+
+        self.dialog.close()
+        self.dialog.deleteLater()
+
+        self.name_dialog.close()
+        self.name_dialog.deleteLater()

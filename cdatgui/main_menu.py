@@ -68,6 +68,13 @@ class MainMenu(QtGui.QMenuBar):
         linear_regression = self.edit_data_menu.addAction("Linear Regression")
         linear_regression.triggered.connect(self.manipulations.launchLinearRegressionDialog)
 
+        geometric_mean = self.edit_data_menu.addAction("Geometric Mean")
+        geometric_mean.triggered.connect(self.manipulations.launchGeometricMeanDialog)
+
+        weighted_mean = self.edit_data_menu.addAction("Weighted Mean")
+
+        variance = self.edit_data_menu.addAction("Variance")
+        variance.triggered.connect(self.manipulations.launchVarianceDialog)
 
     def open_script(self):
         filePath = QtGui.QFileDialog.getOpenFileName(self,

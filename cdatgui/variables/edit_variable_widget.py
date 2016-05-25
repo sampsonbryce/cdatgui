@@ -120,6 +120,10 @@ class EditVariableDialog(QtGui.QDialog):
                 new_var = self.manipulations.sum(new_var, axis_id)
             elif manipulation == 'Standard Deviation':
                 new_var = self.manipulations.std(new_var, axis_id)
+            elif manipulation == 'Geometric Mean':
+                new_var = self.manipulations.geometricMean(new_var, axis_id)
+            elif manipulation == 'Average':
+                new_var = self.manipulations.average(new_var, axis_id)
 
         return new_var
 
