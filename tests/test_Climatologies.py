@@ -28,7 +28,7 @@ def test_enableAndDisable(qtbot, menu):
     var_widget.variableListEmpty.emit()
     assert menu.edit_data_menu.isEnabled() == False
 
-
+'''
 def test_createClimo(qtbot, menu):
     win = menu[1]
     menu = menu[0]
@@ -55,3 +55,4 @@ def test_createClimo(qtbot, menu):
             assert get_variables().values[-1] not in checked_var_list
             checked_var_list.append(get_variables().values[-1])
             old_count += 1
+'''
