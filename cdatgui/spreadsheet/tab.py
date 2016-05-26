@@ -89,6 +89,7 @@ class StandardWidgetToolBar(QtGui.QToolBar):
     included
 
     """
+    clearClicked = QtCore.Signal()
 
     def __init__(self, parent=None):
         """ StandardWidgetToolBar(parent: QWidget) -> StandardWidgetToolBar
@@ -104,6 +105,12 @@ class StandardWidgetToolBar(QtGui.QToolBar):
         self.addSeparator()
         self.layout().setSpacing(2)
         self.currentToolBarAction = None
+        empty = QtGui.QWidget()
+        empty.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+        self.addWidget(empty)
+        clear_push_button = QtGui.QPushButton('Clear')
+        clear_push_button.clicked.connect(self.clearClicked.emit)
+        self.addWidget(clear_push_button)
 
     def rowCountSpinBox(self):
         """ rowCountSpinBox() -> SizeSpinBox
@@ -465,6 +472,7 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
         self.sheet.itemSelectionChanged.connect(self.selectionChange)
         self.sheet.setFitToWindow(True)
         self.toolBar = StandardWidgetToolBar(self)
+        self.toolBar.clearClicked.connect(self.clear)
         self.vLayout = QtGui.QVBoxLayout()
         self.vLayout.setSpacing(0)
         self.vLayout.setContentsMargins(0, 0, 0, 0)
@@ -474,12 +482,16 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
         self.setAcceptDrops(True)
         self.createContainers()
 
-    def selectionChange(self):
-        # Get selection
+    def getSelectedCells(self):
         indices = self.sheet.selectedIndexes()
         selected_cells = []
         for index in indices:
             selected_cells.append(self.sheet.cellWidget(index.row(), index.column()))
+        return selected_cells
+
+    def selectionChange(self):
+        # Get selection
+        selected_cells = self.getSelectedCells()
         self.selectionChanged.emit(selected_cells)
 
     def createContainers(self):
@@ -524,25 +536,29 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
         return cell_widgets
 
     def checkDisplayPlots(self, tracked_plots):
-        # print "checking display plots"
         cell_widgets = self.getCellWidgets()
         removed_plots = []
         for cell in cell_widgets:
             qcdat = cell.widget()
             tracked_plots = qcdat.getPlotters()
-            # print "tracked plots", tracked_plots
             d_names = qcdat.canvas.display_names
-            # print 'current d_names', d_names
             for plot in tracked_plots:
-                # print "plot dp", plot.dp
-                # if plot.dp:
-                    # print "plot dp name", plot.dp.name
                 if plot.dp and plot.dp.name not in d_names:
                     removed_plots.append(plot)
 
         if removed_plots:
-            # print "plots removed"
             self.plotsRemoved.emit(removed_plots)
+
+    def clear(self):
+        """Clears currently selected plots when clear button is pressed"""
+        selected_cells = self.getSelectedCells()
+        for cell in selected_cells:
+            qcdat = cell.widget()
+            for plot in qcdat.getPlotters():
+                plot.remove()
+            qcdat.canvas.clear()
+
+        self.selectionChanged.emit(selected_cells)
 
     def rowSpinBoxChanged(self):
         """ rowSpinBoxChanged() -> None
