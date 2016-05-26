@@ -1,5 +1,6 @@
 from types import FunctionType
 
+from cdatgui.editors.model.legend import VCSLegend
 from cdatgui.editors.widgets.dict_editor import DictEditorWidget
 from PySide import QtCore, QtGui
 from cdatgui.editors.model import legend
@@ -184,6 +185,8 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.cur_button = None
         self.cur_index = None
         self.colormap_editor = None
+        self.gm = None
+        self.orig_gm = None
 
         # Create Labels
         colormap_label = QtGui.QLabel("Colormap:")
@@ -318,8 +321,10 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.vertical_layout.insertLayout(5, custom_fill_layout)
         self.vertical_layout.insertLayout(6, labels_layout)
 
-    def setObject(self, legend):
-        self.object = legend
+    def createAndSetObject(self, gm, var):
+        self.orig_gm = gm
+        self.gm = vcs.creategraphicsmethod(vcs.graphicsmethodtype(gm), gm.name)
+        self.object = VCSLegend(self.gm, var)
 
         try:
             self.start_color_spin.setValue(self.object.color_1)
@@ -362,7 +367,11 @@ class LegendEditorWidget(BaseOkWindowWidget):
         else:
             self.disableCustom()
 
-        self.preview.setLegendObject(legend)
+        # select correct colormap index
+        if gm.colormap is not None:
+            self.colormap_dropdown.setCurrentIndex(self.colormap_dropdown.findText(gm.colormap))
+
+        self.preview.setLegendObject(self.object)
         self.preview.update()
 
     def updateColormap(self, cur_item, recreate=True):
@@ -584,6 +593,19 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.custom_fill_icon.setEnabled(False)
         self.custom_fill_icon.hide()
         self.custom_fill_label.hide()
+        
+    def accept(self):
+        orig_name = self.orig_gm.name
+        if orig_name in vcs.elements[vcs.graphicsmethodtype(self.orig_gm)]:
+            del vcs.elements[vcs.graphicsmethodtype(self.orig_gm)][orig_name]
+
+        new_gm = vcs.creategraphicsmethod(vcs.graphicsmethodtype(self.orig_gm), self.gm.name, orig_name)
+        super(LegendEditorWidget, self).accept()
+
+    def reject(self):
+        if self.gm.name in vcs.elements[vcs.graphicsmethodtype(self.orig_gm)]:
+            del vcs.elements[vcs.graphicsmethodtype(self.orig_gm)][self.gm.name]
+        super(LegendEditorWidget, self).reject()
 
 
 if __name__ == "__main__":

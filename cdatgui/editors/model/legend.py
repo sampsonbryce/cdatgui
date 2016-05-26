@@ -82,9 +82,9 @@ class VCSLegend(LevelsBaseModel):
 
     def adjust_to_level_length(self, lst):
         # +1 for invisible level
-        while len(lst) < len(self.levels)+1:
+        while len(lst) < len(self.levels) + 1:
             lst.append(lst[-1])
-        while len(lst) > len(self.levels)+1:
+        while len(lst) > len(self.levels) + 1:
             lst.pop()
 
     @property
@@ -181,13 +181,17 @@ class VCSLegend(LevelsBaseModel):
             self.labels = {}
         else:
             if vcs.isboxfill(self._gm):
-                self.labels = self._gm.autolabels(self._var)
+                min, max = vcs.minmax(self._var)
+                levels = self._gm.getlevels(min, max)
+                self.labels = self._gm.getlegendlabels(levels)
 
     @property
     def labels(self):
         if self._gm.legend is None:
             if vcs.isboxfill(self._gm):
-                return self._gm.autolabels(self._var)
+                min, max = vcs.minmax(self._var)
+                levels = self._gm.getlevels(min, max)
+                return self._gm.getlegendlabels(levels)
         return self._gm.legend
 
     @labels.setter

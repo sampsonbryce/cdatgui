@@ -95,10 +95,13 @@ class QColormapEditor(QtGui.QColorDialog):
 
     def acceptClicked(self):
         # Make sure the colormap changes take effect
-        self.applyChanges()
-        self.choseColormap.emit(str(self.colormap.currentText()))
-        if self.mode == COLOR_MODE:
-            self.choseColorIndex.emit(self.cell)
+        if self.colormap.currentText() == 'default':
+            QtGui.QMessageBox.information(self, 'Cannot Modify', 'Cannot modify the default colormap')
+        else:
+            self.applyChanges()
+            self.choseColormap.emit(str(self.colormap.currentText()))
+            if self.mode == COLOR_MODE:
+                self.choseColorIndex.emit(self.cell)
 
     def selectedCell(self, ind):
         self.cell = ind
@@ -135,6 +138,7 @@ class QColormapEditor(QtGui.QColorDialog):
         self.colors.set_cell(self.cell, cr, cg, cb, ca)
 
     def rejectChanges(self):
+        self.colors.reject()
         self.close()
 
     def save(self):

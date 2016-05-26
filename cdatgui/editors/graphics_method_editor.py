@@ -1,7 +1,6 @@
 from PySide import QtGui, QtCore
 import vcs
 
-from cdatgui.editors.model.legend import VCSLegend
 from cdatgui.editors.widgets.legend_widget import LegendEditorWidget
 from cdatgui.editors.projection_editor import ProjectionEditor
 from level_editor import LevelEditor
@@ -11,8 +10,7 @@ from model.vcsaxis import VCSAxis
 
 class GraphicsMethodEditorWidget(QtGui.QWidget):
     """Configures a boxfill graphics method."""
-
-    graphicsMethodUpdated = QtCore.Signal(object)
+    graphicsMethodUpdated = QtCore.Signal()
 
     def __init__(self, parent=None):
         """Initialize the object."""
@@ -87,6 +85,7 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
 
     def updated(self):
         if self.legend_editor is not None:
+            self._gm = self.legend_editor.gm
             self.legend_editor.deleteLater()
             self.legend_editor = None
         if self.axis_editor is not None:
@@ -98,6 +97,7 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
         if self.projection_editor is not None:
             self.projection_editor.deleteLater()
             self.projection_editor = None
+        self.graphicsMethodUpdated.emit()
 
     @property
     def gm(self):
@@ -113,8 +113,7 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
         self.legend_editor = LegendEditorWidget()
         self.legend_editor.accepted.connect(self.updated)
         self.legend_editor.rejected.connect(self.updated)
-        legend = VCSLegend(self.gm, self.var.var)
-        self.legend_editor.setObject(legend)
+        self.legend_editor.createAndSetObject(self.gm, self.var.var)
         self.legend_editor.show()
         self.legend_editor.raise_()
 
