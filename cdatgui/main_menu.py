@@ -2,8 +2,7 @@ import re
 from PySide import QtGui, QtCore
 from functools import partial
 
-from cdatgui.bases import FileBrowserWidget
-from cdatgui.bases.input_dialog import ValidatingInputDialog
+from cdatgui.bases.input_dialog import AccessibleButtonDialog
 from cdatgui.cdat.importer import import_script
 from cdatgui.cdat.exporter import export_script
 from cdatgui.utils import label
@@ -49,17 +48,17 @@ class FilePathValidator(QtGui.QValidator):
             return QtGui.QValidator.Intermediate
 
 
-class CDFSaveDialog(ValidatingInputDialog):
+class CDFSaveDialog(AccessibleButtonDialog):
     def __init__(self, parent=None):
         super(CDFSaveDialog, self).__init__(parent=None)
 
         self.dialog = None
+        self.file_name_edit = QtGui.QLineEdit()
 
-        self.setLabelText('Filename')
         validator = FileNameValidator()
         validator.invalidInput.connect(self.update)
         validator.validInput.connect(self.update)
-        self.edit.setValidator(validator)
+        self.file_name_edit.setValidator(validator)
         self.save_button.setEnabled(False)
 
         # create variable list
@@ -76,8 +75,6 @@ class CDFSaveDialog(ValidatingInputDialog):
         for var_label, var in get_variables().values:
             self.var_list.addItem(var_label)
 
-        variable_edit_layout = self.vertical_layout.takeAt(0)
-
         self.file_path_edit = QtGui.QLineEdit()
         validator = FilePathValidator()
         validator.invalidInput.connect(self.update)
@@ -87,13 +84,23 @@ class CDFSaveDialog(ValidatingInputDialog):
         file_browser_button = QtGui.QPushButton('Browse')
         file_browser_button.clicked.connect(self.launchFileBrowser)
         file_path_layout = QtGui.QHBoxLayout()
-        file_path_layout.addWidget(label('Path:'))
         file_path_layout.addWidget(self.file_path_edit)
         file_path_layout.addWidget(file_browser_button)
 
+        label_layout = QtGui.QVBoxLayout()
+        label_layout.addWidget(label('Path:'))
+        label_layout.addWidget(label('Filename:'))
+
+        line_edit_layout = QtGui.QVBoxLayout()
+        line_edit_layout.addWidget(self.file_name_edit)
+        line_edit_layout.addLayout(file_path_layout)
+
+        edits_layout = QtGui.QHBoxLayout()
+        edits_layout.addLayout(label_layout)
+        edits_layout.addLayout(line_edit_layout)
+
         self.vertical_layout.insertWidget(0, self.var_list)
-        self.vertical_layout.insertLayout(1, variable_edit_layout)
-        self.vertical_layout.insertLayout(2, file_path_layout)
+        self.vertical_layout.insertLayout(1, edits_layout)
 
         self.setMinimumSize(500, 300)
 
@@ -130,9 +137,9 @@ class CDFSaveDialog(ValidatingInputDialog):
             self.save_button.setEnabled(True)
         validator.blockSignals(block)
 
-        validator = self.edit.validator()
+        validator = self.file_name_edit.validator()
         block = validator.blockSignals(True)
-        if validator.validate(self.edit.text(), 0) == QtGui.QValidator.Intermediate:
+        if validator.validate(self.file_name_edit.text(), 0) == QtGui.QValidator.Intermediate:
             self.save_button.setEnabled(False)
             validator.blockSignals(block)
             return
@@ -141,7 +148,7 @@ class CDFSaveDialog(ValidatingInputDialog):
         validator.blockSignals(block)
 
     def fileName(self):
-        return self.textValue().strip()
+        return self.file_name_edit.text().strip()
 
     def filePath(self):
         return self.file_path_edit.text().strip()
@@ -247,6 +254,12 @@ class MainMenu(QtGui.QMenuBar):
 
         if filepath[-1] != '/':
             filepath += '/'
+
+        if not os.access(filepath, os.W_OK | os.X_OK):
+            QtGui.QMessageBox.information(self, 'Invalid Permissions',
+                                                "You do not have permission to acces the directory '{0}'".format(
+                                                    filepath))
+            return
 
         if os.path.isfile(filepath + filename):
             buttons = QtGui.QMessageBox.warning(self, 'File Exists',
