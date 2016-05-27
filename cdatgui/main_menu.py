@@ -48,10 +48,9 @@ class FilePathValidator(QtGui.QValidator):
             return QtGui.QValidator.Intermediate
 
 
-class CDFSaveDialog(AccessibleButtonDialog):
+class FilenameAndPathDialog(AccessibleButtonDialog):
     def __init__(self, parent=None):
-        super(CDFSaveDialog, self).__init__(parent=None)
-
+        super(FilenameAndPathDialog, self).__init__(parent=parent)
         self.dialog = None
         self.file_name_edit = QtGui.QLineEdit()
 
@@ -60,20 +59,6 @@ class CDFSaveDialog(AccessibleButtonDialog):
         validator.validInput.connect(self.update)
         self.file_name_edit.setValidator(validator)
         self.save_button.setEnabled(False)
-
-        # create variable list
-        var_label = label('Select Variables to Export')
-        self.var_list = SelectionChangedListWidget()
-        self.var_list.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
-        self.var_list.changedSelection.connect(self.update)
-        var_layout = QtGui.QVBoxLayout()
-        var_layout.addWidget(var_label)
-        var_layout.addWidget(self.var_list)
-        var_widget = QtGui.QWidget()
-        var_widget.setLayout(var_layout)
-
-        for var_label, var in get_variables().values:
-            self.var_list.addItem(var_label)
 
         self.file_path_edit = QtGui.QLineEdit()
         validator = FilePathValidator()
@@ -99,10 +84,9 @@ class CDFSaveDialog(AccessibleButtonDialog):
         edits_layout.addLayout(label_layout)
         edits_layout.addLayout(line_edit_layout)
 
-        self.vertical_layout.insertWidget(0, self.var_list)
-        self.vertical_layout.insertLayout(1, edits_layout)
+        self.vertical_layout.insertLayout(0, edits_layout)
 
-        self.setMinimumSize(500, 300)
+        self.setMinimumSize(300, 300)
 
         self.update()
 
@@ -119,6 +103,58 @@ class CDFSaveDialog(AccessibleButtonDialog):
         file_path = self.dialog.selectedFiles()[0]
         self.file_path_edit.setText(file_path)
         self.file_path_edit.validator().validate(file_path, 0)
+
+    def update(self):
+        validator = self.file_path_edit.validator()
+        block = validator.blockSignals(True)
+        if validator.validate(self.file_path_edit.text(), 0) == QtGui.QValidator.Intermediate:
+            self.save_button.setEnabled(False)
+            validator.blockSignals(block)
+            return
+        else:
+            self.save_button.setEnabled(True)
+        validator.blockSignals(block)
+
+        validator = self.file_name_edit.validator()
+        block = validator.blockSignals(True)
+        if validator.validate(self.file_name_edit.text(), 0) == QtGui.QValidator.Intermediate:
+            self.save_button.setEnabled(False)
+            validator.blockSignals(block)
+            return
+        else:
+            self.save_button.setEnabled(True)
+        validator.blockSignals(block)
+
+    def fileName(self):
+        return self.file_name_edit.text().strip()
+
+    def filePath(self):
+        return self.file_path_edit.text().strip()
+
+
+class CDFSaveDialog(FilenameAndPathDialog):
+    def __init__(self, parent=None):
+        super(CDFSaveDialog, self).__init__(parent=None)
+
+        # create variable list
+        var_label = label('Select Variables to Export')
+        self.var_list = SelectionChangedListWidget()
+        self.var_list.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
+        self.var_list.changedSelection.connect(self.update)
+        var_layout = QtGui.QVBoxLayout()
+        var_layout.addWidget(var_label)
+        var_layout.addWidget(self.var_list)
+        var_widget = QtGui.QWidget()
+        var_widget.setLayout(var_layout)
+
+        for var_label, var in get_variables().values:
+            self.var_list.addItem(var_label)
+
+        self.vertical_layout.insertWidget(0, self.var_list)
+
+        self.setMinimumSize(500, 300)
+
+        self.update()
 
     def update(self):
         if len(self.var_list.selectedIndexes()) == 0:
@@ -147,12 +183,6 @@ class CDFSaveDialog(AccessibleButtonDialog):
             self.save_button.setEnabled(True)
         validator.blockSignals(block)
 
-    def fileName(self):
-        return self.file_name_edit.text().strip()
-
-    def filePath(self):
-        return self.file_path_edit.text().strip()
-
     def getVariables(self):
         vars = []
         for index in self.var_list.selectedIndexes():
@@ -161,6 +191,11 @@ class CDFSaveDialog(AccessibleButtonDialog):
 
     def accept(self):
         self.accepted.emit()
+
+
+class ImageSaveDialog(FilenameAndPathDialog):
+    def __init__(self, parent=None):
+        super(ImageSaveDialog, self).__init__(parent=parent)
 
 
 class MainMenu(QtGui.QMenuBar):
@@ -187,6 +222,9 @@ class MainMenu(QtGui.QMenuBar):
 
         save_variables = export_menu.addAction('NetCDF File')
         save_variables.triggered.connect(self.launchCDFDailog)
+
+        save_image = export_menu.addMenu('Image')
+        save_image.triggered.connect(self.launchImageDialog)
 
         self.edit_data_menu = self.addMenu("Edit Data")
         self.edit_data_menu.setEnabled(False)
@@ -243,6 +281,12 @@ class MainMenu(QtGui.QMenuBar):
         self.dialog.show()
         self.dialog.raise_()
 
+    def launchImageDialog(self):
+        self.dialog = ImageSaveDialog()
+        self.dialog.accepted.connect(self.saveImage)
+        self.dialog.show()
+        self.dialog.raise_()
+
     def saveCDF(self):
         global file_extensions
         filename = self.dialog.fileName()
@@ -257,8 +301,8 @@ class MainMenu(QtGui.QMenuBar):
 
         if not os.access(filepath, os.W_OK | os.X_OK):
             QtGui.QMessageBox.information(self, 'Invalid Permissions',
-                                                "You do not have permission to acces the directory '{0}'".format(
-                                                    filepath))
+                                          "You do not have permission to acces the directory '{0}'".format(
+                                              filepath))
             return
 
         if os.path.isfile(filepath + filename):
