@@ -11,6 +11,7 @@ class AccessibleButtonDialog(QtGui.QWidget):
         self.setWindowModality(QtCore.Qt.ApplicationModal)
         shortcut = QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Escape), self)
         shortcut.activated.connect(self.reject)
+        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
         self.save_button = QtGui.QPushButton('Save')
         self.save_button.clicked.connect(self.accept)
@@ -27,7 +28,7 @@ class AccessibleButtonDialog(QtGui.QWidget):
 
         self.setLayout(self.vertical_layout)
 
-        self.setMaximumSize(300, 100)
+        self.resize(300, 100)
 
     def reject(self):
         self.close()

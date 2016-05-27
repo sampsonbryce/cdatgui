@@ -178,7 +178,7 @@ class ConsoleWidget(QtGui.QWidget):
             self.display_plots.append(last_line)
             self.createdPlot.emit(last_line)
 
-        self.checkDisplayPlots.emit(self.display_plots)
+        # self.checkDisplayPlots.emit(self.display_plots)
 
         if variable_updated:
             self.updatedVar.emit()

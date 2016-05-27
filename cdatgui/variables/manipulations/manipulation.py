@@ -393,11 +393,11 @@ class RegridDialog(VariableSelectorDialog):
         return None
 
 
-class AxisListWidget(QtGui.QListWidget):
+class SelectionChangedListWidget(QtGui.QListWidget):
     changedSelection = QtCore.Signal()
 
     def selectionChanged(self, selected, deselected):
-        super(AxisListWidget, self).selectionChanged(selected, deselected)
+        super(SelectionChangedListWidget, self).selectionChanged(selected, deselected)
         self.changedSelection.emit()
 
 
@@ -406,7 +406,7 @@ class AverageDialog(VariableSelectorDialog):
         super(AverageDialog, self).__init__(parent=parent)
         self.variable_combo.currentIndexChanged.connect(self.update)
 
-        self.axis_list = AxisListWidget()
+        self.axis_list = SelectionChangedListWidget()
         self.axis_list.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
         self.axis_list.changedSelection.connect(self.selectionChanged)
 

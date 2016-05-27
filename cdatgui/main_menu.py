@@ -1,11 +1,159 @@
+import re
 from PySide import QtGui, QtCore
 from functools import partial
 
+from cdatgui.bases import FileBrowserWidget
+from cdatgui.bases.input_dialog import ValidatingInputDialog
 from cdatgui.cdat.importer import import_script
 from cdatgui.cdat.exporter import export_script
+from cdatgui.utils import label
+from cdatgui.variables import get_variables
 from cdatgui.variables.manager import manager
-import os
-from cdatgui.variables.manipulations.manipulation import Manipulations
+import os, cdms2
+from cdatgui.variables.manipulations.manipulation import Manipulations, SelectionChangedListWidget
+
+file_extensions = ['nc', 'cdg', 'NC', 'CDF', 'nc4', 'NC4']
+
+
+class FileNameValidator(QtGui.QValidator):
+    validInput = QtCore.Signal()
+    invalidInput = QtCore.Signal()
+
+    def validate(self, inp, pos):
+        period_ind = inp.rfind('.')
+        if self.isValidName(inp) and (period_ind != len(inp) - 1 and (period_ind == -1 or (
+                        period_ind != -1 and inp[period_ind + 1:] in file_extensions))):
+            self.validInput.emit()
+            return QtGui.QValidator.Acceptable
+        else:
+
+            self.invalidInput.emit()
+            return QtGui.QValidator.Intermediate
+
+    def isValidName(self, name):
+        return not (
+            not re.search("^[a-zA-Z_]", name) or name == '' or re.search(' +', name) or re.search("[^a-zA-Z0-9_.]+",
+                                                                                                  name))
+
+
+class FilePathValidator(QtGui.QValidator):
+    validInput = QtCore.Signal()
+    invalidInput = QtCore.Signal()
+
+    def validate(self, inp, pos):
+        if os.path.exists(inp):
+            self.validInput.emit()
+            return QtGui.QValidator.Acceptable
+        else:
+            self.invalidInput.emit()
+            return QtGui.QValidator.Intermediate
+
+
+class CDFSaveDialog(ValidatingInputDialog):
+    def __init__(self, parent=None):
+        super(CDFSaveDialog, self).__init__(parent=None)
+
+        self.dialog = None
+
+        self.setLabelText('Filename')
+        validator = FileNameValidator()
+        validator.invalidInput.connect(self.update)
+        validator.validInput.connect(self.update)
+        self.edit.setValidator(validator)
+        self.save_button.setEnabled(False)
+
+        # create variable list
+        var_label = label('Select Variables to Export')
+        self.var_list = SelectionChangedListWidget()
+        self.var_list.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
+        self.var_list.changedSelection.connect(self.update)
+        var_layout = QtGui.QVBoxLayout()
+        var_layout.addWidget(var_label)
+        var_layout.addWidget(self.var_list)
+        var_widget = QtGui.QWidget()
+        var_widget.setLayout(var_layout)
+
+        for var_label, var in get_variables().values:
+            self.var_list.addItem(var_label)
+
+        variable_edit_layout = self.vertical_layout.takeAt(0)
+
+        self.file_path_edit = QtGui.QLineEdit()
+        validator = FilePathValidator()
+        validator.invalidInput.connect(self.update)
+        validator.validInput.connect(self.update)
+        self.file_path_edit.setValidator(validator)
+        self.file_path_edit.setText('/')
+        file_browser_button = QtGui.QPushButton('Browse')
+        file_browser_button.clicked.connect(self.launchFileBrowser)
+        file_path_layout = QtGui.QHBoxLayout()
+        file_path_layout.addWidget(label('Path:'))
+        file_path_layout.addWidget(self.file_path_edit)
+        file_path_layout.addWidget(file_browser_button)
+
+        self.vertical_layout.insertWidget(0, self.var_list)
+        self.vertical_layout.insertLayout(1, variable_edit_layout)
+        self.vertical_layout.insertLayout(2, file_path_layout)
+
+        self.setMinimumSize(500, 300)
+
+        self.update()
+
+    def launchFileBrowser(self):
+        self.dialog = QtGui.QFileDialog(directory='/')
+        self.dialog.setWindowModality(QtCore.Qt.ApplicationModal)
+        self.dialog.setFileMode(QtGui.QFileDialog.Directory)
+        self.dialog.setOption(QtGui.QFileDialog.ShowDirsOnly, True)
+        self.dialog.accepted.connect(self.updatePath)
+        self.dialog.exec_()
+        self.dialog.raise_()
+
+    def updatePath(self):
+        file_path = self.dialog.selectedFiles()[0]
+        self.file_path_edit.setText(file_path)
+        self.file_path_edit.validator().validate(file_path, 0)
+
+    def update(self):
+        if len(self.var_list.selectedIndexes()) == 0:
+            self.save_button.setEnabled(False)
+            return
+        else:
+            self.save_button.setEnabled(True)
+
+        validator = self.file_path_edit.validator()
+        block = validator.blockSignals(True)
+        if validator.validate(self.file_path_edit.text(), 0) == QtGui.QValidator.Intermediate:
+            self.save_button.setEnabled(False)
+            validator.blockSignals(block)
+            return
+        else:
+            self.save_button.setEnabled(True)
+        validator.blockSignals(block)
+
+        validator = self.edit.validator()
+        block = validator.blockSignals(True)
+        if validator.validate(self.edit.text(), 0) == QtGui.QValidator.Intermediate:
+            self.save_button.setEnabled(False)
+            validator.blockSignals(block)
+            return
+        else:
+            self.save_button.setEnabled(True)
+        validator.blockSignals(block)
+
+    def fileName(self):
+        return self.textValue().strip()
+
+    def filePath(self):
+        return self.file_path_edit.text().strip()
+
+    def getVariables(self):
+        vars = []
+        for index in self.var_list.selectedIndexes():
+            vars.append(get_variables().get_variable(index.data()))
+        return vars
+
+    def accept(self):
+        self.accepted.emit()
 
 
 class MainMenu(QtGui.QMenuBar):
@@ -17,6 +165,7 @@ class MainMenu(QtGui.QMenuBar):
         self.gm = gm
         self.tmpl = tmpl
         self.manipulations = Manipulations()
+        self.dialog = None
 
         file_menu = self.addMenu("File")
         openscript = file_menu.addAction("Open Script")
@@ -26,6 +175,11 @@ class MainMenu(QtGui.QMenuBar):
         save = file_menu.addAction("Save Script")
         save.setShortcut(QtGui.QKeySequence.Save)
         save.triggered.connect(self.save_script)
+
+        export_menu = file_menu.addMenu('Export')
+
+        save_variables = export_menu.addAction('NetCDF File')
+        save_variables.triggered.connect(self.launchCDFDailog)
 
         self.edit_data_menu = self.addMenu("Edit Data")
         self.edit_data_menu.setEnabled(False)
@@ -75,6 +229,44 @@ class MainMenu(QtGui.QMenuBar):
 
         variance = self.edit_data_menu.addAction("Variance")
         variance.triggered.connect(self.manipulations.launchVarianceDialog)
+
+    def launchCDFDailog(self):
+        self.dialog = CDFSaveDialog()
+        self.dialog.accepted.connect(self.saveCDF)
+        self.dialog.show()
+        self.dialog.raise_()
+
+    def saveCDF(self):
+        global file_extensions
+        filename = self.dialog.fileName()
+        filepath = self.dialog.filePath()
+        ext = filename.rfind('.')
+        if ext == -1 or filename[ext + 1:] not in file_extensions:
+            filename += '.nc'
+        filepath = filepath.replace('\\', '/')
+
+        if filepath[-1] != '/':
+            filepath += '/'
+
+        if os.path.isfile(filepath + filename):
+            buttons = QtGui.QMessageBox.warning(self, 'File Exists',
+                                                'File {0} already exists at path {1}. Do you want to overwrite?'.format(
+                                                    filename,
+                                                    filepath),
+                                                buttons=QtGui.QMessageBox.Yes | QtGui.QMessageBox.Cancel)
+            if buttons == QtGui.QMessageBox.Yes:
+                os.remove(filepath + filename)
+            else:
+                return
+
+        f = cdms2.createDataset(filepath + filename)
+        for var in self.dialog.getVariables():
+            f.write(var)
+
+        f.close()
+
+        self.dialog.close()
+        self.dialog.deleteLater()
 
     def open_script(self):
         filePath = QtGui.QFileDialog.getOpenFileName(self,

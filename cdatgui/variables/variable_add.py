@@ -39,6 +39,7 @@ class AddDialog(QtGui.QDialog):
         self.setWindowModality(QtCore.Qt.ApplicationModal)
         self.renameVar = []
         self.dialog = None
+        self.chooser = None
 
         wrap = QtGui.QVBoxLayout()
 
@@ -80,9 +81,6 @@ class AddDialog(QtGui.QDialog):
 
         horiz.addLayout(tree_layout, 2)
 
-        self.chooser = CDMSFileChooser()
-        self.chooser.accepted.connect(self.added_files)
-
     def addFileToTree(self, file):
         self.tree.add_file(file)
 
@@ -95,6 +93,11 @@ class AddDialog(QtGui.QDialog):
             return self.tree.get_selected()
 
     def add_file(self):
+        if self.chooser:
+            self.chooser.close()
+            self.chooser.deleteLater()
+        self.chooser = CDMSFileChooser()
+        self.chooser.accepted.connect(self.added_files)
         self.chooser.show()  # pragma: no cover
 
     def added_files(self):
@@ -105,14 +108,22 @@ class AddDialog(QtGui.QDialog):
     def remove_file(self):
         sel = self.tree.selectedItems()
         for item in sel:
-            i = item.parent().takeChild(item.parent().indexOfChild(item))
-            del i
+            if item.parent() is None:
+                # remove entire file
+                for child_ind in range(item.childCount()):
+                    i = item.takeChild(0)
+                    del i
+            else:
+                # remove variable in file
+                i = item.parent().takeChild(item.parent().indexOfChild(item))
+                del i
 
         file_count = self.tree.topLevelItemCount()
         i = 0
         while i < file_count:
             if not self.tree.topLevelItem(i).childCount():
                 file = self.tree.takeTopLevelItem(i)
+                del self.tree.files[item.uri]
                 manager().remove_file(file)
                 del file
                 file_count -= 1
