@@ -36,7 +36,5 @@ class ConsoleDockWidget(StaticDockWidget):
         self.console.updateAllPlots(self.plots)
 
     def clearPlots(self, removed_dps):
-        print "clearing plots"
         for plot in self.plots:
             if plot.dp in removed_dps:
-                print "removed plot", plot

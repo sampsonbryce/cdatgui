@@ -214,6 +214,9 @@ class TableLabel(QtGui.QLabel):
             # painter.restore()
             self.setPixmap(pix)
         else:
+            pix = self.pixmap()
+            if pix is not None:
+                del pix
             self.setPixmap(self.pix)
 
     def setPixmap(self, pixmap):
@@ -225,7 +228,6 @@ class TableLabel(QtGui.QLabel):
 class ImageSaveDialog(FilenameAndPathDialog):
     def __init__(self, spreadsheet, parent=None):
         super(ImageSaveDialog, self).__init__(parent=parent)
-
         self.image_widget = QtGui.QTableWidget()
         self.image_widget.setItemDelegate(SaveItemDelegate())
         self.image_widget.itemSelectionChanged.connect(self.update)
@@ -284,7 +286,7 @@ class ImageSaveDialog(FilenameAndPathDialog):
         self.height.setMaximum(10000)
         self.height.setMinimum(1)
         self.units = QtGui.QComboBox()
-        self.units.addItems(['inches', 'in', 'cm', 'mm', 'pixels', 'dots'])
+        self.units.addItems(['inches', 'in', 'cm', 'mm', 'pixel', 'dots'])
 
         self.file_type = QtGui.QComboBox()
         self.file_type.addItems(['PNG', 'PDF', 'SVG', 'Postscript'])
@@ -306,7 +308,7 @@ class ImageSaveDialog(FilenameAndPathDialog):
         self.vertical_layout.insertWidget(2, seperator_frame)
         self.vertical_layout.insertLayout(3, attribute_row)
 
-        self.setMinimumSize(600, 700)
+        self.setMinimumSize(650, 750)
 
     def update(self):
         widgets = []
@@ -449,17 +451,25 @@ class MainMenu(QtGui.QMenuBar):
         self.dialog.show()
         self.dialog.raise_()
 
-    def saveImage(self, filepath, filename, ext):
+    def saveImage(self, full_paths):
         indicies = self.dialog.image_widget.selectedIndexes()
+        width = self.dialog.width.value()
+        height = self.dialog.height.value()
+        canvas = vcs.init(size=width / float(height))
 
-        w, h = self.dialog.canvases[(indicies[0].row(), indicies[0].column())]._compute_width_height(
-            self.dialog.width.value(), self.dialog.height.value(), self.dialog.units.currentText())
-
+        w, h = canvas._compute_width_height(self.dialog.width.value(), self.dialog.height.value(),
+                                            self.dialog.units.currentText())
+      
         render_canvas = vcs.init(geometry=(w, h), bg=True)
         render_canvas.open()
         for count, index in enumerate(indicies):
             canvas = self.dialog.canvases[(index.row(), index.column())]
             render_canvas.display_names = canvas.display_names
+
+            display_backups_backends = {}
+            for dn in render_canvas.display_names:
+                display_backups_backends[dn] = vcs.elements["display"][dn].backend
+
             render_canvas.update()
 
             if self.dialog.file_type.currentText() == 'PNG':
@@ -471,39 +481,26 @@ class MainMenu(QtGui.QMenuBar):
             elif self.dialog.file_type.currentText() == 'Postscript':
                 func = render_canvas.postscript
 
-            if count:
-                filename = '{0}_{1}'.format(filename, count)
+            func(full_paths[count])
 
-            file = '{0}{1}.{2}'.format(filepath, filename, ext)
-            if not self.checkIfFileExists(file):
-                return
-
-            func(file)
-
-            if count:
-                filename = filename.split('.')[0][:-2]
+            # Restore the old backend to the display
+            for dn in render_canvas.display_names:
+                vcs.elements["display"][dn].backend = display_backups_backends[dn]
 
         self.dialog.close()
         self.dialog.deleteLater()
         self.dialog = None
-
-    def checkIfFileExists(self, file):
-        print "checking if file exists", file
-        if os.path.isfile(file):
-            buttons = QtGui.QMessageBox.warning(self, 'File Exists',
-                                                'File {0} already exists. Do you want to overwrite?'.format(file),
-                                                buttons=QtGui.QMessageBox.Yes | QtGui.QMessageBox.Cancel)
-            if buttons == QtGui.QMessageBox.Yes:
-                os.remove(file)
-            else:
-                return False
-        return True
+        render_canvas.display_names = []
+        render_canvas.clear()
+        render_canvas.close()
 
     def checkFile(self, func):
         filename = self.dialog.fileName()
         filepath = self.dialog.filePath()
         extension = self.dialog.getExtension()
         ext = filename.rfind('.')
+        if ext != -1:
+            filename = filename[:-ext]
 
         filepath = filepath.replace('\\', '/')
 
@@ -516,12 +513,39 @@ class MainMenu(QtGui.QMenuBar):
                                               filepath))
             return
 
-        if ext == -1 or filename[ext:] != extension:
-            filename += extension
+        # generate filenames
+        full_paths = []
+        duplicate_paths = []
+        indicies = self.dialog.image_widget.selectedIndexes()
+        for count, index in enumerate(indicies):
+            temp_filename = filepath + filename
+            if count:
+                temp_filename = '{0}_{1}{2}'.format(temp_filename, count, extension)
+            else:
+                temp_filename += extension
 
-        filename, ext = filename.split('.')
+            if os.path.isfile(temp_filename):
+                duplicate_paths.append(temp_filename)
 
-        func(filepath, filename, ext)
+            full_paths.append(temp_filename)
+
+        if duplicate_paths:
+            info = 'Currently existing files:\n\n'
+            for name in duplicate_paths:
+                info = info + name + '\n'
+            info += '\n'
+            info += 'Do you want to overwrite?'
+
+            buttons = QtGui.QMessageBox.warning(self, 'Files Exists',
+                                                info,
+                                                buttons=QtGui.QMessageBox.Yes | QtGui.QMessageBox.Cancel)
+            if buttons == QtGui.QMessageBox.Yes:
+                for name in duplicate_paths:
+                    os.remove(name)
+            else:
+                return
+
+        func(full_paths)
 
     def saveCDF(self, filepath, filename):
         f = cdms2.createDataset(filepath + filename)
