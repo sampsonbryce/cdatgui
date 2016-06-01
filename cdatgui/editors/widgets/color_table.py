@@ -117,6 +117,7 @@ class ColormapTable(QtGui.QTableWidget):
         self._real_map = value
         if self._cmap is not None:
             del vcs.elements['colormap'][self._cmap.name]
+
         self._cmap = vcs.createcolormap(Cp_name_src=self._real_map.name)
         self.update_table()
 

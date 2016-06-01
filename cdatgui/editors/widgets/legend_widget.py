@@ -379,8 +379,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
             return
 
         self.object.colormap = cur_item
-        items = [self.colormap_dropdown.itemText(i) for i in range(self.colormap_dropdown.count())]
-        self.colormap_dropdown.setCurrentIndex(items.index(cur_item))
+        self.colormap_dropdown.setCurrentIndex(self.colormap_dropdown.findText(cur_item))
         self.preview.update()
 
         self.level_count = len(self.object.levels)
@@ -530,6 +529,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.colormap_editor.colormap.setCurrentIndex(items.index(self.colormap_dropdown.currentText()))
         self.colormap_editor.choseColormap.connect(partial(self.updateColormap, recreate=False))
         self.colormap_editor.choseColorIndex.connect(partial(self.performActionAndClose, obj))
+        self.colormap_editor.colormapCreated.connect(self.colormap_dropdown.addItem)
         self.colormap_editor.show()
         if self.start_timer.isActive():
             self.start_timer.stop()

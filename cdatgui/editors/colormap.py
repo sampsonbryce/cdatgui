@@ -9,6 +9,7 @@ COLOR_MODE = "color"
 class QColormapEditor(QtGui.QColorDialog):
     choseColormap = QtCore.Signal(str)
     choseColorIndex = QtCore.Signal(int)
+    colormapCreated = QtCore.Signal(str)
 
     def __init__(self, mode=COLORMAP_MODE, parent=None):
         QtGui.QColorDialog.__init__(self, parent)
@@ -155,6 +156,7 @@ class QColormapEditor(QtGui.QColorDialog):
         self.colormap.model().sort(0)
         self.colormap.setCurrentIndex(self.colormap.findText(newname))
         self.newname.setText("")
+        self.colormapCreated.emit(newname)
 
     def blend(self):
         min_index, max_index = self.colors.get_color_range()
