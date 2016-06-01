@@ -459,7 +459,7 @@ class MainMenu(QtGui.QMenuBar):
 
         w, h = canvas._compute_width_height(self.dialog.width.value(), self.dialog.height.value(),
                                             self.dialog.units.currentText())
-      
+
         render_canvas = vcs.init(geometry=(w, h), bg=True)
         render_canvas.open()
         for count, index in enumerate(indicies):

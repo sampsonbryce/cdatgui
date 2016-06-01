@@ -22,7 +22,6 @@ def is_displayplot(v):
 class ConsoleWidget(QtGui.QWidget):
     createdPlot = QtCore.Signal(object)
     updatedVar = QtCore.Signal()
-    checkDisplayPlots = QtCore.Signal(list)
 
     def __init__(self, parent=None):
         super(ConsoleWidget, self).__init__()
@@ -34,7 +33,6 @@ class ConsoleWidget(QtGui.QWidget):
         self.kernel = None
         self.jupyter_widget = None
         self.values = []
-        self.display_plots = []
         self.shell_vars = {}
         self.gm_count = {}
         self.letters = list(string.ascii_uppercase)
@@ -171,14 +169,10 @@ class ConsoleWidget(QtGui.QWidget):
                     variable_updated = True
 
             elif is_displayplot(value) and value not in self.display_plots:
-                self.display_plots.append(value)
                 self.createdPlot.emit(value)
 
         if is_displayplot(last_line) and last_line not in self.display_plots:
-            self.display_plots.append(last_line)
             self.createdPlot.emit(last_line)
-
-        # self.checkDisplayPlots.emit(self.display_plots)
 
         if variable_updated:
             self.updatedVar.emit()

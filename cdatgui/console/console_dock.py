@@ -12,9 +12,7 @@ class ConsoleDockWidget(StaticDockWidget):
         self.console.createdPlot.connect(self.added_plot)
         self.console.createdPlot.connect(spreadsheet.tabController.currentWidget().totalPlotsChanged)
         self.console.updatedVar.connect(spreadsheet.tabController.currentWidget().replotPlottersUpdateVars)
-        self.console.checkDisplayPlots.connect(spreadsheet.tabController.currentWidget().checkDisplayPlots)
         spreadsheet.emitAllPlots.connect(self.updateAllPlots)
-        spreadsheet.tabController.currentWidget().plotsRemoved.connect(self.clearPlots)
         self.setWidget(self.console)
 
     def added_plot(self, displayplot):
@@ -34,7 +32,3 @@ class ConsoleDockWidget(StaticDockWidget):
             plots.extend(plotter)
         self.plots = plots
         self.console.updateAllPlots(self.plots)
-
-    def clearPlots(self, removed_dps):
-        for plot in self.plots:
-            if plot.dp in removed_dps:

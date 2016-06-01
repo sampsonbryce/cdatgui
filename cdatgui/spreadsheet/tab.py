@@ -449,7 +449,6 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
     displaying the spreadsheet.
 
     """
-    plotsRemoved = QtCore.Signal(list)
     selectionChanged = QtCore.Signal(list)
     emitAllPlots = QtCore.Signal(list)
 
@@ -534,20 +533,6 @@ class StandardWidgetSheetTab(QtGui.QWidget, StandardWidgetSheetTabInterface):
                 if w is not None and w.widget() is not None:
                     cell_widgets.append(w)
         return cell_widgets
-
-    def checkDisplayPlots(self, tracked_plots):
-        cell_widgets = self.getCellWidgets()
-        removed_plots = []
-        for cell in cell_widgets:
-            qcdat = cell.widget()
-            tracked_plots = qcdat.getPlotters()
-            d_names = qcdat.canvas.display_names
-            for plot in tracked_plots:
-                if plot.dp and plot.dp.name not in d_names:
-                    removed_plots.append(plot)
-
-        if removed_plots:
-            self.plotsRemoved.emit(removed_plots)
 
     def clear(self):
         """Clears currently selected plots when clear button is pressed"""
