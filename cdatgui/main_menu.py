@@ -3,25 +3,28 @@ from PySide import QtGui, QtCore
 from functools import partial
 
 from cdatgui.bases.input_dialog import AccessibleButtonDialog
+from bases.background_delegate import SaveItemDelegate
 from cdatgui.cdat.importer import import_script
 from cdatgui.cdat.exporter import export_script
 from cdatgui.utils import label
 from cdatgui.variables import get_variables
 from cdatgui.variables.manager import manager
-import os, cdms2
+import os, cdms2, tempfile, shutil, vcs
 from cdatgui.variables.manipulations.manipulation import Manipulations, SelectionChangedListWidget
-
-file_extensions = ['nc', 'cdg', 'NC', 'CDF', 'nc4', 'NC4']
 
 
 class FileNameValidator(QtGui.QValidator):
     validInput = QtCore.Signal()
     invalidInput = QtCore.Signal()
 
+    def __init__(self, parent=None):
+        super(FileNameValidator, self).__init__(parent=parent)
+        self.ext = '.nc'
+
     def validate(self, inp, pos):
         period_ind = inp.rfind('.')
         if self.isValidName(inp) and (period_ind != len(inp) - 1 and (period_ind == -1 or (
-                        period_ind != -1 and inp[period_ind + 1:] in file_extensions))):
+                        period_ind != -1 and inp[period_ind:] == self.ext))):
             self.validInput.emit()
             return QtGui.QValidator.Acceptable
         else:
@@ -33,6 +36,18 @@ class FileNameValidator(QtGui.QValidator):
         return not (
             not re.search("^[a-zA-Z_]", name) or name == '' or re.search(' +', name) or re.search("[^a-zA-Z0-9_.]+",
                                                                                                   name))
+
+    def setExt(self, comboItem):
+        if comboItem == 'PNG':
+            self.ext = '.png'
+        elif comboItem == 'PDF':
+            self.ext = '.pdf'
+        elif comboItem == 'SVG':
+            self.ext = '.svg'
+        elif comboItem == 'Postscript':
+            self.ext = '.ps'
+        else:
+            raise Exception('{0} is not a valid file extension'.format(comboItem))
 
 
 class FilePathValidator(QtGui.QValidator):
@@ -59,13 +74,15 @@ class FilenameAndPathDialog(AccessibleButtonDialog):
         validator.validInput.connect(self.update)
         self.file_name_edit.setValidator(validator)
         self.save_button.setEnabled(False)
-
         self.file_path_edit = QtGui.QLineEdit()
+
         validator = FilePathValidator()
         validator.invalidInput.connect(self.update)
         validator.validInput.connect(self.update)
         self.file_path_edit.setValidator(validator)
+        block = self.file_path_edit.validator().blockSignals(True)
         self.file_path_edit.setText('/')
+        self.file_path_edit.validator().blockSignals(block)
         file_browser_button = QtGui.QPushButton('Browse')
         file_browser_button.clicked.connect(self.launchFileBrowser)
         file_path_layout = QtGui.QHBoxLayout()
@@ -73,8 +90,8 @@ class FilenameAndPathDialog(AccessibleButtonDialog):
         file_path_layout.addWidget(file_browser_button)
 
         label_layout = QtGui.QVBoxLayout()
-        label_layout.addWidget(label('Path:'))
         label_layout.addWidget(label('Filename:'))
+        label_layout.addWidget(label('Path:'))
 
         line_edit_layout = QtGui.QVBoxLayout()
         line_edit_layout.addWidget(self.file_name_edit)
@@ -86,9 +103,7 @@ class FilenameAndPathDialog(AccessibleButtonDialog):
 
         self.vertical_layout.insertLayout(0, edits_layout)
 
-        self.setMinimumSize(300, 300)
-
-        self.update()
+        self.setMinimumSize(300, 200)
 
     def launchFileBrowser(self):
         self.dialog = QtGui.QFileDialog(directory='/')
@@ -153,35 +168,18 @@ class CDFSaveDialog(FilenameAndPathDialog):
         self.vertical_layout.insertWidget(0, self.var_list)
 
         self.setMinimumSize(500, 300)
-
         self.update()
 
-    def update(self):
+    def checkVarList(self):
         if len(self.var_list.selectedIndexes()) == 0:
             self.save_button.setEnabled(False)
             return
         else:
             self.save_button.setEnabled(True)
 
-        validator = self.file_path_edit.validator()
-        block = validator.blockSignals(True)
-        if validator.validate(self.file_path_edit.text(), 0) == QtGui.QValidator.Intermediate:
-            self.save_button.setEnabled(False)
-            validator.blockSignals(block)
-            return
-        else:
-            self.save_button.setEnabled(True)
-        validator.blockSignals(block)
-
-        validator = self.file_name_edit.validator()
-        block = validator.blockSignals(True)
-        if validator.validate(self.file_name_edit.text(), 0) == QtGui.QValidator.Intermediate:
-            self.save_button.setEnabled(False)
-            validator.blockSignals(block)
-            return
-        else:
-            self.save_button.setEnabled(True)
-        validator.blockSignals(block)
+    def update(self):
+        self.checkVarList()
+        super(CDFSaveDialog, self).update()
 
     def getVariables(self):
         vars = []
@@ -189,13 +187,177 @@ class CDFSaveDialog(FilenameAndPathDialog):
             vars.append(get_variables().get_variable(index.data()))
         return vars
 
+    def getExtension(self):
+        return '.nc'
+
     def accept(self):
         self.accepted.emit()
 
 
-class ImageSaveDialog(FilenameAndPathDialog):
+class TableLabel(QtGui.QLabel):
     def __init__(self, parent=None):
+        super(TableLabel, self).__init__(parent=parent)
+        self.selected = False
+        self.pix = None
+
+    def setSelected(self, selected):
+        self.selected = selected
+        if self.selected:
+            pix = self.pixmap()
+            painter = QtGui.QPainter(pix)
+            # painter.save()
+            color = QtGui.QColor(29, 28, 247)
+            pen = QtGui.QPen(color, 10, QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.MiterJoin)
+            w = pen.width() / 2
+            painter.setPen(pen)
+            painter.drawRect(self.frameRect().adjusted(w, w, -w, -w))
+            # painter.restore()
+            self.setPixmap(pix)
+        else:
+            self.setPixmap(self.pix)
+
+    def setPixmap(self, pixmap):
+        if self.pix is None:
+            self.pix = pixmap
+        super(TableLabel, self).setPixmap(pixmap)
+
+
+class ImageSaveDialog(FilenameAndPathDialog):
+    def __init__(self, spreadsheet, parent=None):
         super(ImageSaveDialog, self).__init__(parent=parent)
+
+        self.image_widget = QtGui.QTableWidget()
+        self.image_widget.setItemDelegate(SaveItemDelegate())
+        self.image_widget.itemSelectionChanged.connect(self.update)
+        cells = spreadsheet.tabController.currentWidget().getCellWidgets()
+        row_count, column_count = spreadsheet.tabController.currentWidget().getDimension()
+        self.image_widget.setRowCount(row_count)
+        self.image_widget.setColumnCount(column_count)
+        row_size = 315
+        column_size = 215
+        width = row_size * column_count
+        height = column_size * row_count
+        self.image_widget.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+        self.image_widget.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+
+        self.image_widget.setMaximumSize(width, height)
+
+        selected_cells = spreadsheet.tabController.currentWidget().getSelectedCells()
+        self.temp_dir = tempfile.mkdtemp()
+        self.canvases = {}
+        row = 0
+        col = 0
+        for ind, cell in enumerate(cells):
+            path = os.path.join(self.temp_dir, 'grid_image_' + str(ind))
+            image = cell.widget().canvas.png(path, width=100, height=100, units='pixel')
+            loaded_image = QtGui.QImage(path)
+            loaded_image = loaded_image.scaled(300, 200, transformMode=QtCore.Qt.SmoothTransformation)
+            pixmap = QtGui.QPixmap.fromImage(loaded_image)
+
+            lab = TableLabel()
+            lab.setPixmap(pixmap)
+            self.image_widget.setCellWidget(row, col, lab)
+            self.canvases[(row, col)] = cell.widget().canvas
+
+            # select if selected in spreadsheet
+            if cell in selected_cells:
+                sel = QtGui.QTableWidgetSelectionRange(row, col, row, col)
+                self.image_widget.setRangeSelected(sel, True)
+
+            if col < column_count - 1:
+                col += 1
+            else:
+                row += 1
+                col = 0
+
+        seperator_frame = QtGui.QFrame()
+        seperator_frame.setFrameShape(QtGui.QFrame.HLine)
+        image_layout = QtGui.QHBoxLayout()
+        image_layout.addWidget(self.image_widget)
+        select_label = label('Select Canvases to Export:')
+        select_label.setSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
+
+        self.width = QtGui.QSpinBox()
+        self.width.setMaximum(10000)
+        self.width.setMinimum(1)
+        self.height = QtGui.QSpinBox()
+        self.height.setMaximum(10000)
+        self.height.setMinimum(1)
+        self.units = QtGui.QComboBox()
+        self.units.addItems(['inches', 'in', 'cm', 'mm', 'pixels', 'dots'])
+
+        self.file_type = QtGui.QComboBox()
+        self.file_type.addItems(['PNG', 'PDF', 'SVG', 'Postscript'])
+        self.file_type.currentIndexChanged[str].connect(self.setValidatorExt)
+        self.file_name_edit.validator().setExt(self.file_type.currentText())
+
+        attribute_row = QtGui.QHBoxLayout()
+        attribute_row.addWidget(label('Width:'))
+        attribute_row.addWidget(self.width)
+        attribute_row.addWidget(label('Height:'))
+        attribute_row.addWidget(self.height)
+        attribute_row.addWidget(label('Units:'))
+        attribute_row.addWidget(self.units)
+        attribute_row.addWidget(label('Export As:'))
+        attribute_row.addWidget(self.file_type)
+
+        self.vertical_layout.insertWidget(0, select_label)
+        self.vertical_layout.insertLayout(1, image_layout)
+        self.vertical_layout.insertWidget(2, seperator_frame)
+        self.vertical_layout.insertLayout(3, attribute_row)
+
+        self.setMinimumSize(600, 700)
+
+    def update(self):
+        widgets = []
+        for index in self.image_widget.selectedIndexes():
+            widget = self.image_widget.cellWidget(index.row(), index.column())
+            if widget is None:
+                continue
+            widget.setSelected(True)
+            widgets.append(widget)
+
+        for row in range(self.image_widget.rowCount()):
+            for col in range(self.image_widget.columnCount()):
+                widget = self.image_widget.cellWidget(row, col)
+                if widget is None:
+                    continue
+                if widget not in widgets:
+                    widget.setSelected(False)
+
+        if not self.image_widget.selectedIndexes():
+            self.save_button.setEnabled(False)
+            return
+        else:
+            self.save_button.setEnabled(True)
+        super(ImageSaveDialog, self).update()
+
+    def setValidatorExt(self, comboItem):
+        self.file_name_edit.validator().setExt(comboItem)
+        self.file_name_edit.validator().validate(self.file_name_edit.text(), 0)
+
+    def getExtension(self):
+        item = self.file_type.currentText()
+        if item == 'PNG':
+            return '.png'
+        elif item == 'PDF':
+            return '.pdf'
+        elif item == 'SVG':
+            return '.svg'
+        elif item == 'Postscript':
+            return '.ps'
+        else:
+            raise Exception('{0} is not a valid file extension'.format(item))
+
+    def removeImages(self):
+        shutil.rmtree(self.temp_dir)
+
+    def accept(self):
+        self.accepted.emit()
+
+    def close(self):
+        super(ImageSaveDialog, self).close()
+        self.removeImages()
 
 
 class MainMenu(QtGui.QMenuBar):
@@ -223,7 +385,7 @@ class MainMenu(QtGui.QMenuBar):
         save_variables = export_menu.addAction('NetCDF File')
         save_variables.triggered.connect(self.launchCDFDailog)
 
-        save_image = export_menu.addMenu('Image')
+        save_image = export_menu.addAction('Image')
         save_image.triggered.connect(self.launchImageDialog)
 
         self.edit_data_menu = self.addMenu("Edit Data")
@@ -277,23 +439,72 @@ class MainMenu(QtGui.QMenuBar):
 
     def launchCDFDailog(self):
         self.dialog = CDFSaveDialog()
-        self.dialog.accepted.connect(self.saveCDF)
+        self.dialog.accepted.connect(partial(self.checkFile, self.saveCDF))
         self.dialog.show()
         self.dialog.raise_()
 
     def launchImageDialog(self):
-        self.dialog = ImageSaveDialog()
-        self.dialog.accepted.connect(self.saveImage)
+        self.dialog = ImageSaveDialog(self.ss)
+        self.dialog.accepted.connect(partial(self.checkFile, self.saveImage))
         self.dialog.show()
         self.dialog.raise_()
 
-    def saveCDF(self):
-        global file_extensions
+    def saveImage(self, filepath, filename, ext):
+        indicies = self.dialog.image_widget.selectedIndexes()
+
+        w, h = self.dialog.canvases[(indicies[0].row(), indicies[0].column())]._compute_width_height(
+            self.dialog.width.value(), self.dialog.height.value(), self.dialog.units.currentText())
+
+        render_canvas = vcs.init(geometry=(w, h), bg=True)
+        render_canvas.open()
+        for count, index in enumerate(indicies):
+            canvas = self.dialog.canvases[(index.row(), index.column())]
+            render_canvas.display_names = canvas.display_names
+            render_canvas.update()
+
+            if self.dialog.file_type.currentText() == 'PNG':
+                func = render_canvas.png
+            elif self.dialog.file_type.currentText() == 'PDF':
+                func = render_canvas.pdf
+            elif self.dialog.file_type.currentText() == 'SVG':
+                func = render_canvas.svg
+            elif self.dialog.file_type.currentText() == 'Postscript':
+                func = render_canvas.postscript
+
+            if count:
+                filename = '{0}_{1}'.format(filename, count)
+
+            file = '{0}{1}.{2}'.format(filepath, filename, ext)
+            if not self.checkIfFileExists(file):
+                return
+
+            func(file)
+
+            if count:
+                filename = filename.split('.')[0][:-2]
+
+        self.dialog.close()
+        self.dialog.deleteLater()
+        self.dialog = None
+
+    def checkIfFileExists(self, file):
+        print "checking if file exists", file
+        if os.path.isfile(file):
+            buttons = QtGui.QMessageBox.warning(self, 'File Exists',
+                                                'File {0} already exists. Do you want to overwrite?'.format(file),
+                                                buttons=QtGui.QMessageBox.Yes | QtGui.QMessageBox.Cancel)
+            if buttons == QtGui.QMessageBox.Yes:
+                os.remove(file)
+            else:
+                return False
+        return True
+
+    def checkFile(self, func):
         filename = self.dialog.fileName()
         filepath = self.dialog.filePath()
+        extension = self.dialog.getExtension()
         ext = filename.rfind('.')
-        if ext == -1 or filename[ext + 1:] not in file_extensions:
-            filename += '.nc'
+
         filepath = filepath.replace('\\', '/')
 
         if filepath[-1] != '/':
@@ -301,21 +512,18 @@ class MainMenu(QtGui.QMenuBar):
 
         if not os.access(filepath, os.W_OK | os.X_OK):
             QtGui.QMessageBox.information(self, 'Invalid Permissions',
-                                          "You do not have permission to acces the directory '{0}'".format(
+                                          "You do not have permission to access the directory '{0}'".format(
                                               filepath))
             return
 
-        if os.path.isfile(filepath + filename):
-            buttons = QtGui.QMessageBox.warning(self, 'File Exists',
-                                                'File {0} already exists at path {1}. Do you want to overwrite?'.format(
-                                                    filename,
-                                                    filepath),
-                                                buttons=QtGui.QMessageBox.Yes | QtGui.QMessageBox.Cancel)
-            if buttons == QtGui.QMessageBox.Yes:
-                os.remove(filepath + filename)
-            else:
-                return
+        if ext == -1 or filename[ext:] != extension:
+            filename += extension
 
+        filename, ext = filename.split('.')
+
+        func(filepath, filename, ext)
+
+    def saveCDF(self, filepath, filename):
         f = cdms2.createDataset(filepath + filename)
         for var in self.dialog.getVariables():
             f.write(var)

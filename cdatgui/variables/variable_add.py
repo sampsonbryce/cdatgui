@@ -123,7 +123,7 @@ class AddDialog(QtGui.QDialog):
         while i < file_count:
             if not self.tree.topLevelItem(i).childCount():
                 file = self.tree.takeTopLevelItem(i)
-                del self.tree.files[item.uri]
+                del self.tree.files[file.uri]
                 manager().remove_file(file)
                 del file
                 file_count -= 1
