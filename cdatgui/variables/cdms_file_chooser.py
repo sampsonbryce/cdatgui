@@ -1,6 +1,7 @@
 from PySide import QtGui, QtCore
 from cdatgui.bases import VerticalTabWidget, FileBrowserWidget
 from manager import manager
+from cdatgui.variables.esgf.esgf_search import ESGFSearch
 
 
 class CDMSFileChooser(QtGui.QDialog):
@@ -29,7 +30,10 @@ class CDMSFileChooser(QtGui.QDialog):
         self.file_browser = FileBrowserWidget("/", filetypes=["nc"])
         self.file_browser.selectionChange.connect(self.selected_files)
 
+        self.esgf_search = ESGFSearch()
+
         self.tabs.add_widget(u"Local File", self.file_browser)
+        self.tabs.add_widget(u"ESGF", self.esgf_search)
 
     def selected_files(self):
         files = self.file_browser.get_selected_files()
