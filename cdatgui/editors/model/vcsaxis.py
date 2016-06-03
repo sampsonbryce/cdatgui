@@ -9,6 +9,7 @@ class VCSAxis(object):
         self.orig_tmpl_name = tmpl.name
         self._axis = axis
         self.var = var
+        self.name = None
 
     @property
     def axis(self):
@@ -45,6 +46,12 @@ class VCSAxis(object):
             minitick_count = self.minitick_count
         else:
             minitick_count = 0
+        if isinstance(val, str):
+            if val == '*':
+                self.name = None
+            else:
+                self.name = val
+
         if self._axis == "x1":
             self.gm.xticlabels1 = val
         if self._axis == "x2":
@@ -96,7 +103,7 @@ class VCSAxis(object):
     @mode.setter
     def mode(self, value):
         # if value == "auto" and isinstance(self.ticks, dict):
-            # self.ticks = "*"
+        # self.ticks = "*"
         if value == 'even' and isinstance(self.ticks, str):
             if self.ticks != "*":
                 step = self.step
@@ -220,18 +227,27 @@ class VCSAxis(object):
             ticks = vcs.elements["list"][ticks]
         return ticks
 
-    def save(self):
+    def save(self, name):
+        if name is None:
+            raise Exception(
+                "Non str name cannot be used to save ticks")  # something got through your rock solid wall of logic
+
+        if isinstance(self.ticks, str):
+            vcs.elements["list"][name] = vcs.elements['list'][self.ticks]
+        else:
+            vcs.elements["list"][name] = self.ticks
+        vcs.elements["list"][name + "_miniticks"] = self.miniticks
+
+        self.ticks = name
+        self.miniticks = name + "_miniticks"
+
         gtype = vcs.graphicsmethodtype(self.gm)
         del vcs.elements[gtype][self.orig_gm_name]
         vcs.elements[gtype][self.orig_gm_name] = self.gm
         del vcs.elements['template'][self.orig_tmpl_name]
         vcs.elements['template'][self.orig_tmpl_name] = self.tmpl
 
-        # vcs.elements["list"][name] = self.ticks
-        # vcs.elements["list"][name + "_miniticks"] = self.miniticks
-
     def cancel(self):
         gtype = vcs.graphicsmethodtype(self.gm)
         del vcs.elements[gtype][self.gm.name]
         del vcs.elements['template'][self.tmpl.name]
-

@@ -8,7 +8,8 @@ from qtconsole.inprocess import QtInProcessKernelManager
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
 
 from cdatgui.cdat.metadata import FileMetadataWrapper, VariableMetadataWrapper
-from cdatgui.variables import get_variables, reserved_words
+from cdatgui.variables import get_variables
+from cdatgui.constants import reserved_words
 
 
 def is_cdms_var(v):

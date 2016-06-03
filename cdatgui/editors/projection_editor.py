@@ -3,14 +3,14 @@ import vcs, sys
 from cdatgui.bases.window_widget import BaseSaveWindowWidget
 from cStringIO import StringIO
 from cdatgui.utils import label
-from cdatgui.bases.vcs_elements_dialog import VcsElementsDialog, VcsElementsValidator
+from cdatgui.bases.vcs_elements_dialog import VCSElementsDialog, VCSElementsValidator
 
 
 class ProjectionEditor(BaseSaveWindowWidget):
     def __init__(self):
         super(ProjectionEditor, self).__init__()
-        dialog = VcsElementsDialog('projection')
-        dialog.setValidator(VcsElementsValidator())
+        dialog = VCSElementsDialog('projection')
+        dialog.setValidator(VCSElementsValidator())
         self.setSaveDialog(dialog)
         self.orig_projection = None
         self.cur_projection_name = None

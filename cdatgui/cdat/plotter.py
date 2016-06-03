@@ -165,15 +165,8 @@ class PlotManager(QtCore.QObject):
         return vcs.getgraphicsmethod(self._type, self._gm)
 
     def set_gm(self, gm):
-        plot = True
-        if isinstance(gm, tuple):
-            plot = gm[1]
-            gm = gm[0]
-
         self._gm = gm.name
         self._type = vcs.graphicsmethodtype(gm)
-        if plot and self.can_plot():
-            self.plot()
         self.source.gm_label.setText(self._gm)
 
     graphics_method = property(gm, set_gm)
@@ -182,10 +175,6 @@ class PlotManager(QtCore.QObject):
         return self._vars
 
     def set_vars(self, v):
-        plot = True
-        if len(v) > 2:
-            plot = v[2]
-            v = v[:2]
         try:
             self._vars = (v[0], v[1])
         except TypeError:
@@ -201,8 +190,6 @@ class PlotManager(QtCore.QObject):
             else:
                 new_vars.append(var)
         self._vars = new_vars
-        if plot and self.can_plot():
-            self.plot()
 
         valid_vars = []
         for v in self._vars:
@@ -221,15 +208,7 @@ class PlotManager(QtCore.QObject):
 
     def set_templ(self, template):
         # Check if gm supports templates
-        plot = True
-        if isinstance(template, tuple):
-            plot = template[1]
-            template = template[0]
-
         self._template = template
-        if plot and self.can_plot():
-            self.plot()
-
         self.source.tmpl_label.setText(self.template.name)
 
     template = property(templ, set_templ)
@@ -242,6 +221,8 @@ class PlotManager(QtCore.QObject):
             self.removed.emit()
 
     def plot(self):
+        if not self.can_plot():
+            raise Exception("Attempted plot when can_plot not valid")
         if self.variables is None:
             raise ValueError("No variables specified")
 

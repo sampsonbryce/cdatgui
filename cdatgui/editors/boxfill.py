@@ -1,6 +1,8 @@
 from PySide import QtGui, QtCore
 from collections import OrderedDict
 
+import numpy, vcs
+
 from .graphics_method_editor import GraphicsMethodEditorWidget
 
 
@@ -32,6 +34,15 @@ class BoxfillEditor(GraphicsMethodEditorWidget):
         self.button_layout.insertLayout(0, button_layout)
         self.levels_button.setEnabled(False)
 
+        self.graphicsMethodUpdated.connect(self.updateLegendButton)
+
+    def updateLegendButton(self):
+        levs = self._gm.getlevels(*vcs.minmax(self.var))
+        if len(levs) == 2 and numpy.allclose(levs, [1e+20] * 2):
+            self.legend_button.setEnabled(False)
+        else:
+            self.legend_button.setEnabled(True)
+
     @property
     def gm(self):
         """GM property."""
@@ -49,11 +60,13 @@ class BoxfillEditor(GraphicsMethodEditorWidget):
 
     def setBoxfillType(self, radio):
         """Take in a radio button and set the GM boxfill_type."""
+        box_type = self.boxfill_types[radio.text()]
+        self._gm.boxfill_type = box_type
+
         if radio.text() == 'Custom':
             self.levels_button.setEnabled(True)
+            self.updateLegendButton()
         else:
             self.levels_button.setEnabled(False)
-        box_type = self.boxfill_types[radio.text()]
 
-        self._gm.boxfill_type = box_type
 

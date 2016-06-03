@@ -63,7 +63,6 @@ class ColormapTable(QtGui.QTableWidget):
             self.singleColorSelected.emit(self.row_col_to_ind(sel.topRow(), sel.leftColumn()))
             return
         else:
-            print "Emitting None"
             self.singleColorSelected.emit(None)
 
 
@@ -111,15 +110,24 @@ class ColormapTable(QtGui.QTableWidget):
     
     @cmap.setter
     def cmap(self, value):
-        if not vcs.iscolormap(value):
+        try:
             value = vcs.getcolormap(value)
+        except KeyError:
+            raise KeyError('Invalid value {0} for colormap name'.format(value))
         self._real_map = value
+        if self._cmap is not None:
+            del vcs.elements['colormap'][self._cmap.name]
+
         self._cmap = vcs.createcolormap(Cp_name_src=self._real_map.name)
         self.update_table()
 
     def apply(self):
         for ind in range(256):
             self._real_map.index[ind] = self._cmap.index[ind]
+        del vcs.elements['colormap'][self._cmap.name]
+
+    def reject(self):
+        del vcs.elements['colormap'][self._cmap.name]
 
     def reset(self):
         for ind in range(256):

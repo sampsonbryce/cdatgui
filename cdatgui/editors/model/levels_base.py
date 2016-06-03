@@ -10,13 +10,8 @@ class LevelsBaseModel(object):
         # Check if they're autolevels
         if numpy.allclose(levs, 1e20):
             if vcs.isboxfill(self._gm) == 1:
-                nlevs = self.color_2 - self.color_1 + 1
-                minval, maxval = vcs.minmax(self._var)
-                levs = vcs.mkscale(minval, maxval)
-                if len(levs) == 1:
-                    levs.append(levs[0] + .00001)
-                delta = (levs[-1] - levs[0]) / nlevs
-                levs = list(numpy.arange(levs[0], levs[-1] + delta, delta))
+                min, max = vcs.minmax(self._var)
+                levs = self._gm.getlevels(min, max).tolist()
             else:
                 levs = vcs.mkscale(*vcs.minmax(self._var))
 
@@ -26,7 +21,7 @@ class LevelsBaseModel(object):
                 levs.insert(0, -1e20)
             if self.ext_right:
                 levs.append(1e20)
-        except AttributeError:
+        except AttributeError as e:
             pass
 
         return levs

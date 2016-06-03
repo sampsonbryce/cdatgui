@@ -86,6 +86,7 @@ def test_boxfillDialog(qtbot, boxfill_dialog):
 
     # test ticks dialogs
     editor.editLeft()
+    qtbot.addWidget(editor.axis_editor)
     assert editor.axis_editor
     assert editor.axis_editor.axis == 'y1'
 
@@ -93,12 +94,14 @@ def test_boxfillDialog(qtbot, boxfill_dialog):
     assert editor.axis_editor is None
 
     editor.editRight()
+    qtbot.addWidget(editor.axis_editor)
     assert editor.axis_editor.axis == 'y2'
 
     editor.updated()
     assert editor.axis_editor is None
 
     editor.editBottom()
+    qtbot.addWidget(editor.axis_editor)
     assert editor.axis_editor.axis == 'x1'
 
     editor.updated()
@@ -118,6 +121,7 @@ def test_boxfillDialog(qtbot, boxfill_dialog):
     # editor.updated()
 
     editor.editProjection()
+    qtbot.addWidget(editor.projection_editor)
     assert editor.projection_editor
     assert editor.projection_editor.cur_projection_name == 'linear'
     editor.projection_editor.close()
@@ -181,7 +185,8 @@ def test_saveDialog(qtbot, save_dialog):
     save_button = save_dialog.layout().itemAt(1).layout().itemAt(3).widget()
     assert save_button.isEnabled() == True
     save_dialog.customName()
-    assert isinstance(save_dialog.dialog, VcsElementsDialog)
+    qtbot.addWidget(save_dialog.dialog)
+    assert isinstance(save_dialog.dialog, VCSElementsDialog)
 
 
 def test_okDialog(qtbot, ok_dialog):
@@ -193,6 +198,7 @@ def test_okDialog(qtbot, ok_dialog):
 def test_saveButtonDisabled(qtbot):
     s = get_var()
     d = GraphicsMethodSaveDialog(vcs.getisoline('default'), s, vcs.createtemplate())
+    qtbot.addWidget(d)
     save_button = d.layout().itemAt(1).layout().itemAt(3).widget()
     assert save_button.isEnabled() == False
 

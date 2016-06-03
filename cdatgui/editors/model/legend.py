@@ -52,7 +52,7 @@ class VCSLegend(LevelsBaseModel):
             else:
                 colors = vcs.getcolors(levs, colors=range(self.color_1, self.color_2))
             levs = real_levs
-            if len(colors) < len(levs):
+            if len(colors) < len(levs) - 1:
                 # Pad out colors to the right number of buckets
                 diff = len(levs) - len(colors)
                 colors += diff * colors[-1:]
@@ -75,17 +75,6 @@ class VCSLegend(LevelsBaseModel):
     def fill_style(self, style):
         self._gm.fillareastyle = style.lower()
         self._gm.fillareacolors = self.vcs_colors
-        self.adjust_to_level_length(self._gm.fillareaindices)
-        # this should just be temporary until merge of missing level branch
-        self.adjust_to_level_length(self._gm.fillareaopacity)
-        self.adjust_to_level_length(self._gm.fillareacolors)
-
-    def adjust_to_level_length(self, lst):
-        # +1 for invisible level
-        while len(lst) < len(self.levels)+1:
-            lst.append(lst[-1])
-        while len(lst) > len(self.levels)+1:
-            lst.pop()
 
     @property
     def color_1(self):
@@ -181,13 +170,17 @@ class VCSLegend(LevelsBaseModel):
             self.labels = {}
         else:
             if vcs.isboxfill(self._gm):
-                self.labels = self._gm.autolabels(self._var)
+                min, max = vcs.minmax(self._var)
+                levels = self._gm.getlevels(min, max)
+                self.labels = self._gm.getlegendlabels(levels)
 
     @property
     def labels(self):
         if self._gm.legend is None:
             if vcs.isboxfill(self._gm):
-                return self._gm.autolabels(self._var)
+                min, max = vcs.minmax(self._var)
+                levels = self._gm.getlevels(min, max)
+                return self._gm.getlegendlabels(levels)
         return self._gm.legend
 
     @labels.setter

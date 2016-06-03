@@ -6,7 +6,7 @@ from cdatgui.bases.window_widget import BaseOkWindowWidget
 from cdatgui.bases.dynamic_grid_layout import DynamicGridLayout
 import vcs
 from cdatgui.vcsmodel import get_textstyles
-from cdatgui.bases.vcs_elements_dialog import VcsElementsDialog, VcsElementsValidator
+from cdatgui.bases.vcs_elements_dialog import VCSElementsDialog, VCSElementsValidator
 
 
 class MultiTextEditor(BaseOkWindowWidget):
@@ -66,8 +66,8 @@ class MultiTextEditor(BaseOkWindowWidget):
             self.text_editor.close()
             self.text_editor.deleteLater()
         self.text_editor = TextStyleEditorWidget()
-        dialog = VcsElementsDialog('texttable')
-        dialog.setValidator(VcsElementsValidator())
+        dialog = VCSElementsDialog('texttable')
+        dialog.setValidator(VCSElementsValidator())
         self.text_editor.setSaveDialog(dialog)
 
         text = self.isoline_model.text[index]

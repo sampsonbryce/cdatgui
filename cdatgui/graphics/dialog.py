@@ -1,6 +1,6 @@
 from PySide import QtGui, QtCore
 
-from cdatgui.bases.vcs_elements_dialog import VcsElementsDialog
+from cdatgui.bases.vcs_elements_dialog import VCSElementsDialog
 from cdatgui.editors.boxfill import BoxfillEditor
 from cdatgui.editors.isofill import IsofillEditor
 from cdatgui.editors.meshfill import MeshfillEditor
@@ -99,7 +99,7 @@ class GraphicsMethodSaveDialog(GraphicsMethodDialog):
             save.setEnabled(False)
 
     def customName(self):
-        self.dialog = VcsElementsDialog('boxfill')
+        self.dialog = VCSElementsDialog('boxfill')
         self.dialog.setLabelText('Name for {0}'.format(unicode(self.gmtype)))
         self.dialog.setWindowTitle('Save As')
         self.dialog.accepted.connect(self.grabGm)
