@@ -66,6 +66,7 @@ class AddDialog(QtGui.QDialog):
         self.setLayout(wrap)
 
         self.tree = CDMSFileTree()
+        self.tree.doubleClicked.connect(self.verify_selected_files)
         tree_layout = QtGui.QVBoxLayout()
         toolbar = AddEditRemoveToolbar(u"Available Files",
                                        add_action=self.add_file,
