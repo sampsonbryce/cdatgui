@@ -135,8 +135,6 @@ class ESGFSearch(QtGui.QWidget):
         if value == 'Experiment Family':
             return 'experiment_family'
 
-
-
     def prevPage(self):
         self.current_offset -= self.current_limit
         self.next_page_button.setEnabled(True)

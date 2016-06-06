@@ -24,7 +24,7 @@ class ForceResizeScrollArea(QtGui.QScrollArea):
 class CustomFillWidget(QtGui.QWidget):
     colorChanged = QtCore.Signal(int, int)
     opacityChanged = QtCore.Signal(int, int)
-    buttonColorChanged = QtCore.Signal(QtGui.QPushButton, int)
+    buttonColorChanged = QtCore.Signal(QtGui.QPushButton, int, bool)
     patternChanged = QtCore.Signal(int, int)
     attributeChanged = QtCore.Signal()
     colormapChanged = QtCore.Signal(str)
@@ -92,7 +92,7 @@ class CustomFillWidget(QtGui.QWidget):
     def setColor(self, color):
         """initialization of button color. Should not call update preview"""
         self.color = color
-        self.buttonColorChanged.emit(self.color_button, color)
+        self.buttonColorChanged.emit(self.color_button, color, False)
 
     def changeOpacity(self, value):
         if value == 0:
@@ -104,8 +104,8 @@ class CustomFillWidget(QtGui.QWidget):
         self.attributeChanged.emit()
 
     def changeColor(self, color_index):
-        self.buttonColorChanged.emit(self.color_button, color_index)
         self.colorChanged.emit(self.index, color_index)
+        self.buttonColorChanged.emit(self.color_button, color_index, True)
         self.attributeChanged.emit()
 
     def changePattern(self, selected_index):
@@ -322,6 +322,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.vertical_layout.insertLayout(6, labels_layout)
 
     def createAndSetObject(self, gm, var):
+
         self.orig_gm = gm
         self.gm = vcs.creategraphicsmethod(vcs.graphicsmethodtype(gm), gm.name)
         self.object = VCSLegend(self.gm, var)
@@ -435,11 +436,11 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
     def updateArrowType(self):
         if self.custom_fill_icon.arrowType() == QtCore.Qt.RightArrow:
-            self.custom_fill_icon.setArrowType(QtCore.Qt.DownArrow)
             self.fill_style_widget.setVisible(True)
             self.vertical_layout.insertLayout(6, self.custom_vertical_layout)
             self.custom_vertical_layout.addWidget(self.createCustomFillBox())
             self.initateFillStyle()
+            self.custom_fill_icon.setArrowType(QtCore.Qt.DownArrow)
         else:
             self.object.fill_style = "Solid"
             self.fill_style_widget.setVisible(False)
@@ -527,7 +528,7 @@ class LegendEditorWidget(BaseOkWindowWidget):
         self.colormap_editor = QColormapEditor(mode="color")
         items = [self.colormap_editor.colormap.itemText(i) for i in range(self.colormap_editor.colormap.count())]
         self.colormap_editor.colormap.setCurrentIndex(items.index(self.colormap_dropdown.currentText()))
-        self.colormap_editor.choseColormap.connect(partial(self.updateColormap, recreate=False))
+        self.colormap_editor.choseColormap.connect(partial(self.updateColormap))
         self.colormap_editor.choseColorIndex.connect(partial(self.performActionAndClose, obj))
         self.colormap_editor.colormapCreated.connect(self.colormap_dropdown.addItem)
         self.colormap_editor.show()
@@ -567,10 +568,12 @@ class LegendEditorWidget(BaseOkWindowWidget):
 
         self.preview.update()
 
-    def updateButtonColor(self, button, color_index):
+    def updateButtonColor(self, button, color_index, recreate=False):
         r, g, b, a = self.object.rgba_from_index(color_index)
         style_string = "background-color: rgba(%d, %d, %d, %d);" % (r, g, b, a)
         button.setStyleSheet(style_string)
+        if button != self.start_color_button and button != self.end_color_button and recreate:
+            self.updateCustomFillBox()
 
     def handleStartColorInvalidInput(self):
         self.start_timer.stop()
@@ -603,8 +606,9 @@ class LegendEditorWidget(BaseOkWindowWidget):
         super(LegendEditorWidget, self).accept()
 
     def reject(self):
-        if self.gm.name in vcs.elements[vcs.graphicsmethodtype(self.orig_gm)]:
-            del vcs.elements[vcs.graphicsmethodtype(self.orig_gm)][self.gm.name]
+
+        if self.gm.name in vcs.elements[vcs.graphicsmethodtype(self.gm)]:
+            del vcs.elements[vcs.graphicsmethodtype(self.gm)][self.gm.name]
         super(LegendEditorWidget, self).reject()
 
 

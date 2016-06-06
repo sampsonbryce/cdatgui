@@ -193,18 +193,18 @@ class VCSLegend(LevelsBaseModel):
     def set_level_color(self, i, v):
         if self._gm.fillareacolors is None or self._gm.fillareacolors == [1]:
             self._gm.fillareacolors = self.vcs_colors
-        if len(self._gm.fillareacolors) < len(self.levels):
+        if len(self._gm.fillareacolors) < len(self.levels) - 1:
             self._gm.fillareacolors += (len(self.levels) - len(self._gm.fillareacolors)) * self._gm.fillareacolors[-1:]
         self._gm.fillareacolors[i] = v
 
     def level_pattern(self, i):
-        if len(self._gm.fillareaindices) < len(self.levels):
+        if len(self._gm.fillareaindices) < len(self.levels) - 1:
             self._gm.fillareaindices += (len(self.levels) - len(self._gm.fillareaindices)) * self._gm.fillareaindices[
                                                                                              -1:]
         return self._gm.fillareaindices[i]
 
     def set_level_pattern(self, i, v):
-        if len(self._gm.fillareaindices) < len(self.levels):
+        if len(self._gm.fillareaindices) < len(self.levels) - 1:
             self._gm.fillareaindices += (len(self.levels) - len(self._gm.fillareaindices)) * self._gm.fillareaindices[
                                                                                              -1:]
         self._gm.fillareaindices[i] = v

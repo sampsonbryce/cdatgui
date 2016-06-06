@@ -15,6 +15,7 @@ class BorderHighlightStyleDelegate(QtGui.QStyledItemDelegate):
             painter.drawRect(option.rect.adjusted(w, w, -w, -w))
             painter.restore()
 
+
 class SaveItemDelegate(QtGui.QStyledItemDelegate):
     def paint(self, painter, option, index):
         bg = index.data(QtCore.Qt.BackgroundRole)
@@ -28,4 +29,3 @@ class SaveItemDelegate(QtGui.QStyledItemDelegate):
             painter.setPen(pen)
             painter.drawRect(option.rect.adjusted(w, w, -w, -w))
             painter.restore()
-

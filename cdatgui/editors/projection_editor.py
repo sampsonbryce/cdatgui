@@ -1,7 +1,6 @@
 from PySide import QtCore, QtGui
-import vcs, sys
+import vcs
 from cdatgui.bases.window_widget import BaseSaveWindowWidget
-from cStringIO import StringIO
 from cdatgui.utils import label
 from cdatgui.bases.vcs_elements_dialog import VCSElementsDialog, VCSElementsValidator
 

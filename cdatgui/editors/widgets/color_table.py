@@ -1,4 +1,6 @@
 from PySide import QtGui, QtCore
+
+import math
 import vcs
 from cdatgui.bases.background_delegate import BorderHighlightStyleDelegate
 
@@ -30,7 +32,7 @@ class ColormapTable(QtGui.QTableWidget):
         return self.cmap.index[index]
 
     def set_cell(self, index, r, g, b, a):
-        self.cmap.index[index] = (r / 2.55, g / 2.55, b / 2.55, a / 2.55)
+        self.cmap.index[index] = (math.ceil(r / 2.55), math.ceil(g / 2.55), math.ceil(b / 2.55), math.ceil(a / 2.55))
         self.update_table()
 
     def get_color_range(self):
@@ -119,11 +121,20 @@ class ColormapTable(QtGui.QTableWidget):
             del vcs.elements['colormap'][self._cmap.name]
 
         self._cmap = vcs.createcolormap(Cp_name_src=self._real_map.name)
+        for ind in range(256):
+            assert self._real_map.index[ind] == self._cmap.index[ind]
         self.update_table()
 
-    def apply(self):
+    def changed(self):
         for ind in range(256):
-            self._real_map.index[ind] = self._cmap.index[ind]
+            if self._real_map.index[ind] != self._cmap.index[ind]:
+                return True
+        return False
+
+    def apply(self):
+        if self.changed():
+            for ind in range(256):
+                self._real_map.index[ind] = self._cmap.index[ind]
         del vcs.elements['colormap'][self._cmap.name]
 
     def reject(self):

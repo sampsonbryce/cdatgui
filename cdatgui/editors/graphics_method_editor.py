@@ -85,7 +85,6 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
 
     def updated(self):
         if self.legend_editor is not None:
-            self._gm = self.legend_editor.gm
             self.legend_editor.deleteLater()
             self.legend_editor = None
         if self.axis_editor is not None:
@@ -109,8 +108,12 @@ class GraphicsMethodEditorWidget(QtGui.QWidget):
         """GM setter."""
         self._gm = value
 
+    def updateGM(self):
+        self._gm = self.legend_editor.gm
+
     def editLegend(self):
         self.legend_editor = LegendEditorWidget()
+        self.legend_editor.accepted.connect(self.updateGM)
         self.legend_editor.accepted.connect(self.updated)
         self.legend_editor.rejected.connect(self.updated)
         self.legend_editor.createAndSetObject(self.gm, self.var.var)

@@ -96,7 +96,7 @@ class QColormapEditor(QtGui.QColorDialog):
 
     def acceptClicked(self):
         # Make sure the colormap changes take effect
-        if self.colormap.currentText() == 'default':
+        if self.colormap.currentText() == 'default' and self.colors.changed():
             QtGui.QMessageBox.information(self, 'Cannot Modify', 'Cannot modify the default colormap')
         else:
             self.applyChanges()
