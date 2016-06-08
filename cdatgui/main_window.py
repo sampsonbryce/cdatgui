@@ -20,6 +20,7 @@ class MainWindow(QtGui.QMainWindow):
         self.setCentralWidget(self.spreadsheet)
 
         var_widget = VariableWidget(parent=self)
+        var_widget.variableUpdated.connect(self.spreadsheet.tabController.currentWidget().replotPlottersUpdateVars)
         self.add_left_dock(var_widget)
 
         gm_widget = GraphicsMethodWidget(parent=self)

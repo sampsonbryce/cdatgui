@@ -11,6 +11,7 @@ from edit_variable_widget import EditVariableDialog
 
 class VariableWidget(StaticDockWidget):
     selectedVariable = QtCore.Signal(object)
+    variableUpdated = QtCore.Signal()
     variableListNotEmpty = QtCore.Signal()
     variableListEmpty = QtCore.Signal()
 
@@ -53,9 +54,13 @@ class VariableWidget(StaticDockWidget):
         variable = self.variable_widget.get_variable(index)
         label = self.variable_widget.get_variable_label(variable)
         e = EditVariableDialog(variable, self.variable_widget, self)
-        e.editedVariable.connect(partial(self.variable_widget.update_variable, label=label))
+        e.editedVariable.connect(partial(self.updateVariable, label=label))
         e.createdVariable.connect(self.variable_widget.add_variable)
         e.show()
+
+    def updateVariable(self, var, label):
+        self.variable_widget.update_variable(var, label=label)
+        self.variableUpdated.emit()
 
     def remove_variable(self):
         indices = self.variable_widget.selectedIndexes()
