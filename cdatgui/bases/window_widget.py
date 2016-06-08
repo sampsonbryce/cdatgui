@@ -24,9 +24,9 @@ class BaseSaveWindowWidget(QtGui.QWidget):
         cancel_button.setText("Cancel")
         cancel_button.clicked.connect(self.reject)
 
-        saveas_button = QtGui.QPushButton()
-        saveas_button.setText("Save As")
-        saveas_button.clicked.connect(self.saveAs)
+        self.saveas_button = QtGui.QPushButton()
+        self.saveas_button.setText("Save As")
+        self.saveas_button.clicked.connect(self.saveAs)
 
         self.save_button = QtGui.QPushButton()
         self.save_button.setText("Save")
@@ -34,7 +34,7 @@ class BaseSaveWindowWidget(QtGui.QWidget):
 
         save_cancel_row = QtGui.QHBoxLayout()
         save_cancel_row.addWidget(cancel_button)
-        save_cancel_row.addWidget(saveas_button)
+        save_cancel_row.addWidget(self.saveas_button)
         save_cancel_row.addWidget(self.save_button)
         save_cancel_row.insertStretch(1, 1)
 

@@ -230,7 +230,7 @@ class VCSAxis(object):
     def save(self, name):
         if name is None:
             raise Exception(
-                "Non str name cannot be used to save ticks")  # something got through your rock solid wall of logic
+                "None str name cannot be used to save ticks")  # something got through your rock solid wall of logic
 
         if isinstance(self.ticks, str):
             vcs.elements["list"][name] = vcs.elements['list'][self.ticks]
