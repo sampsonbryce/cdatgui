@@ -38,7 +38,8 @@ class VCSLegend(LevelsBaseModel):
     def vcs_colors(self):
         """Used internally, don't worry about it."""
         levs = self.levels
-        if self._gm.fillareacolors and self._gm.fillareacolors != [1]:
+        if self._gm.fillareacolors and self._gm.fillareacolors != [1] and len(self._gm.fillareacolors) == len(
+                self.levels) - 1:
             colors = self._gm.fillareacolors
             return colors
         else:
@@ -52,10 +53,15 @@ class VCSLegend(LevelsBaseModel):
             else:
                 colors = vcs.getcolors(levs, colors=range(self.color_1, self.color_2))
             levs = real_levs
+            if self.ext_left:
+                colors.insert(0, colors[0])
+            if self.ext_right:
+                colors.append(colors[-1])
             if len(colors) < len(levs) - 1:
                 # Pad out colors to the right number of buckets
-                diff = len(levs) - len(colors)
+                diff = (len(levs) - 1) - len(colors)
                 colors += diff * colors[-1:]
+            self._gm.fillareacolors = sorted(colors)
             return sorted(colors)
 
     def set_color(self, index, color):
