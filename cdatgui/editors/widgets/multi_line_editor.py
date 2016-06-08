@@ -6,7 +6,7 @@ from cdatgui.bases.window_widget import BaseOkWindowWidget
 from cdatgui.bases.dynamic_grid_layout import DynamicGridLayout
 import vcs
 from cdatgui.vcsmodel import get_lines
-from cdatgui.bases.vcs_elements_dialog import VCSElementsDialog, VCSElementsValidator
+from cdatgui.bases.vcs_elements_dialog import VCSElementsDialog, DefaultValidator
 
 
 class MultiLineEditor(BaseOkWindowWidget):
@@ -67,7 +67,7 @@ class MultiLineEditor(BaseOkWindowWidget):
             self.line_editor.deleteLater()
         self.line_editor = LineEditorWidget()
         dialog = VCSElementsDialog('line')
-        dialog.setValidator(VCSElementsValidator())
+        dialog.setValidator(DefaultValidator())
         self.line_editor.setSaveDialog(dialog)
 
         line = self.isoline_model.line[index]

@@ -1,6 +1,8 @@
 from PySide import QtCore, QtGui
 from functools import partial
 
+import subprocess
+
 from cdatgui.utils import label
 from pyesgf.search import SearchConnection
 from pyesgf.logon import LogonManager
@@ -203,5 +205,10 @@ class ESGFSearch(QtGui.QWidget):
         if selected_index.parent().isValid():
             return None
         else:
-            return self.results_tree.model().getDataset(selected_index)
+            # return self.results_tree.model().getDataset(selected_index)
+            data = self.results_tree.model().getDataset(selected_index)
+            script = data.file_context().get_download_script()
+            pipe = subprocess.Popen(script, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+            # import pdb;pdb.set_trace()
 

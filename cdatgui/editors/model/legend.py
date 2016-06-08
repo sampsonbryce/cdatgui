@@ -90,6 +90,8 @@ class VCSLegend(LevelsBaseModel):
             if self._gm.fillareacolors:
                 self._gm.fillareacolors = None
             self._gm.color_1 = c
+            if self._gm.boxfill_type == 'custom':
+                self._gm.fillareacolors = self.vcs_colors
 
     @property
     def color_2(self):
@@ -105,6 +107,8 @@ class VCSLegend(LevelsBaseModel):
             if self._gm.fillareacolors:
                 self._gm.fillareacolors = None
             self._gm.color_2 = c
+            if self._gm.boxfill_type == 'custom':
+                self._gm.fillareacolors = self.vcs_colors
 
     @property
     def ext_left(self):

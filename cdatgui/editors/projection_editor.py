@@ -2,14 +2,14 @@ from PySide import QtCore, QtGui
 import vcs
 from cdatgui.bases.window_widget import BaseSaveWindowWidget
 from cdatgui.utils import label
-from cdatgui.bases.vcs_elements_dialog import VCSElementsDialog, VCSElementsValidator
+from cdatgui.bases.vcs_elements_dialog import VCSElementsDialog, DefaultValidator
 
 
 class ProjectionEditor(BaseSaveWindowWidget):
     def __init__(self):
         super(ProjectionEditor, self).__init__()
         dialog = VCSElementsDialog('projection')
-        dialog.setValidator(VCSElementsValidator())
+        dialog.setValidator(DefaultValidator())
         self.setSaveDialog(dialog)
         self.orig_projection = None
         self.cur_projection_name = None

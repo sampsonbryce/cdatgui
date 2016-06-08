@@ -7,7 +7,7 @@ class VCSElementsDialog(ValidatingInputDialog):
     def __init__(self, element):
         super(VCSElementsDialog, self).__init__()
         self.element = element
-        self.setValidator(VCSElementsValidator())
+        self.setValidator(DefaultValidator())
 
     def save(self):
         if self.textValue() in vcs.elements[self.element] or self.textValue() + '_miniticks' in vcs.elements[self.element]:
@@ -22,7 +22,7 @@ class VCSElementsDialog(ValidatingInputDialog):
             self.accepted.emit()
 
 
-class VCSElementsValidator(QtGui.QValidator):
+class DefaultValidator(QtGui.QValidator):
     invalidInput = QtCore.Signal()
     validInput = QtCore.Signal()
 

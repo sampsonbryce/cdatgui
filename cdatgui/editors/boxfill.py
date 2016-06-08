@@ -70,3 +70,4 @@ class BoxfillEditor(GraphicsMethodEditorWidget):
             self.levels_button.setEnabled(False)
 
 
+

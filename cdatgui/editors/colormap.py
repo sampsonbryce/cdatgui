@@ -1,6 +1,7 @@
 from PySide import QtCore, QtGui
 import vcs
 import widgets.color_table as color_table
+from cdatgui.bases.vcs_elements_dialog import DefaultValidator
 
 COLORMAP_MODE = "colormap"
 COLOR_MODE = "color"
@@ -32,10 +33,16 @@ class QColormapEditor(QtGui.QColorDialog):
 
         h.addWidget(self.colormap)
         self.newname = QtGui.QLineEdit()
+
         h.addWidget(self.newname)
-        b = QtGui.QPushButton("Rename")
-        b.clicked.connect(self.renamed)
-        h.addWidget(b)
+        self.b = QtGui.QPushButton("Rename")
+        self.b.clicked.connect(self.renamed)
+        self.b.setEnabled(False)
+        rename_validator = DefaultValidator()
+        rename_validator.validInput.connect(lambda: self.b.setEnabled(True))
+        rename_validator.invalidInput.connect(lambda: self.b.setEnabled(False))
+        self.newname.setValidator(rename_validator)
+        h.addWidget(self.b)
         f.setLayout(h)
         l.addWidget(f)
 
@@ -151,6 +158,14 @@ class QColormapEditor(QtGui.QColorDialog):
 
     def renamed(self):
         newname = str(self.newname.text())
+        if newname in vcs.listelements('colormap'):
+            check = QtGui.QMessageBox.question(self, "Overwrite {0}?".format(newname),
+                                               "Colormap '{0}' already exists. Overwrite?".format(newname),
+                                               buttons=QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
+            if check != QtGui.QDialogButtonBox.FirstButton:
+                return
+            else:
+                del vcs.elements['colormap'][newname]
         cmap = vcs.createcolormap(newname, self.colors.cmap)
         self.colormap.addItem(newname)
         self.colormap.model().sort(0)
