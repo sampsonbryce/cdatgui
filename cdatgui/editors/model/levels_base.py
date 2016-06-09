@@ -14,5 +14,10 @@ class LevelsBaseModel(object):
                 levs = self._gm.getlevels(min, max).tolist()
             else:
                 levs = vcs.mkscale(*vcs.minmax(self._var))
-
+            '''
+            if self.ext_left:
+                levs = [-1e20] + levs
+            if self.ext_right:
+                levs += [1e20]
+            '''
         return levs

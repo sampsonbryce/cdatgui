@@ -35,9 +35,29 @@ class LegendPreviewWidget(QVCSWidget):
         text_orientation.height = legend_size
         text_orientation.halign = "center"
         template.legend.textorientation = text_orientation.name
+        # Keep this for debugging purposes
+        # print "####################################"
+        # print 'colors', self.legend.vcs_colors
+        # print 'levs', self.legend.levels
+        # print 'labels', self.legend.labels
+        # print 'ext_1', self.legend.ext_left
+        # print 'ext_2', self.legend.ext_right
+        # print 'cmap', self.legend.colormap
+        # print 'style', self.legend.fill_style
+        # print 'index', self.legend._gm.fillareaindices
+        # print 'opacity', self.legend._gm.fillareaopacity
+        # print "####################################"
+        if self.legend.ext_left:
+            ext_1 = 'y'
+        else:
+            ext_1 = 'n'
+        if self.legend.ext_right:
+            ext_2 = 'y'
+        else:
+            ext_2 = 'n'
         template.drawColorBar(self.legend.vcs_colors, self.legend.levels, self.legend.labels,
-                              ext_1=self.legend.ext_left,
-                              ext_2=self.legend.ext_right,
+                              ext_1=ext_1,
+                              ext_2=ext_2,
                               x=self.canvas,
                               cmap=self.legend.colormap,
                               style=[self.legend.fill_style],

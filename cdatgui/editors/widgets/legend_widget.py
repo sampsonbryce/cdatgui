@@ -602,7 +602,8 @@ class LegendEditorWidget(BaseOkWindowWidget):
         if orig_name in vcs.elements[vcs.graphicsmethodtype(self.orig_gm)]:
             del vcs.elements[vcs.graphicsmethodtype(self.orig_gm)][orig_name]
 
-        new_gm = vcs.creategraphicsmethod(vcs.graphicsmethodtype(self.orig_gm), self.gm.name, orig_name)
+        # setting to self.gm so graphics method editor can grab the correct gm to update
+        self.gm = vcs.creategraphicsmethod(vcs.graphicsmethodtype(self.orig_gm), self.gm.name, orig_name)
         super(LegendEditorWidget, self).accept()
 
     def reject(self):

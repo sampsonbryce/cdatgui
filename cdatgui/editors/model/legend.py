@@ -190,7 +190,16 @@ class VCSLegend(LevelsBaseModel):
             if vcs.isboxfill(self._gm):
                 min, max = vcs.minmax(self._var)
                 levels = self._gm.getlevels(min, max)
-                return self._gm.getlegendlabels(levels)
+                if self._gm.boxfill_type == 'custom':
+                    levs = levels
+                    if self.ext_left:
+                        levs = levs[1:]
+                    if self.ext_right:
+                        levs = levs[:-1]
+                    scale = vcs.mkscale(levs[0], levs[-1])
+                    return vcs.mklabels(scale)
+                else:
+                    return self._gm.getlegendlabels(levels)
         return self._gm.legend
 
     @labels.setter

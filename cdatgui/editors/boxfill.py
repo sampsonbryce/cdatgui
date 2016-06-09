@@ -68,6 +68,7 @@ class BoxfillEditor(GraphicsMethodEditorWidget):
             self.updateLegendButton()
         else:
             self.levels_button.setEnabled(False)
+            self.updateLegendButton()
 
 
 
